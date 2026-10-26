@@ -120,6 +120,7 @@ func wireFields(b []byte,dst any) error {
 	var err error
 	switch dst.(type) {
 	case *Signed:_,err=fields(b,[]string{"payload","signature"},nil)
+	case *Release:_,err=fields(b,[]string{"version","vault_id","scope_id","record_id","revision_id","sha256","runtime","capabilities"},nil)
 	case *Envelope:_,err=fields(b,[]string{"version","vault_id","scope_id","device_id","key_epoch","transport_id","nonce_b64","ciphertext_b64","ciphertext_sha256"},nil)
 	case *Control:
 		var m map[string]json.RawMessage;m,err=fields(b,[]string{"version","vault_id","generation","scopes","devices"},nil);if err!=nil{return err}

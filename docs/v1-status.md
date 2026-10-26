@@ -1,21 +1,21 @@
 # V1 delivery status
 
-This page is the acceptance record for the implementation branch. **No runtime check has been executed.** Update each row from the actual source and job evidence before handoff; an authored test is not a passed test.
+This page records the v1 source delivery on `feat/usable-v1`. **No runtime check has been executed.** Source is authored and inspected; usable runtime behavior is still unproven. An authored test is not a passed test.
 
 ## Required implementation and evidence
 
 | Requirement | Evidence needed | Current status |
 | --- | --- | --- |
-| Go CLI and official-SDK MCP | Actual command/tool entrypoints, shared scoped domain operations, machine-run instructions | Implementation in progress |
-| SQLite FTS5 and provenance | Durable revision/index schema, scoped visible-query path, exact source references in results | Implementation in progress |
-| Offline queue and retry identity | Atomic local revision/envelope/outbox commit, persisted exact retry bytes, pending status | Implementation in progress |
-| Device-only E2EE | Local key permissions, AES-GCM framing, exact Ed25519 bytes, owner pinning, no remote keys/plaintext | Implementation in progress |
-| Cloudflare archive path | Worker/DO/R2 source, head CAS publication boundary, durable replay and coordinator recovery | Implementation in progress |
-| Conflicts and deletion | Retained concurrent heads, causal resolution, tombstones, explicit restore, no stale resurrection | Implementation in progress |
-| Skill trust | Incoming staging, exact approved revision, approval separated from activation | Implementation in progress |
-| Focused E2E suite | One runnable suite covering the five requested behavior groups | Being authored; NOT RUN |
-| Focused inspection | Exact reviewed source identity and concrete findings/fix evidence | Pending integrated source |
-| Delivery | One pushed branch, matching local/remote commit, concise run and cleanup commands | Pending integration |
+| Go CLI and official-SDK MCP | [CLI](../cmd/agent-memory/main.go), [MCP](../internal/memory/mcp.go), [usage](go-client.md) | Source authored; runtime unverified |
+| SQLite FTS5 and provenance | [Store](../internal/memory/store.go): durable revision/index schema, scoped visibility and source references | Source inspected; SQL/runtime NOT RUN |
+| Offline queue and retry identity | [Store](../internal/memory/store.go) and [sync](../internal/memory/sync.go): atomic revision/exact-envelope/outbox commit, retained retry bytes | Source inspected; crash behavior NOT RUN |
+| Device-only E2EE | [Crypto](../internal/memory/crypto.go), [profile](../internal/memory/profile.go), [wire contract](v1-contract.md) | Source inspected; cryptographic interoperability NOT RUN |
+| Cloudflare archive path | [Archive](../cloudflare/src/archive.ts), [coordinator](../cloudflare/src/index.ts), [setup](relay-setup.md) | Source authored; Wrangler/provider behavior NOT RUN |
+| Conflicts and deletion | [Store](../internal/memory/store.go), [deleted-fetch handling](../internal/memory/skills.go), existing E2E assertions | Source inspected; convergence/runtime NOT RUN |
+| Skill trust | [Approvals and activation](../internal/memory/skills.go): owner signature, scope/revision/digest, current-head eligibility | Local text activation authored; runtime NOT RUN |
+| Focused E2E suite | [One black-box journey](../e2e/run.mjs) with twelve scenarios covering the five behavior groups | Authored; NOT RUN |
+| Focused inspection | [Findings and fixes](v1-inspection.md); initial source `3b73b6e8ea28c833fb64cd2a6a75204b885b35ea` | One source inspection and concrete-fix rechecks; no broad repeat review |
+| Delivery | [Implementation branch](https://github.com/humzakhan/agent-memory/tree/feat/usable-v1), [run/cleanup commands](run-v1.md) | Final handoff records verified remote commit; no deployment or merge |
 
 ## Runtime acceptance
 
@@ -27,8 +27,14 @@ This page is the acceptance record for the implementation branch. **No runtime c
 | Interrupted synchronization and local rebuild | NOT RUN |
 | Tampered/cross-scope data and unapproved skill rejection | NOT RUN |
 
-The shared OVH host has no approved isolated execution route for this job. No installs, builds, typechecks, validators, tests, or runtimes are authorized here. The delivery must include exact commands for the owner's machine and retain this limitation until an actual authorized job provides evidence.
+The shared OVH host has no approved isolated execution route for this job. No installs, builds, typechecks, validators, tests, or runtimes were executed. [The runbook](run-v1.md) contains exact commands for the owner's machine. Keep this limitation until an authorized execution provides evidence; do not infer runtime acceptance from the pushed branch or Git diff checks.
+
+## Source inspection evidence
+
+One combined inspection examined encryption/signature framing, authorization, local transactions, archive acknowledgement, replay, and tombstones. It found three concrete issues/gaps: duplicate-key parser disagreement, deleted normal fetch exposing head payloads, and missing approved text activation. Corrective source and additions to the same E2E journey address these findings. The four GPT worker turns used medium effort and priority service, with at most two active workers and disjoint ownership; all worker threads are settled.
+
+Read-only file/Git inspection and `git diff --check` establish the authored inventory and whitespace state only. Dependency checksums, npm lockfile, formatting, compiler/SDK behavior, E2E results, SQLite crash safety, real R2 durability, quotas, and cost remain unverified.
 
 ## Deliberate scope
 
-Embeddings, automatic summaries, Git automation, broad hooks, destructive history pruning, and cloud deployment are deferred. Device key storage initially uses restrictive local files; native keystore integration and automated remote key distribution are not implied. Read the implementation runbooks for any further limitations established during integration.
+Embeddings, automatic summaries, Git automation, broad hooks, destructive history pruning, and cloud deployment are deferred. There is no background synchronization daemon/IPC or notification bus yet; run `sync` explicitly. Device key storage uses restrictive local files. Native keystores, automated rotation/key distribution, cross-device approval releases, executable skill installation, production deployment, and independent backup automation are not implemented. Local activation means selecting approved Markdown text for retrieval. Read the implementation runbooks for exact limits.

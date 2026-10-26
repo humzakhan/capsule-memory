@@ -1,6 +1,6 @@
 # Contributing
 
-Start with [AGENTS.md](AGENTS.md), [development](docs/development.md), and the [roadmap](docs/roadmap.md). This is a private project scaffold; implementation has not begun.
+Start with [AGENTS.md](AGENTS.md), [development](docs/development.md), and [v1 delivery status](docs/v1-status.md). The private repository contains an initial source implementation with runtime acceptance still pending. The [roadmap](docs/roadmap.md) describes the wider system.
 
 ## Make a change reviewable
 

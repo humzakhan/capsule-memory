@@ -35,7 +35,7 @@ func run(ctx context.Context,args []string) error {
 	case "recall":fs.StringVar(&scope,"scope","","scope ID");fs.StringVar(&query,"query","","FTS5 query")
 	case "get","delete","restore":fs.StringVar(&scope,"scope","","scope ID");fs.StringVar(&id,"id","","record ID");if command=="get"{fs.BoolVar(&history,"history",false,"include immutable history")};if command=="restore"{fs.StringVar(&text,"text","","explicit reviewed replacement for ambiguous restore")}
 	case "sync","mcp":fs.StringVar(&scope,"scope","","scope ID")
-	case "skill":if sub!="approve"&&sub!="activate"&&sub!="list"&&sub!="fetch"{return errors.New("unknown skill subcommand")};fs.StringVar(&scope,"scope","","scope ID");fs.StringVar(&id,"id","","record ID");fs.StringVar(&revision,"revision","","exact revision ID")
+	case "skill":if sub!="approve"&&sub!="activate"&&sub!="list"&&sub!="fetch"{return errors.New("unknown skill subcommand")};fs.StringVar(&scope,"scope","","scope ID");fs.StringVar(&id,"id","","record ID");fs.StringVar(&revision,"revision","","exact revision ID");if sub=="fetch"{fs.BoolVar(&history,"history",false,"include immutable history")}
 	case "status","rebuild":
 	default:return errors.New("unknown command")
 	}
@@ -55,9 +55,9 @@ func run(ctx context.Context,args []string) error {
 	case "mcp":return service.MCP(ctx,scope)
 	case "skill":switch sub {
 		case "approve":v,err:=service.ApproveSkill(ctx,scope,id,revision);if err!=nil{return err};return print(v)
-		case "activate":return service.ActivateSkill(ctx,scope,id,revision)
-		case "list":v,err:=service.ListSkills(ctx,scope);if err!=nil{return err};return print(map[string]any{"skills":v,"staged":true,"activation_supported":false})
-		case "fetch":v,err:=service.Get(ctx,scope,id,false);if err!=nil{return err};if v.Deleted||len(v.Heads)==0||v.Heads[0].Kind!="skill"{return memory.ErrInvalid};return print(map[string]any{"skill":v,"staged":true,"active":false})
+		case "activate":v,err:=service.ActivateSkill(ctx,scope,id,revision);if err!=nil{return err};return print(v)
+		case "list":v,err:=service.ListSkills(ctx,scope);if err!=nil{return err};return print(memory.SkillListResult(v))
+		case "fetch":v,err:=service.FetchSkill(ctx,scope,id,history);if err!=nil{return err};return print(v)
 		}
 	}
 	return errors.New("unsupported command")

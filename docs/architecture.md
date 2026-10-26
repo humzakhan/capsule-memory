@@ -1,6 +1,8 @@
 # Architecture
 
-**Decision:** build a local Go service on each trusted machine, with device-only SQLite search and an encrypted archive coordinated by a small Cloudflare relay. **Status:** design only; all runtime guarantees remain unverified.
+**Decision:** build a local Go service on each trusted machine, with device-only SQLite search and an encrypted archive coordinated by a small Cloudflare relay. **Status:** this is the full architectural target; [v1 delivery status](v1-status.md) describes the source implemented so far. All runtime guarantees remain unverified.
+
+V1 uses explicit CLI sync and fixed-scope MCP processes sharing SQLite. The daemon/IPC, wake hints, automated key distribution, maintenance, and Git bridge shown below are future work. Read the [v1 contract](v1-contract.md) and [runbook](run-v1.md) for current behavior.
 
 ## System shape
 

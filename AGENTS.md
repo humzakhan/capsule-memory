@@ -1,6 +1,6 @@
 # Working in agent-memory
 
-Build a portable, offline-capable memory system without losing history or moving plaintext search into the cloud. The repository is currently a documentation scaffold. Design intent is not runtime evidence.
+Build a portable, offline-capable memory system without losing history or moving plaintext search into the cloud. A v1 source implementation is present; see [delivery status](docs/v1-status.md) for actual evidence and limits. Design intent and source inspection are not runtime evidence.
 
 ## Scope and permissions
 

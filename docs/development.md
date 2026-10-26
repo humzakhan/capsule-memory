@@ -1,6 +1,6 @@
 # Development
 
-**Current next step:** review the draft protocol and choose the first local storage slice in [the roadmap](roadmap.md). There is no module, package lockfile, server, or install command yet.
+**Current next step:** follow the [owner-machine runbook](run-v1.md) to resolve pinned dependencies, build, and execute the focused E2E journey. Go and Cloudflare source/manifests exist; runtime checks and generated dependency lockfiles remain pending. See [delivery status](v1-status.md) before claiming a feature works.
 
 ## Execution boundaries
 
@@ -11,6 +11,8 @@ Do not substitute direct host execution, another account, an old runner, or unap
 Documentation authoring and read-only file/Git inspection are permitted within the current task. Record missing checks clearly. Do not run a skill validator or schema checker on this host merely because it is small.
 
 ## Language and library choices
+
+V1 pins Go 1.24+, the official Go MCP SDK v1.4.0, modernc SQLite v1.39.1, and Wrangler v4.129.1 via npm. See the implementation runbooks for source evidence and platform limits. The table below records the broader selection criteria; installed compatibility remains unverified.
 
 | Boundary | Starting choice | Still to decide with implementation |
 | --- | --- | --- |

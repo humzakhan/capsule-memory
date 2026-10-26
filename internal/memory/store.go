@@ -68,7 +68,10 @@ func (s *Service) current(ctx context.Context) (Control,Signed,error) {
 }
 func (s *Service) scope(scope string) error {if _,ok:=s.config.Keys[scope];!ok||!idPattern.MatchString(scope){return ErrInvalid};return nil}
 
-type queryer interface { QueryContext(context.Context,string,...any)(*sql.Rows,error) }
+type queryer interface {
+	QueryContext(context.Context,string,...any)(*sql.Rows,error)
+	QueryRowContext(context.Context,string,...any) *sql.Row
+}
 func recordRevisions(ctx context.Context,q queryer,scope,record string) ([]Revision,error) {
 	rows,err:=q.QueryContext(ctx,"SELECT body FROM revisions WHERE scope=? AND record=? ORDER BY revision",scope,record);if err!=nil{return nil,ErrStorage};defer rows.Close()
 	result:=[]Revision{};size:=0;for rows.Next(){var b []byte;var r Revision;if rows.Scan(&b)!=nil{return nil,ErrStorage};size+=len(b);if len(result)>=4096||size>32<<20{return nil,errors.New("record exceeds v1 local history working-set limit")};if decode(b,&r)!=nil{return nil,ErrStorage};result=append(result,r)};if rows.Err()!=nil{return nil,ErrStorage};return result,nil
@@ -125,9 +128,12 @@ func (s *Service) Write(ctx context.Context,in WriteInput) (Revision,error) {
 	if err=tx.Commit();err!=nil{return r,ErrStorage};return r,nil
 }
 
-type RecordView struct {Record string `json:"record_id"`;Heads []Revision `json:"heads"`;Deleted bool `json:"deleted"`;Conflict bool `json:"conflict"`;History []Revision `json:"history,omitempty"`}
+type RecordView struct {Record string `json:"record_id"`;Heads []Revision `json:"heads"`;Deleted bool `json:"deleted"`;Conflict bool `json:"conflict"`;History []Revision `json:"history,omitempty"`;*SkillState}
 func (s *Service) Get(ctx context.Context,scope,record string,history bool) (RecordView,error) {
-	if err:=s.scope(scope);err!=nil{return RecordView{},err};revs,err:=recordRevisions(ctx,s.db,scope,record);if err!=nil{return RecordView{},err};if len(revs)==0{return RecordView{},errors.New("record not found")};heads,deleted:=state(revs);v:=RecordView{Record:record,Heads:heads,Deleted:deleted,Conflict:len(heads)>1};if history{v.History=revs};return v,nil
+	if err:=s.scope(scope);err!=nil{return RecordView{},err}
+	tx,err:=s.db.BeginTx(ctx,nil);if err!=nil{return RecordView{},ErrStorage};defer tx.Rollback()
+	v,err:=s.recordView(ctx,tx,scope,record,history);if err!=nil{return RecordView{},err}
+	if err=tx.Commit();err!=nil{return RecordView{},ErrStorage};return v,nil
 }
 type Coverage struct {Cursor string `json:"cursor"`;Head string `json:"head"`;Complete bool `json:"complete"`;Basis string `json:"basis"`}
 func (s *Service) coverage(ctx context.Context,scope string) (Coverage,error) {
@@ -139,7 +145,7 @@ func (s *Service) Recall(ctx context.Context,scope,query string) (RecallResult,e
 	s.mu.Lock();defer s.mu.Unlock();out:=RecallResult{Results:[]SearchHit{}};if err:=s.scope(scope);err!=nil{return out,err};if len(query)>4096||query==""{return out,ErrInvalid}
 	rows,err:=s.db.QueryContext(ctx,"SELECT r.body FROM search JOIN revisions r ON r.revision=search.revision WHERE search MATCH ? AND search.scope=? ORDER BY bm25(search) LIMIT 100",query,scope);if err!=nil{return out,errors.New("invalid search query or unavailable index")}
 	found:=[]Revision{};for rows.Next(){var b []byte;var r Revision;if rows.Scan(&b)!=nil||decode(b,&r)!=nil{rows.Close();return out,ErrStorage};found=append(found,r)};err=rows.Err();rows.Close();if err!=nil{return out,ErrStorage}
-	for _,r:=range found{v,err:=s.Get(ctx,scope,r.Record,false);if err!=nil{return out,err};if !v.Deleted{out.Results=append(out.Results,SearchHit{r,v.Conflict,r.Kind=="skill"})}}
+	for _,r:=range found{v,err:=s.Get(ctx,scope,r.Record,false);if err!=nil{return out,err};if !v.Deleted{active:=v.SkillState!=nil&&v.Active&&len(v.Heads)==1&&v.Heads[0].ID==r.ID;out.Results=append(out.Results,SearchHit{r,v.Conflict,r.Kind=="skill"&&!active})}}
 	out.Coverage,err=s.coverage(ctx,scope);return out,err
 }
 func (s *Service) Status(ctx context.Context) (map[string]any,error) {

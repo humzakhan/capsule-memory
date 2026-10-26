@@ -61,7 +61,12 @@ record authors are checked against the control active at original publication.
 
 Limits are 2 MiB per record request, 128 KiB decoded control payload, 64 scopes,
 256 devices, and 128 decimal digits per counter. IDs are 8–128 URL-safe ASCII
-characters. Unknown payload fields and noncanonical base64 are rejected. Control
+characters. JSON uses fatal UTF-8 decoding and rejects duplicate object keys,
+including equivalent escaped key names, before archive publication. The root
+value has depth 0; values beyond depth 32 are rejected, matching the Go parser.
+Standard JSON parsing supplies value semantics; a bounded structural walk checks
+decoded key uniqueness without changing the signed bytes. Unknown payload
+fields and noncanonical base64 are rejected. Control
 requests are at most 256 KiB. GET request bodies are forbidden. Body transfer is
 limited to ten seconds; provider operations also have ten-second deadlines.
 Provider deadlines do not cancel an in-flight write or prove it failed.

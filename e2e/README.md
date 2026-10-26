@@ -26,7 +26,10 @@ The journey asserts:
 3. Index rebuild preserves pending writes; an empty authorized profile recovers
    from archive; discarding the DO cache preserves durable deduplication.
 4. Tampered envelopes, substituted/unauthorized scopes, expired auth, malformed
-   cursors, non-owner approval, and unapproved skill activation are rejected.
+   cursors, signed duplicate/escaped keys, excessive JSON depth, non-owner
+   approval, and unapproved skill activation are rejected. Parser negatives
+   leave the archive head/scanned cursor unchanged; the original valid pending
+   envelope subsequently replays.
 5. Scope-filtered pages advance across invisible entries; revocation blocks
    current access while old publications validate during a fresh recovery.
 
@@ -55,7 +58,11 @@ lost acknowledgement after the real Worker returns success; it does not claim
 to simulate an R2 server committing after a network timeout. CPU suitability
 and long-history rebuild need separate authorized production-like evidence.
 
-Supported negative activation evidence is rejection: full executable skill
-activation/installation is unavailable in v1. Automatic epoch rotation, remote
+The same journey checks owner approval followed by local text activation,
+CLI/MCP fetch/list state, and invalidation on revision change, conflict, or
+deletion. Normal deleted fetches withhold payload text; explicit history retains
+the stale edit. Text activation declares only `text/markdown` / `read-as-text`.
+Executable activation/installation, harness file writes, global registration,
+and approval-release syncing are unavailable in v1. Automatic epoch rotation, remote
 key distribution, multi-head restore UX, background daemon/hooks, notifications,
 and a Git bridge are outside this journey. No mock converts them into passes.

@@ -117,7 +117,8 @@ acknowledgement; another process may synchronize immediately afterward.
 `recall` accepts SQLite FTS5 query syntax and returns at most 100 visible revision
 hits with author/provenance, revision identity, conflict state, and coverage.
 Queries are bound SQL arguments. No cloud search or summarizer exists. Skill
-results are explicitly staged. The index contains every visible concurrent head.
+results carry staged status derived from current local approval/activation.
+The index contains every visible concurrent head.
 
 Updating an existing `--id` without `--parents` names all locally known heads.
 With multiple parents the operation is an explicit `resolve` revision. To create
@@ -133,7 +134,9 @@ reuse with different logical content stops replay.
 ```
 
 A deletion hides the entire record from recall, including concurrent stale edits.
-History stays inspectable through `get --history`. Ordinary edits cannot undo a
+Normal `get` retains head/revision, deletion, and conflict metadata but omits
+every head's `payload` while the record is deleted. History stays inspectable
+through `get --history`, which includes preserved plaintext. Ordinary edits cannot undo a
 tombstone. Restore names all current local heads and every known unresolved
 deletion. If the nearest preserved content differs between branches, restore
 fails until the owner supplies reviewed replacement content:
@@ -234,10 +237,50 @@ revision. It signs a **local** exact revision/scope/text digest, runtime
 cross-device executable release and is not uploaded. Approval returns
 `approved:true, staged:true, active:false`.
 
-**Activation always fails explicitly.** No trusted installer, executable release
-policy, or harness activation adapter is implemented. Fetch/list/recall never
-execute skill text or installation instructions. Updates remain staged, and
-approval of an earlier revision cannot approve a changed digest.
+Activation verifies the stored exact owner signature and selects only the unique
+visible current skill revision for local text consumption. It requires no owner
+private key once the approval exists. The signature frames the exact base64
+payload as `agent-memory/skill-approval/v1` + LF + payload + LF. The signed JSON
+requires exactly `version`, `vault_id`, `scope_id`, `record_id`, `revision_id`,
+`sha256`, `runtime`, and `capabilities`; duplicate, unknown, missing, null, or
+incorrectly cased fields are rejected. Version must be 1; vault, scope, record,
+revision, and lowercase SHA-256 of the exact UTF-8 text must match. Runtime must
+be exactly `text/markdown` and the capability list exactly `["read-as-text"]`.
+
+`skill activate` returns one JSON object with this shape (key order is unspecified):
+
+```json
+{"record_id":"RECORD_ID","revision_id":"REVISION_ID","approved":true,"active":true,"staged":false,"runtime":"text/markdown","capabilities":["read-as-text"]}
+```
+
+Approval remains owner-only and always resets that revision to inactive/staged,
+including re-approval. Activation commits `approvals.active=1` only after exact
+verification in the same SQLite transaction as the current-head check. Missing
+or tampered approvals and noncurrent, deleted, conflicting, or wrong-scope records
+cannot activate. Failed activation leaves the durable active flag unchanged;
+reads independently verify eligibility and never treat that flag as authority.
+
+CLI `skill fetch` and MCP `skill_fetch` return
+`{skill:<record-view>,approved:<bool>,active:<bool>,staged:!active}`. Skill record
+views from `get`, fetch, and list also contain those three status fields. A new
+revision, deletion, or conflict makes the current record unapproved, inactive,
+and staged even when a historical approval has `active=1`. Tampering likewise
+produces unapproved/inactive/staged status. An exact valid inactive approval is
+approved/staged. CLI `skill fetch --history` and MCP `skill_fetch` with
+`history:true` explicitly expose preserved history; normal deleted fetch returns
+metadata with every head's payload omitted. Non-skill fetch is rejected.
+
+CLI/MCP skill list returns
+`{skills:[<record-view>,...],activation_supported:true,runtime:"text/markdown",capabilities:["read-as-text"]}`.
+It excludes deleted records and reports per-record verified state. Recall still
+filters tombstones and reports skill `staged:!active` for each returned hit.
+MCP scope remains fixed at launch, and MCP exposes no approval/activation tool.
+
+Approvals and active selections are **local only**: they are neither uploaded
+nor synchronized to another device. Incoming skills without a local signed
+approval stay staged. Fetch/list/recall execute no code and install no scripts,
+files, or harness registration. Executable releases and trusted installers remain
+outside this slice.
 
 ## Source limits and acceptance checks
 
@@ -265,7 +308,8 @@ physical erasure, and destructive history GC are not implemented.
 
 Manual source inspection covered transaction boundaries, signature/AAD framing,
 identity checks, generation order, scoped replay state, DAG/tombstone behavior,
-MCP scope binding, exact retries, and explicit activation refusal. This is not
+MCP scope binding, exact retries, deleted payload suppression, and local signed
+text activation. This is not
 compiler or runtime evidence. **Dependency resolution, gofmt, compilation,
 vet, race checks, tests, cross-language crypto execution, SQLite crash/WAL
 behavior, MCP handshakes, relay/cache-reset integration, and real R2 durability

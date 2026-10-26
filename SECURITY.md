@@ -1,6 +1,6 @@
 # Security
 
-The system is not implemented or security-reviewed. Do not use this scaffold to protect real memories or distribute executable skills.
+The initial implementation has received focused source inspection, but compilation, E2E behavior, and deployment security remain unverified. Use synthetic data while establishing runtime acceptance. Executable skill installation is not implemented.
 
 The intended boundary is end-to-end encryption with keys and search indexes on trusted devices. Cloudflare and GitHub must not receive plaintext memories, content keys, or decrypted skill bundles. See the [threat model](docs/threat-model.md) for assumptions and limits.
 

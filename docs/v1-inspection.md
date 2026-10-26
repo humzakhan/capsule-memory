@@ -18,4 +18,6 @@ These observations support the implementation approach but do not prove that bui
 
 ## Fix ownership and evidence
 
-The coordinator records the inspected source commit and exact fix commits in the run ledger. A GPT Go worker owns findings 2–3; a GPT relay/tooling worker owns finding 1 and amendments to the same E2E suite. No additional broad review or unit-test suite is requested.
+The initial inspected source is `3b73b6e8ea28c833fb64cd2a6a75204b885b35ea`. The coordinator rechecked the concrete corrective diff against these findings: relay decoded-key/depth validation, deleted-fetch payload suppression, transactional exact-owner-release activation/current-state computation, and the corresponding existing E2E assertions. All three source corrections are present; runtime acceptance is still NOT RUN.
+
+Two bounded GPT corrective tasks authored the changes with disjoint ownership and are settled. No additional broad review or unit-test suite was added. The run ledger records source commits, decisions, and verified worker closure; Git history records the final fix revision.

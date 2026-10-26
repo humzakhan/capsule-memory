@@ -31,7 +31,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const sha = data => createHash("sha256").update(data).digest("hex");
 const opaqueID = () => randomBytes(24).toString("base64url");
 const children = new Set();
-let worker, workerLog = "", proxy, offline = false, dropNextRecord = false, bootstrap;
+let worker, workerLog = "", proxy, offline = false, dropNextRecord = false, rejectNextRecord = false, bootstrap;
 const capturedRecords = [];
 let capturedControl;
 const completed = [];
@@ -116,7 +116,10 @@ function privateKey(raw64) {
   return createPrivateKey({key:Buffer.concat([Buffer.from("302e020100300506032b657004220420","hex"),key.subarray(0,32)]),format:"der",type:"pkcs8"});
 }
 function signedPayload(kind, value, key) {
-  const payload = Buffer.from(JSON.stringify(value)).toString("base64");
+  return signedJSON(kind, JSON.stringify(value), key);
+}
+function signedJSON(kind, text, key) {
+  const payload = Buffer.from(text).toString("base64");
   return {payload,signature:sign(null,Buffer.from(`agent-memory/${kind}/v1\n${payload}\n`),key).toString("base64")};
 }
 async function authFetch(config, route, {method="GET",body=Buffer.alloc(0),scope=bootstrap.scope_id,time=String(Math.floor(Date.now()/1000))} = {}) {
@@ -169,6 +172,8 @@ try {
       if (offline) { res.writeHead(503); res.end(); return; }
       const isRecord=req.method==="POST"&&req.url.endsWith("/records");
       if (isRecord) capturedRecords.push({body,headers:{...req.headers}});
+      // Capture a real, valid, unpublished CLI envelope for parser negatives.
+      if (isRecord && rejectNextRecord) { rejectNextRecord=false; res.writeHead(503); res.end(); return; }
       if (req.method==="PUT"&&req.url.endsWith("/manifest")) capturedControl=Buffer.from(body);
       const upstream = await fetch(`http://127.0.0.1:${workerPort}${req.url}`,{method:req.method,headers:{...req.headers,host:`127.0.0.1:${workerPort}`},body:["GET","HEAD"].includes(req.method)?undefined:body,signal:AbortSignal.timeout(30000)});
       const response=Buffer.from(await upstream.arrayBuffer());
@@ -225,10 +230,21 @@ try {
   const stale=await command(child,["store","--scope",scope,"--id",base.record_id,"--parents",base.revision_id,"--text","synthetic resurrection forbidden"]);
   await sync(owner,scope); await sync(child,scope); await sync(owner,scope);
   for (const home of [owner,child]) {
+    const normal=await command(home,["get","--scope",scope,"--id",base.record_id]);
+    assert(normal.deleted&&normal.heads.length>0);
+    assert(normal.heads.every(r=>r.payload?.text===undefined),"normal deleted get exposed payload text");
+    assert.equal(normal.history,undefined);
     const view=await command(home,["get","--scope",scope,"--id",base.record_id,"--history"]);
     assert(view.deleted&&view.history.some(r=>r.revision_id===stale.revision_id)&&view.history.some(r=>r.revision_id===deletion.revision_id));
+    assert.equal(view.history.find(r=>r.revision_id===stale.revision_id).payload.text,"synthetic resurrection forbidden");
     assert(!(await command(home,["recall","--scope",scope,"--query","resurrection"])).results.some(r=>r.record_id===base.record_id));
   }
+  await mcp(child,scope,async tool=>{
+    const normal=await tool("memory_get",{id:base.record_id});
+    assert(normal.deleted&&normal.heads.every(r=>r.payload?.text===undefined),"MCP deleted fetch exposed payload text");
+    const history=await tool("memory_get",{id:base.record_id,history:true});
+    assert.equal(history.history.find(r=>r.revision_id===stale.revision_id).payload.text,"synthetic resurrection forbidden");
+  });
   passed("concurrent heads preserved; deletion suppresses a stale edit without losing history");
 
   const ambiguous=await command(owner,["store","--scope",scope,"--text","synthetic ambiguous nectarine"]);
@@ -262,8 +278,65 @@ try {
   await sync(owner,scope); await sync(child,scope);
   await command(child,["skill","activate","--scope",scope,"--id",staged.record_id,"--revision",staged.revision_id],{fail:true});
   await command(child,["skill","approve","--scope",scope,"--id",staged.record_id,"--revision",staged.revision_id],{fail:true});
-  const stagedList=await command(child,["skill","list","--scope",scope]); assert(stagedList.staged&&stagedList.activation_supported===false);
-  passed("incoming skill stays staged; non-owner approval and unapproved activation rejected");
+  function skillState(value,approved,active) {
+    assert.equal(value.approved,approved); assert.equal(value.active,active); assert.equal(value.staged,!active);
+  }
+  function skillList(value,approved,active) {
+    assert.equal(value.activation_supported,true); assert.equal(value.runtime,"text/markdown");
+    assert.deepEqual(value.capabilities,["read-as-text"]);
+    const record=value.skills.find(r=>r.record_id===staged.record_id); assert(record,"skill absent from list");
+    skillState(record,approved,active);
+  }
+  skillList(await command(child,["skill","list","--scope",scope]),false,false);
+  const skillArgs=revision=>["--scope",scope,"--id",staged.record_id,"--revision",revision];
+  async function approveAndActivate(revision) {
+    const approval=await command(owner,["skill","approve",...skillArgs(revision)]);
+    skillState(approval,true,false);
+    assert.equal(approval.record_id,staged.record_id); assert.equal(approval.revision_id,revision);
+    const activation=await command(owner,["skill","activate",...skillArgs(revision)]);
+    assert.deepEqual(activation,{record_id:staged.record_id,revision_id:revision,approved:true,active:true,staged:false,runtime:"text/markdown",capabilities:["read-as-text"]});
+  }
+  await approveAndActivate(staged.revision_id);
+  const activeFetch=await command(owner,["skill","fetch","--scope",scope,"--id",staged.record_id]);
+  skillState(activeFetch,true,true); skillState(activeFetch.skill,true,true);
+  assert.equal(activeFetch.skill.heads[0].revision_id,staged.revision_id);
+  skillList(await command(owner,["skill","list","--scope",scope]),true,true);
+  await mcp(owner,scope,async tool=>{
+    const fetched=await tool("skill_fetch",{id:staged.record_id});
+    skillState(fetched,true,true); skillState(fetched.skill,true,true);
+    skillList(await tool("skill_list",{}),true,true);
+  });
+  await sync(owner,scope); await sync(child,scope);
+  skillState(await command(child,["skill","fetch","--scope",scope,"--id",staged.record_id]),false,false);
+  const changed=await command(owner,["store","--scope",scope,"--kind","skill","--id",staged.record_id,"--text","# synthetic changed skill"]);
+  skillState(await command(owner,["skill","fetch","--scope",scope,"--id",staged.record_id]),false,false);
+  await command(owner,["skill","activate",...skillArgs(staged.revision_id)],{fail:true});
+  await approveAndActivate(changed.revision_id);
+  await sync(owner,scope); await sync(child,scope);
+  await command(owner,["store","--scope",scope,"--kind","skill","--id",staged.record_id,"--parents",changed.revision_id,"--text","# synthetic skill branch one"]);
+  await command(child,["store","--scope",scope,"--kind","skill","--id",staged.record_id,"--parents",changed.revision_id,"--text","# synthetic skill branch two"]);
+  await sync(owner,scope); await sync(child,scope); await sync(owner,scope);
+  const conflictedSkill=await command(owner,["skill","fetch","--scope",scope,"--id",staged.record_id]);
+  assert(conflictedSkill.skill.conflict); skillState(conflictedSkill,false,false);
+  skillList(await command(owner,["skill","list","--scope",scope]),false,false);
+  await command(owner,["skill","approve",...skillArgs(changed.revision_id)],{fail:true});
+  await command(owner,["skill","activate",...skillArgs(changed.revision_id)],{fail:true});
+  const resolved=await command(owner,["store","--scope",scope,"--kind","skill","--id",staged.record_id,"--text","# synthetic resolved skill"]);
+  await approveAndActivate(resolved.revision_id);
+  await command(owner,["delete","--scope",scope,"--id",staged.record_id]);
+  const deletedSkill=await command(owner,["skill","fetch","--scope",scope,"--id",staged.record_id]);
+  assert(deletedSkill.skill.deleted); skillState(deletedSkill,false,false);
+  assert(deletedSkill.skill.heads.every(r=>r.payload?.text===undefined));
+  await command(owner,["skill","activate",...skillArgs(resolved.revision_id)],{fail:true});
+  await mcp(owner,scope,async tool=>{
+    const fetched=await tool("skill_fetch",{id:staged.record_id});
+    assert(fetched.skill.deleted); skillState(fetched,false,false);
+    assert(fetched.skill.heads.every(r=>r.payload?.text===undefined));
+    const listed=await tool("skill_list",{}); assert.equal(listed.activation_supported,true);
+    assert(!listed.skills.some(r=>r.record_id===staged.record_id));
+  });
+  await sync(owner,scope); await sync(child,scope);
+  passed("incoming skill staged; owner text activation exposed in CLI/MCP and invalidated by changes/conflicts/deletion");
 
   const captured=JSON.parse(lost.body); const outer=JSON.parse(Buffer.from(captured.payload,"base64"));
   const tampered={...outer,transport_id:opaqueID()};
@@ -280,6 +353,51 @@ try {
   assert.equal((await authFetch(ownerConfig,"/changes?after=0&limit=1",{time:String(Math.floor(Date.now()/1000)-301)})).status,403);
   assert.equal((await authFetch(ownerConfig,"/changes?after=00&limit=1")).status,400);
   passed("tampering, cross-scope substitution, unauthorized scope, expired auth, noncanonical cursor rejected");
+
+  const parserRecord=await command(owner,["store","--scope",scope,"--text","synthetic parser boundary"]);
+  rejectNextRecord=true;
+  await command(owner,["sync","--scope",scope],{fail:true});
+  assert(!rejectNextRecord,"parser fixture was not captured before publication");
+  const parserBody=capturedRecords.at(-1).body;
+  const parserEnvelope=JSON.parse(parserBody);
+  const parserText=Buffer.from(parserEnvelope.payload,"base64").toString("utf8");
+  const headResponse=await authFetch(ownerConfig,"/changes?after=0&limit=1");
+  assert.equal(headResponse.status,200);
+  const parserHead=(await headResponse.json()).head;
+  async function rejectedJSON(body, route="/records", method="POST") {
+    const response=await authFetch(ownerConfig,route,{method,body});
+    assert.equal(response.status,400);
+    assert.equal((await response.json()).error,"invalid_json");
+    const unchanged=await authFetch(ownerConfig,`/changes?after=${parserHead}&limit=1`);
+    assert.equal(unchanged.status,200);
+    const page=await unchanged.json();
+    assert.equal(page.head,parserHead); assert.equal(page.cursor,parserHead);
+    assert.deepEqual(page.entries,[]); assert.equal(page.has_more,false);
+  }
+  const parserKey=privateKey(ownerConfig.device_private_key_b64);
+  // Both copies have the correct value; all other fields/signatures are valid.
+  // Use the pending transport so deduplication cannot mask parser acceptance.
+  for (const key of ['"version"','"\\u0076ersion"']) {
+    const duplicateText=parserText.replace(/}$/,`,${key}:1}`);
+    await rejectedJSON(Buffer.from(JSON.stringify(signedJSON("envelope",duplicateText,parserKey))));
+  }
+  // Check the common parser on the signed wrapper and on owner control too.
+  await rejectedJSON(Buffer.from(JSON.stringify(parserEnvelope).replace(/}$/,`,"\\u0070ayload":${JSON.stringify(parserEnvelope.payload)}}`)));
+  const controlSecret=JSON.parse(await readFile(path.join(owner,"owner.json"),"utf8"));
+  const controlKey=privateKey(controlSecret.private_key_b64);
+  const controlText=Buffer.from(JSON.parse(capturedControl).payload,"base64").toString("utf8");
+  await rejectedJSON(Buffer.from(JSON.stringify(signedJSON("control",controlText.replace(/}$/,',"\\u0076ersion":1}'),controlKey))),"/manifest","PUT");
+  const nestedDuplicate=controlText.replace('"revoked":false','"revoked":false,"\\u0072evoked":false');
+  assert.notEqual(nestedDuplicate,controlText,"nested control fixture did not change");
+  await rejectedJSON(Buffer.from(JSON.stringify(signedJSON("control",nestedDuplicate,controlKey))),"/manifest","PUT");
+  // These remain syntactically valid JSON. Require invalid_json specifically,
+  // so a later unknown-field/type rejection cannot hide missing depth checks.
+  const nested='['.repeat(33)+'0'+']'.repeat(33);
+  await rejectedJSON(Buffer.from(JSON.stringify(signedJSON("envelope",parserText.replace(/}$/,`,"nested":${nested}}`),parserKey))));
+  await rejectedJSON(Buffer.from(JSON.stringify(signedJSON("control",controlText.replace(/}$/,`,"nested":${nested}}`),controlKey))),"/manifest","PUT");
+  await sync(owner,scope); await sync(child,scope);
+  assert.equal((await command(child,["get","--scope",scope,"--id",parserRecord.record_id])).heads[0].revision_id,parserRecord.revision_id);
+  passed("signed duplicate/escaped keys and excessive depth rejected without publication; original envelope replays");
 
   // A separate HTTP-only synthetic scope checks omission+watermark semantics.
   // This is a real signed/encrypted request to the same local Worker, not a mock.

@@ -16,7 +16,53 @@ export function fields(v: Record<string, unknown>, names: string[]) {
   requireThat(Object.keys(v).length === names.length && names.every(k => Object.hasOwn(v, k)));
 }
 export function parse(bytes: Uint8Array): any {
-  try { return JSON.parse(dec.decode(bytes)); } catch { throw new Fault(400, "invalid_json"); }
+  try {
+    const text = dec.decode(bytes);
+    const value = JSON.parse(text);
+    uniqueJSON(text);
+    return value;
+  } catch { throw new Fault(400, "invalid_json"); }
+}
+// JSON.parse owns syntax and value semantics. Walk the validated source once
+// because parsing erases duplicate properties. Decode key tokens with the same
+// parser so "version" and "\u0076ersion" compare equal. No signed bytes change.
+function uniqueJSON(text: string): void {
+  let i = 0;
+  const space = () => { while (i < text.length && /[ \t\r\n]/.test(text[i])) i++; };
+  const stringEnd = () => {
+    const start = i++;
+    while (text[i] !== '"') { i += text[i] === "\\" ? 2 : 1; }
+    i++;
+    return start;
+  };
+  const walk = (depth: number): void => {
+    // Match Go uniqueJSON: root value is depth 0, including scalar children.
+    requireThat(depth <= 32, "invalid_json");
+    space();
+    const kind = text[i];
+    if (kind === "{" || kind === "[") {
+      i++; space();
+      const end = kind === "{" ? "}" : "]";
+      const keys = kind === "{" ? new Set<string>() : null;
+      if (text[i] !== end) for (;;) {
+        if (keys) {
+          const start = stringEnd();
+          const key: string = JSON.parse(text.slice(start, i));
+          requireThat(!keys.has(key), "invalid_json"); keys.add(key);
+          space(); i++; // Colon; syntax was already validated by JSON.parse.
+        }
+        walk(depth + 1); space();
+        if (text[i] === end) break;
+        i++; space(); // Comma.
+      }
+      i++;
+    } else if (kind === '"') {
+      stringEnd();
+    } else {
+      while (i < text.length && !/[ \t\r\n,\]}]/.test(text[i])) i++;
+    }
+  };
+  walk(0);
 }
 export function bytes(v: unknown): Uint8Array {
   requireThat(typeof v === "string" && v.length <= MAX_BODY * 2 && v.length % 4 === 0 && /^[A-Za-z0-9+/]*={0,2}$/.test(v));

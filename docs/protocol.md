@@ -1,6 +1,6 @@
 # Synchronization protocol
 
-**Status: draft semantics for implementation planning.** The record schema illustrates the inner logical model. Cryptographic framing, signing bytes, key wrapping, and real Go/TypeScript vectors require a separate review before wire compatibility is implemented.
+**Status: full protocol target.** The record schema illustrates the inner logical model; [the v1 contract](v1-contract.md) specializes exact implemented framing and the narrower manual-sync/text-skill scope. V1 received focused source inspection, but execution and full cryptographic/security acceptance remain unverified. Key wrapping and automated distribution are deferred.
 
 ## Identity and records
 
@@ -77,7 +77,7 @@ A Git import decrypts and validates a reviewed artifact, checks its signed relea
 
 An export records the source operation/revision IDs and is created only after the relevant publication is known. The importer recognizes that provenance rather than creating another revision. Divergent Git and local edits therefore enter the same revision DAG as conflicts instead of bouncing between systems. No cloud CI job receives decryption keys.
 
-Webhooks accelerate discovery; local Git reconciliation repairs missed events. Version one can use manual reviewed import/export, with automation deferred. No Git bridge is implemented by this scaffold.
+Webhooks accelerate discovery; local Git reconciliation repairs missed events. Manual reviewed import/export remains a future option, with automation deferred. No Git bridge is implemented in the initial source slice.
 
 ## Deletion, compaction, and long absences
 

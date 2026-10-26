@@ -46,7 +46,9 @@ starts Wrangler with local-only bindings, and stops its processes afterward.
 It asserts MCP provenance, offline replay, duplicate/lost-ack recovery,
 concurrent edits and tombstones, clean-device archive replay, index rebuild,
 DO cache recovery, scope filtering, auth/crypto rejection, staged skills, and
-historical-author validation after revocation. See [E2E details](../e2e/README.md).
+local approved text activation/invalidation, deleted fetch privacy, signed
+duplicate-key/depth rejection without publication, and historical-author
+validation after revocation. See [E2E details](../e2e/README.md).
 
 Success prints one `PASS` per scenario and removes the private temporary state.
 Failure exits nonzero and retains its synthetic artifacts for local inspection.
@@ -129,9 +131,26 @@ fixed arguments. Keep diagnostics separate from stdio JSON-RPC:
 
 Tools include `memory_store`, `memory_recall`, `memory_get`, `memory_delete`,
 `sync_status`, `skill_list`, and `skill_fetch`. Sync remains an explicit CLI
-operation. A tool argument cannot grant another scope. Fetched skills remain
-staged text; executable activation is disabled. Owner `skill approve` records
-local exact-revision text review, not a deployed skill release.
+operation. A tool argument cannot grant another scope. Incoming skills remain
+staged until locally approved and activated. Owner approval signs the exact
+current unique visible revision; approval alone leaves it staged and inactive.
+Use the record/revision IDs returned by a skill `store`:
+
+```sh
+"$AM_BIN" --home "$AM_OWNER" skill approve --scope "$AM_SCOPE" \
+  --id SKILL_RECORD_ID --revision CURRENT_REVISION_ID
+"$AM_BIN" --home "$AM_OWNER" skill activate --scope "$AM_SCOPE" \
+  --id SKILL_RECORD_ID --revision CURRENT_REVISION_ID
+"$AM_BIN" --home "$AM_OWNER" skill fetch --scope "$AM_SCOPE" --id SKILL_RECORD_ID
+```
+
+Activation verifies the owner-signed local approval and selects text retrieval
+only: `runtime:"text/markdown"`, `capabilities:["read-as-text"]`. Fetch reports
+`approved`, `active`, and `staged`; list reports per-record state and
+`activation_supported:true`. A new revision, deletion, or conflict makes the
+skill inactive. Approval and activation stay on that device; they do not sync
+to the child. No scripts, executable installer, harness file writes, or global
+registration are implemented.
 
 ## 5. Recovery and cleanup
 

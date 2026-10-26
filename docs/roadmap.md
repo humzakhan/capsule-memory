@@ -1,10 +1,10 @@
 # Build plan
 
-**Build the reliable local write path first.** Keep every slice reviewable and preserve the privacy boundary before adding cloud synchronization.
+**Build the reliable local write path first.** The initial source now covers the local core, encrypted manual relay path, CLI/MCP, and approved text activation. [Delivery status](v1-status.md) distinguishes authored code from runtime acceptance. Keep remaining slices reviewable and preserve the privacy boundary.
 
-## 0. Repository foundation — current deliverable
+## 0. Repository foundation — authored
 
-Architecture, decisions, threat model, draft logical contracts, project skills, personas, and verification scenarios. No application code, installed dependencies, deployed infrastructure, CI workflows, real vault data, or approved cryptographic protocol.
+Architecture, decisions, threat model, draft logical contracts, project skills, personas, and verification scenarios are present. V1 source and its specialized contract have since been added. No dependencies were installed, no infrastructure/CI was provisioned, and no real vault data was used. The implementation has not received runtime or full security acceptance.
 
 ## 1. Local durable core
 
@@ -44,4 +44,4 @@ Exit evidence: traceable summaries, complete versus partial index coverage, safe
 - K2/Queues, distributed pub/sub, and advanced traffic/fork privacy.
 - Destructive compaction, selective cryptographic erasure, and automatic skill merging.
 
-Each implementation task needs a bounded slice, an authorized execution route, and meaningful evidence. The next implementation proposal should start with slice 1's database/driver and acknowledgement boundary; it should not deploy the whole diagram.
+Each implementation task needs a bounded slice, an authorized execution route, and meaningful evidence. The next acceptance step is the [owner-machine build and focused E2E](run-v1.md). Background synchronization, notifications, key distribution, maintenance, and wider harness support remain separate implementation work; do not deploy the whole diagram as an incidental check.

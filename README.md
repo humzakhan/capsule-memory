@@ -2,17 +2,21 @@
 
 Portable, end-to-end encrypted memories and skills for agents across machines and harnesses. **Carry** is the temporary product name; `agent-memory` is the repository name.
 
-**Status: documentation and agent setup only.** No application, daemon, deployed infrastructure, or executable verification suite exists yet. Runtime behavior described here is a design target, not a tested guarantee.
+**Status: v1 source implementation, runtime unverified.** Go CLI/MCP, local SQLite storage, encrypted manual synchronization, a Cloudflare relay, and one focused E2E journey are authored. Dependency resolution, compilation, formatting, typechecks, and E2E execution are **NOT RUN**. No infrastructure is deployed.
 
 ## Start here
 
-1. Read [the architecture](docs/architecture.md) for ownership, retrieval, and system boundaries.
-2. Read [the roadmap](docs/roadmap.md) for the first implementation slice and deferred work.
-3. Read [development guidance](docs/development.md) before changing code or running tools.
+1. Follow [the owner-machine runbook](docs/run-v1.md) to build and run the synthetic local E2E journey.
+2. Read [delivery status](docs/v1-status.md) for evidence and limits, then [Go usage](docs/go-client.md) for CLI/MCP configuration.
+3. Read [the architecture](docs/architecture.md), [v1 contract](docs/v1-contract.md), and [development guidance](docs/development.md) before contributing.
 
 ## The system we are building
 
-Each trusted machine runs a small Go service with a local SQLite database, device-only search, a durable offline queue, and an MCP interface. Cloudflare R2 stores encrypted records and history. A Worker and a SQLite-backed Durable Object coordinate publication and send change hints without decrypting content.
+The v1 CLI and MCP processes share a device-local SQLite database with FTS5, immutable revisions, and a durable outbox. Explicit `sync` sends signed encrypted records to a TypeScript Worker, a SQLite-backed Durable Object, and R2. Publication follows an atomic durable archive-head update. Search and keys stay on devices.
+
+Incoming skills stay staged. The owner can approve and activate an exact local revision for reading as Markdown text. Executable installation and cross-device approval distribution are deferred. Conflicts, tombstones, and source provenance remain explicit.
+
+Background service/IPC, WebSocket hints, automatic rotation/key distribution, summaries, embeddings, Git automation, and broad hooks remain roadmap work. Device secrets currently use restrictive local files; there is no native keystore integration.
 
 GitHub holds source, instructions, and reviewed changes. A separate private vault repository may hold encrypted skill sources and curated exports. Search indexes, private keys, plaintext memories, and working databases never belong in either repository.
 
@@ -22,8 +26,8 @@ GitHub holds source, instructions, and reviewed changes. A separate private vaul
 | Local storage | SQLite with FTS5; embeddings deferred |
 | Relay | TypeScript Worker and one Durable Object per vault |
 | Cold archive | R2 Standard initially; explicit provider capabilities |
-| Privacy | Device-held keys; device-only plaintext search and summarization |
-| Synchronization | Durable outbox, immutable revisions, replay, preserved conflicts |
+| Privacy | AES-256-GCM content encryption; Ed25519 signatures; device-only plaintext search |
+| Synchronization | Manual durable outbox/replay; preserved conflicts and deletion history |
 
 ## Repository map
 
@@ -37,16 +41,22 @@ agent-memory/
 |-- .claude/
 |   |-- agents/               adapters to the canonical personas
 |   `-- skills -> ../.agents/skills
+|-- cmd/agent-memory/         Go CLI and MCP entrypoint
+|-- internal/memory/          local domain, SQLite, crypto, and sync
+|-- cloudflare/               Worker, Durable Object, and R2 adapter
+|-- e2e/                      one real local Wrangler/CLI/MCP journey
 |-- docs/                     architecture, protocol, risks, verification
 |   `-- decisions/            accepted choices and their trade-offs
 |-- contracts/                draft schemas and synthetic examples
 `-- .github/                  pull request template; no workflows yet
 ```
 
-Application directories and dependency manifests will be added with their first implementation slice. There is no reason to install dependencies for this scaffold.
+The Go module and Wrangler version are pinned. Authorized dependency resolution must generate real checksums/lockfiles; none were fabricated. Run the installation/build commands on your own trusted machine or an explicitly authorized isolated runner, following the host policy.
 
 ## Evidence and limits
 
-[Protocol](docs/protocol.md), [threat model](docs/threat-model.md), and [verification scenarios](docs/verification.md) describe the invariants implementation must establish. [Sources](docs/sources.md) separates official capability documentation from project decisions.
+[The focused inspection](docs/v1-inspection.md) records the source findings and corrections. [The E2E journey](e2e/README.md) covers the requested behavior groups with a real local Worker/DO/R2 emulator and built CLI; it has not been executed. Emulator success would not establish production durability or cost.
+
+[Protocol](docs/protocol.md), [threat model](docs/threat-model.md), and [verification scenarios](docs/verification.md) describe the wider invariants. [Sources](docs/sources.md) separates official capabilities from project decisions. Use synthetic data until the implementation has been built, exercised, and reviewed for your intended deployment.
 
 The free Cloudflare tier is the initial deployment target. Workers Paid starts at a monthly minimum, not a spending ceiling. No infrastructure is provisioned by this repository setup.
