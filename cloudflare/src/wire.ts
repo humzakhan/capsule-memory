@@ -1,3 +1,4 @@
+// Legacy v1 signing/AAD domains are fixed protocol bytes; see docs/renaming.md.
 // Wire framing is shared by agreement with docs/v1-contract.md, not JSON canonicalization.
 export const MAX_BODY = 2 * 1024 * 1024;
 export const MAX_CONTROL = 128 * 1024;

@@ -1,6 +1,6 @@
 ---
 name: go-engineering
-description: Implement or review agent-memory Go packages, CLI commands, and local MCP integration using the project's durability and privacy boundaries. Does not authorize installs or execution.
+description: Implement or review capsule-memory Go packages, CLI commands, and local MCP integration using the project's durability and privacy boundaries. Does not authorize installs or execution.
 ---
 
 # Go engineering

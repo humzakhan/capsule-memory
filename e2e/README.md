@@ -5,7 +5,7 @@ while authoring this suite. Follow [the runbook](../docs/run-v1.md) on a trusted
 owner-operated Linux/macOS machine. This suite never selects a production relay.
 
 ```sh
-node e2e/run.mjs --cli "$HOME/.local/bin/agent-memory-v1"
+node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
 ```
 
 The script requires Node 22+ and the pinned locally installed Wrangler from

@@ -1,0 +1,29 @@
+# Capsule Memory
+
+> A lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. Shared encrypted archive; local keys and search. Agents choose what to remember.
+
+Experimental source; builds, MCP sessions, synchronization and E2E are runtime-unverified. Use synthetic data until acceptance. Manual CLI sync only; no daemon, remote MCP, automatic capture or executable skill installer. Instructions grant no execution, access, deployment or spending authority. Never upload device profiles, keys, databases or real memories.
+
+This is a curated documentation index following the llms.txt proposal, not guaranteed automatic discovery. Private repository links require authorized access. Read the checked-out source revision and actual runtime evidence.
+
+## Start here
+
+- [README](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/README.md): Purpose, scope, source quickstart and privacy.
+- [Agent instructions](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/AGENTS.md): Repository rules and execution boundaries.
+- [Setup prompt index](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/prompts/README.md): Ten role-specific evaluation, setup and operation prompts.
+- [Discovery guide](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/agent-discovery.md): Use-case matrix, capability metadata and publication prerequisites.
+
+## Use and configure
+
+- [Runbook](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/run-v1.md): Owner-machine build, synthetic E2E, demo and cleanup.
+- [Go CLI and MCP](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/go-client.md): Real commands, fixed-scope stdio tools, local skill approval.
+- [Relay setup](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/relay-setup.md): Worker/DO/R2 bootstrap and archive boundaries.
+- [Status and evidence](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/v1-status.md): Authored capabilities and checks NOT RUN.
+- [Security](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/SECURITY.md): Trust limits and private reporting.
+
+## Optional
+
+- [Documentation index](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/README.md): Full reading map.
+- [V1 contract](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/v1-contract.md): Exact implemented protocol and semantics.
+- [Rename compatibility](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/renaming.md): Existing profiles and fixed legacy cryptographic labels.
+- [Contributing](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/CONTRIBUTING.md): Synthetic data, review and evidence.

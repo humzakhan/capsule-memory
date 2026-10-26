@@ -47,6 +47,7 @@ func (s *Service) skillState(ctx context.Context,q queryer,heads []Revision,dele
 	var signed Signed;var release Release
 	if decode(raw,&signed)!=nil{return result,nil}
 	pub,err:=unbase(s.config.OwnerPublic,ed25519.PublicKeySize);if err!=nil{return result,nil}
+	// Legacy v1 protocol domain is fixed for compatibility; see docs/renaming.md.
 	if verify("agent-memory/skill-approval/v1",signed,ed25519.PublicKey(pub),&release)!=nil||!s.validRelease(release,r){return result,nil}
 	result.Approved=true;result.Active=active==1;result.Staged=!result.Active;return result,nil
 }

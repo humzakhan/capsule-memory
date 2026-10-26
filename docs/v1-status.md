@@ -6,7 +6,7 @@ This page records the v1 source delivery, now integrated into `main`. **No runti
 
 | Requirement | Evidence needed | Current status |
 | --- | --- | --- |
-| Go CLI and official-SDK MCP | [CLI](../cmd/agent-memory/main.go), [MCP](../internal/memory/mcp.go), [usage](go-client.md) | Source authored; runtime unverified |
+| Go CLI and official-SDK MCP | [CLI](../cmd/capsule-memory/main.go), [MCP](../internal/memory/mcp.go), [usage](go-client.md) | Source authored; runtime unverified |
 | SQLite FTS5 and provenance | [Store](../internal/memory/store.go): durable revision/index schema, scoped visibility and source references | Source inspected; SQL/runtime NOT RUN |
 | Offline queue and retry identity | [Store](../internal/memory/store.go) and [sync](../internal/memory/sync.go): atomic revision/exact-envelope/outbox commit, retained retry bytes | Source inspected; crash behavior NOT RUN |
 | Device-only E2EE | [Crypto](../internal/memory/crypto.go), [profile](../internal/memory/profile.go), [wire contract](v1-contract.md) | Source inspected; cryptographic interoperability NOT RUN |
@@ -15,7 +15,11 @@ This page records the v1 source delivery, now integrated into `main`. **No runti
 | Skill trust | [Approvals and activation](../internal/memory/skills.go): owner signature, scope/revision/digest, current-head eligibility | Local text activation authored; runtime NOT RUN |
 | Focused E2E suite | [One black-box journey](../e2e/run.mjs) with twelve scenarios covering the five behavior groups | Authored; NOT RUN |
 | Focused inspection | [Findings and fixes](v1-inspection.md); initial source `3b73b6e8ea28c833fb64cd2a6a75204b885b35ea` | One source inspection and concrete-fix rechecks; no broad repeat review |
-| Delivery | [Implementation source](https://github.com/humzakhan/agent-memory/tree/18f2d323dd56d2bb03e0088d0ff49822e61955ea), [run/cleanup commands](run-v1.md) | Original handoff recorded the verified remote implementation commit; documentation consolidation preserves its ancestry on `main`. No deployment or runtime acceptance. |
+| Delivery | [Implementation source](https://github.com/humzakhan/capsule-memory/tree/18f2d323dd56d2bb03e0088d0ff49822e61955ea), [run/cleanup commands](run-v1.md) | Original handoff recorded the verified remote implementation commit; documentation consolidation preserves its ancestry on `main`. The immutable tree retains pre-rename source paths; see [rename compatibility](renaming.md). No deployment or runtime acceptance. |
+
+## Agent setup and discovery documentation
+
+[Ten task-specific prompts](../prompts/README.md), [agent discovery guidance](agent-discovery.md), [llms.txt](../llms.txt) and the [project-specific manifest](../agent-manifest.json) are authored. They describe existing interfaces and limits; prompt-driven setup, link fetching, automated ingestion and harness integration have not been runtime-verified. No daemon, hosted MCP endpoint, public website, package release or registry submission was added.
 
 ## Runtime acceptance
 

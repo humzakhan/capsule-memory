@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "record-revision.schema.json",
-  "title": "Draft decrypted agent-memory record revision",
+  "title": "Draft decrypted Capsule Memory record revision",
   "description": "Planning schema only. Does not define signing bytes, encryption, or transport.",
   "type": "object",
   "additionalProperties": false,

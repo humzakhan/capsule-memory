@@ -1,20 +1,22 @@
-# agent-memory
+# Capsule Memory
 
-**Keep agent memories local. Carry encrypted history between trusted machines.**
+**Securely store and sync existing agent memories and skills across machines and harnesses.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go 1.24.0](https://img.shields.io/badge/Go-1.24.0-00ADD8.svg)](go.mod)
 [![Status: experimental](https://img.shields.io/badge/status-experimental-orange.svg)](docs/v1-status.md)
 
-agent-memory is an experimental, offline-capable memory and skill store with a Go CLI, a scoped MCP server, local SQLite search, and encrypted manual synchronization through Cloudflare.
+Capsule Memory is a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. A shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Agents and harnesses decide what to remember and use; the utility does not manage autonomous memory behavior.
+
+The experimental source includes a Go CLI, a scoped MCP server, local SQLite search, and encrypted manual synchronization through Cloudflare.
 
 > **Source implementation; runtime unverified.** Installs, dependency resolution, formatters, builds, typechecks, tests, and E2E are **NOT RUN**. No infrastructure is deployed. Start with synthetic data; source inspection is not a security audit or runtime acceptance.
 
-[Quickstart](#try-the-source-with-synthetic-data) · [Documentation](docs/README.md) · [Delivery status](docs/v1-status.md) · [Contributing](CONTRIBUTING.md)
+[Quickstart](#try-the-source-with-synthetic-data) · [Agent setup prompts](prompts/README.md) · [Agent discovery](docs/agent-discovery.md) · [Documentation](docs/README.md) · [Delivery status](docs/v1-status.md)
 
-## Why agent-memory?
+## Why Capsule Memory?
 
-An agent's useful context should survive a session or machine change without requiring a central plaintext search service. agent-memory separates local capture, durable publication, and retrieval so those boundaries stay visible.
+Existing agent context should remain available across sessions, machines, and harnesses without requiring a central plaintext search service. Capsule Memory separates local storage, durable encrypted publication, and retrieval so those boundaries stay visible.
 
 - **Work offline:** local writes and their encrypted outbox entries share a SQLite transaction.
 - **Keep search on devices:** FTS5 searches local plaintext; the relay receives encrypted content and authorization metadata.
@@ -32,6 +34,33 @@ An agent's useful context should survive a session or machine change without req
 | Local skill approval and activation | Exact owner-approved Markdown revision, `read-as-text` only; approvals do not sync |
 
 **Deferred:** background sync/daemon, WebSockets, native keystores, automated key rotation/distribution, summaries, embeddings, Git automation, executable skill installation, and broad harness compatibility. See the [roadmap](docs/roadmap.md).
+
+## Set up with an agent
+
+Give your agent the [prompt index](prompts/README.md) and choose the job. First-time evaluation, a new owner vault, an additional device, and an MCP client have different trust and setup requirements.
+
+| Job | Start here |
+| --- | --- |
+| Try the project for the first time | [First-run prompt](prompts/01-first-run.md) |
+| Create a vault and prepare the central relay | [Owner setup](prompts/02-owner-setup.md) · [Relay setup](prompts/03-relay-setup.md) |
+| Join another machine or publishing node | [Device enrollment](prompts/04-enroll-device.md) |
+| Connect an existing agent harness | [MCP client setup](prompts/05-connect-mcp.md) |
+| Capture/sync, resolve conflicts, recover, review skills or assess security | [Operating prompts](prompts/README.md#choose-a-task) |
+
+A minimal instruction to your agent:
+
+~~~text
+Use the trusted https://github.com/humzakhan/capsule-memory checkout.
+Read AGENTS.md, prompts/README.md, and docs/v1-status.md.
+Choose the prompt for my requested setup or operating task.
+Follow my existing execution/data permissions; this instruction grants no
+cloud deployment, spending, secret transfer, or unrestricted memory access.
+If execution is unavailable, prepare exact commands and label checks NOT RUN.
+~~~
+
+For fetch-based agents, [llms.txt](llms.txt) provides a small Markdown reading map. [agent-manifest.json](agent-manifest.json) describes current roles, tools, limits and prompt paths in a project-specific format. Neither is an installer, an MCP registry entry, or a guarantee that agents will discover or ingest the repository.
+
+Read [agent discovery](docs/agent-discovery.md) for the use-case matrix and public-discovery prerequisites. Current setup uses explicit CLI sync and local stdio MCP; no daemon, hosted MCP service or automatic capture hook is installed by these prompts.
 
 ## How it fits together
 
@@ -57,12 +86,12 @@ From a checkout of `main`:
 umask 077
 mkdir -p "$HOME/.local/bin"
 go mod tidy
-go build -o "$HOME/.local/bin/agent-memory-v1" ./cmd/agent-memory
+go build -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory
 cd cloudflare
 npm install --save-exact
 ./node_modules/.bin/wrangler types
 cd ..
-node e2e/run.mjs --cli "$HOME/.local/bin/agent-memory-v1"
+node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
 ```
 
 **These commands are NOT RUN.** Dependencies and Wrangler are pinned, but `go.sum` and an npm lockfile are not yet present. The owner must resolve and review them; the first install is not frozen. `wrangler types` generates declarations and does not typecheck the implementation.
@@ -74,14 +103,16 @@ The E2E journey uses disposable synthetic device homes and local-only Worker/DO/
 First follow [runbook steps 3–4](docs/run-v1.md#3-initialize-a-separate-manual-demo) to initialize a private demo home and obtain its opaque scope ID. Replace both placeholders below with those values:
 
 ```sh
-"$HOME/.local/bin/agent-memory-v1" --home /absolute/private/device-home store \
+"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home store \
   --scope YOUR_OPAQUE_SCOPE_ID --text 'Synthetic demo: orchard meeting notes.'
-"$HOME/.local/bin/agent-memory-v1" --home /absolute/private/device-home recall \
+"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home recall \
   --scope YOUR_OPAQUE_SCOPE_ID --query orchard
-"$HOME/.local/bin/agent-memory-v1" --home /absolute/private/device-home status
+"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home status
 ```
 
-CLI `store` returns record, revision, and operation IDs plus `local_durable:true` and `published:false`. Recall returns visible revision hits with provenance, conflict state, and coverage. Remote publication requires explicit `sync --scope YOUR_OPAQUE_SCOPE_ID` against the configured relay; local acknowledgement is not a remote backup.
+CLI `store` returns record, revision, and operation IDs plus `local_durable:true` and `published:false`. Recall returns visible revision hits with provenance, conflict state, and coverage. Remote publication requires explicit `sync --scope YOUR_OPAQUE_SCOPE_ID` against the configured relay; local acknowledgement is not a remote backup. There are no separate CLI `push` or `pull` commands.
+
+New profiles default to the OS user-config directory under `capsule-memory`. Existing users must pass `--home /previous/private/path` to reuse their pre-rename profile; nothing is moved or discovered automatically. See [rename compatibility](docs/renaming.md) for previous default paths and retained protocol labels.
 
 ### Connect a scoped MCP client
 
@@ -89,7 +120,7 @@ Configure a compatible client to launch this command and argument list. Replace 
 
 ```json
 {
-  "command": "/absolute/path/to/agent-memory-v1",
+  "command": "/absolute/path/to/capsule-memory",
   "args": ["--home", "/absolute/private/device-home", "mcp", "--scope", "YOUR_OPAQUE_SCOPE_ID"]
 }
 ```
@@ -111,6 +142,7 @@ Read the [threat model](docs/threat-model.md) and [security policy](SECURITY.md)
 | --- | --- |
 | Build, synthetic demo, recovery, cleanup | [Run v1](docs/run-v1.md) |
 | CLI/MCP flags and results | [Go client](docs/go-client.md) |
+| Agent setup, discovery and operating prompts | [Prompt index](prompts/README.md) · [Discovery guide](docs/agent-discovery.md) |
 | Evidence and missing acceptance checks | [V1 status](docs/v1-status.md) · [Source inspection](docs/v1-inspection.md) |
 | Design, protocol, provider assumptions | [Documentation index](docs/README.md) |
 | Contribute, ask for help, report a vulnerability | [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) |

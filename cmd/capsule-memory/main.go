@@ -13,7 +13,7 @@ import (
 	"strings"
 	"syscall"
 
-	"agent-memory/internal/memory"
+	"github.com/humzakhan/capsule-memory/internal/memory"
 )
 
 func main() {
@@ -21,8 +21,8 @@ func main() {
 	if err:=run(ctx,os.Args[1:]);err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)}
 }
 func run(ctx context.Context,args []string) error {
-	base,err:=os.UserConfigDir();if err!=nil{return errors.New("cannot locate default state directory; use --home")};home:=filepath.Join(base,"agent-memory")
-	global:=flag.NewFlagSet("agent-memory",flag.ContinueOnError);global.SetOutput(io.Discard);global.StringVar(&home,"home",home,"private device state directory")
+	base,err:=os.UserConfigDir();if err!=nil{return errors.New("cannot locate default state directory; use --home")};home:=filepath.Join(base,"capsule-memory")
+	global:=flag.NewFlagSet("capsule-memory",flag.ContinueOnError);global.SetOutput(io.Discard);global.StringVar(&home,"home",home,"private device state directory")
 	if err=global.Parse(args);err!=nil{return errors.New("invalid global flags")};args=global.Args();if len(args)==0{return errors.New("command required: init, device create, store, recall, get, delete, restore, sync, status, rebuild, skill, mcp")}
 	command:=args[0];args=args[1:];sub:=""
 	if command=="device"||command=="skill" {if len(args)==0{return errors.New("subcommand required")};sub=args[0];args=args[1:]}

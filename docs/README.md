@@ -1,12 +1,19 @@
-# Documentation
+# Capsule Memory documentation
+
+Capsule Memory is a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search remain device-local. Agents and harnesses decide what to remember and use.
 
 Start with [Run v1](run-v1.md) for a synthetic local evaluation. The source is experimental: installs, builds, formatting, typechecks, tests, and E2E are **NOT RUN**. [Delivery status](v1-status.md) is the evidence record; architectural targets are not promises of implemented behavior.
+
+## Set up with an agent
+
+Use [the prompt index](../prompts/README.md) for ten distinct evaluation, setup and operation tasks. [Agent discovery](agent-discovery.md) maps roles, reading paths and public-release prerequisites. The root [llms.txt](../llms.txt) and [project capability manifest](../agent-manifest.json) are concise entry points, not automatic installation or access grants.
 
 ## Use and evaluate
 
 | Guide | Purpose |
 | --- | --- |
 | [Run v1](run-v1.md) | Dependency resolution, build, local E2E, private demo, recovery, cleanup |
+| [Rename compatibility](renaming.md) | Retained protocol bytes and explicit reuse of pre-rename profiles |
 | [Go client](go-client.md) | CLI flags/results, fixed-scope MCP, local skill approval and text activation |
 | [Relay setup](relay-setup.md) | Authentication, archive publication, limits, provider assumptions |
 | [E2E journey](../e2e/README.md) | Authored synthetic local assertions and failure artifacts |

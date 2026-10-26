@@ -1,4 +1,4 @@
-# Go client v1
+# Capsule Memory Go client v1
 
 Source is implemented; runtime behavior is **unverified**. No install, Go command,
 formatter, build, test, checker, MCP session, or relay request was run for this
@@ -33,8 +33,8 @@ Resolve modules and build only in the approved environment:
 
 ```sh
 go mod tidy
-gofmt -w cmd/agent-memory internal/memory
-go build -o ./bin/agent-memory ./cmd/agent-memory
+gofmt -w cmd/capsule-memory internal/memory
+go build -o ./bin/capsule-memory ./cmd/capsule-memory
 go vet ./...
 ```
 
@@ -42,6 +42,10 @@ These commands are **NOT RUN**. Review dependency changes and generated sums;
 minimal source `go.mod` may gain transitive requirements during `go mod tidy`.
 The focused black-box journey under `e2e/` owns integration verification; no
 parallel unit suite was added.
+
+## Profile paths and rename compatibility
+
+New CLI profiles default to `capsule-memory` under the OS user-config directory. To reuse an existing profile, always pass `--home /previous/private/path`; the CLI does not discover or move pre-rename profiles. See [rename compatibility](renaming.md) for the previous `agent-memory` defaults and fixed v1 protocol labels.
 
 ## Create two device profiles
 
@@ -51,7 +55,7 @@ or after the command. Flag values must precede any positional arguments; the
 CLI does not accept extra positional arguments. Examples use synthetic content.
 
 ```sh
-./bin/agent-memory --home /private/device-a init --relay https://relay.example
+./bin/capsule-memory --home /private/device-a init --relay https://relay.example
 ```
 
 The result contains `vault_id`, `scope_id`, `device_id`, `VAULT_ID`, and
@@ -62,7 +66,7 @@ are public. Configure the relay using its separate runbook. Never use
 For an explicitly local development relay only:
 
 ```sh
-./bin/agent-memory --home /private/device-a init \
+./bin/capsule-memory --home /private/device-a init \
   --relay http://127.0.0.1:8787 --allow-loopback-http
 ```
 
@@ -73,8 +77,8 @@ vault, scope, identity, timestamp, nonce, and body digest from the contract.
 Create device B, including before A's initial sync:
 
 ```sh
-./bin/agent-memory --home /private/device-a device create --out /private/device-b
-./bin/agent-memory --home /private/device-a sync --scope SCOPE_ID
+./bin/capsule-memory --home /private/device-a device create --out /private/device-b
+./bin/capsule-memory --home /private/device-a sync --scope SCOPE_ID
 ```
 
 Replace `SCOPE_ID` with the returned opaque ID. Owner-created control generations
@@ -101,11 +105,11 @@ inspection rather than deleting or silently resetting the identity.
 ## Offline writes, search, and conflicts
 
 ```sh
-./bin/agent-memory --home /private/device-a store \
+./bin/capsule-memory --home /private/device-a store \
   --scope SCOPE_ID --kind memory --text 'Synthetic release notes'
-./bin/agent-memory --home /private/device-a recall --scope SCOPE_ID --query 'release'
-./bin/agent-memory --home /private/device-a get --scope SCOPE_ID --id RECORD_ID --history
-./bin/agent-memory --home /private/device-a status
+./bin/capsule-memory --home /private/device-a recall --scope SCOPE_ID --query 'release'
+./bin/capsule-memory --home /private/device-a get --scope SCOPE_ID --id RECORD_ID --history
+./bin/capsule-memory --home /private/device-a status
 ```
 
 `store` returns `record_id`, `revision_id`, `operation_id`, parents,
@@ -129,8 +133,8 @@ writes to the same record remain separate heads. Operation/revision identity
 reuse with different logical content stops replay.
 
 ```sh
-./bin/agent-memory --home /private/device-a delete --scope SCOPE_ID --id RECORD_ID
-./bin/agent-memory --home /private/device-a restore --scope SCOPE_ID --id RECORD_ID
+./bin/capsule-memory --home /private/device-a delete --scope SCOPE_ID --id RECORD_ID
+./bin/capsule-memory --home /private/device-a restore --scope SCOPE_ID --id RECORD_ID
 ```
 
 A deletion hides the entire record from recall, including concurrent stale edits.
@@ -142,7 +146,7 @@ deletion. If the nearest preserved content differs between branches, restore
 fails until the owner supplies reviewed replacement content:
 
 ```sh
-./bin/agent-memory --home /private/device-a restore \
+./bin/capsule-memory --home /private/device-a restore \
   --scope SCOPE_ID --id RECORD_ID --text 'Reviewed restored content'
 ```
 
@@ -152,10 +156,10 @@ not claimed. The supported inner payload is text for memory and skill records.
 ## Manual synchronization and recovery
 
 ```sh
-./bin/agent-memory --home /private/device-a sync --scope SCOPE_ID
-./bin/agent-memory --home /private/device-b sync --scope SCOPE_ID
-./bin/agent-memory --home /private/device-b recall --scope SCOPE_ID --query 'release'
-./bin/agent-memory --home /private/device-a rebuild
+./bin/capsule-memory --home /private/device-a sync --scope SCOPE_ID
+./bin/capsule-memory --home /private/device-b sync --scope SCOPE_ID
+./bin/capsule-memory --home /private/device-b recall --scope SCOPE_ID --query 'release'
+./bin/capsule-memory --home /private/device-a rebuild
 ```
 
 `sync` publishes queued owner controls, refreshes the signed owner manifest,
@@ -207,7 +211,7 @@ private backups, and trusted local inference remain owner responsibilities.
 A harness launches:
 
 ```sh
-./bin/agent-memory --home /private/device-b mcp --scope SCOPE_ID
+./bin/capsule-memory --home /private/device-b mcp --scope SCOPE_ID
 ```
 
 The official Go SDK serves stdio tools: `memory_store`, `memory_recall`,
@@ -220,13 +224,13 @@ scope. No MCP sync, owner enrollment, approval, or activation tool is exposed.
 A small official-SDK client example is under `examples/go-client/`.
 
 ```sh
-./bin/agent-memory --home /private/device-a store \
+./bin/capsule-memory --home /private/device-a store \
   --scope SCOPE_ID --kind skill --text '# Synthetic reviewed skill'
-./bin/agent-memory --home /private/device-a skill list --scope SCOPE_ID
-./bin/agent-memory --home /private/device-a skill fetch --scope SCOPE_ID --id RECORD_ID
-./bin/agent-memory --home /private/device-a skill approve \
+./bin/capsule-memory --home /private/device-a skill list --scope SCOPE_ID
+./bin/capsule-memory --home /private/device-a skill fetch --scope SCOPE_ID --id RECORD_ID
+./bin/capsule-memory --home /private/device-a skill approve \
   --scope SCOPE_ID --id RECORD_ID --revision REVISION_ID
-./bin/agent-memory --home /private/device-a skill activate \
+./bin/capsule-memory --home /private/device-a skill activate \
   --scope SCOPE_ID --id RECORD_ID --revision REVISION_ID
 ```
 

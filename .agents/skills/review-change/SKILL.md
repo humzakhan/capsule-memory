@@ -1,6 +1,6 @@
 ---
 name: review-change
-description: Review a concrete agent-memory diff or design revision for data loss, privacy, synchronization, skill trust, Go correctness, and provider assumptions. Use when review is requested; does not launch another agent.
+description: Review a concrete capsule-memory diff or design revision for data loss, privacy, synchronization, skill trust, Go correctness, and provider assumptions. Use when review is requested; does not launch another agent.
 ---
 
 # Review a change

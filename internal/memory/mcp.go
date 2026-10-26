@@ -19,7 +19,7 @@ func toolResult(v any,err error) (*mcp.CallToolResult,any,error) {
 }
 func (s *Service) MCP(ctx context.Context,scope string) error {
 	if err:=s.scope(scope);err!=nil{return err}
-	server:=mcp.NewServer(&mcp.Implementation{Name:"agent-memory",Version:"0.1.0"},nil)
+	server:=mcp.NewServer(&mcp.Implementation{Name:"capsule-memory",Version:"0.1.0"},nil)
 	mcp.AddTool(server,&mcp.Tool{Name:"memory_store",Description:"Durably store a local memory or staged skill; publication requires explicit sync."},func(ctx context.Context,_ *mcp.CallToolRequest,in mcpStore)(*mcp.CallToolResult,any,error){
 		r,err:=s.Write(ctx,WriteInput{Scope:scope,Kind:in.Kind,Text:in.Text,Record:in.ID,Parents:in.Parents,Source:"harness"});return toolResult(r,err)
 	})

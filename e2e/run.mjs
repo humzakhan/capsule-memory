@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Legacy v1 signing/AAD domains are fixed protocol bytes; see docs/renaming.md.
 // Owner-machine BLACK-BOX integration journey. No imports from application code,
 // no fake relay/SQLite, and no production endpoints. Source artifact: NOT RUN.
 import assert from "node:assert/strict";
@@ -18,13 +19,13 @@ const exec = promisify(execFile);
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const cliIndex = args.indexOf("--cli");
-assert(cliIndex >= 0 && args[cliIndex + 1], "usage: node e2e/run.mjs --cli /absolute/path/agent-memory [--keep]");
+assert(cliIndex >= 0 && args[cliIndex + 1], "usage: node e2e/run.mjs --cli /absolute/path/capsule-memory [--keep]");
 const cli = path.resolve(args[cliIndex + 1]);
 const keep = args.includes("--keep");
 assert(process.platform !== "win32", "this harness currently requires POSIX process groups; Windows is unsupported");
 const wrangler = path.join(repo, "cloudflare/node_modules/wrangler/bin/wrangler.js");
 await stat(cli); await stat(wrangler);
-const root = await mkdtemp(path.join(os.tmpdir(), "agent-memory-e2e-"));
+const root = await mkdtemp(path.join(os.tmpdir(), "capsule-memory-e2e-"));
 const owner = path.join(root, "owner"), child = path.join(root, "child"), recovered = path.join(root, "recovered");
 const state = path.join(root, "relay-state");
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -154,7 +155,7 @@ async function mcp(home, scope, run) {
     const text = result.content.find(c=>c.type==="text"); assert(text,"MCP tool returned no text JSON"); return JSON.parse(text.text);
   }
   try {
-    await request("initialize",{protocolVersion:"2025-03-26",capabilities:{},clientInfo:{name:"agent-memory-blackbox",version:"1"}});
+    await request("initialize",{protocolVersion:"2025-03-26",capabilities:{},clientInfo:{name:"capsule-memory-blackbox",version:"1"}});
     process.stdin.write(JSON.stringify({jsonrpc:"2.0",method:"notifications/initialized"})+"\n");
     return await run(tool, request);
   } finally { lines.close(); process.stdin.end(); await stop(process); }

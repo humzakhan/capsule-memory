@@ -1,6 +1,8 @@
 # Support
 
-Start with the [runbook](docs/run-v1.md) and [current status](docs/v1-status.md). agent-memory is experimental source; no runtime checks have been completed, and no support SLA is promised.
+Start with the [runbook](docs/run-v1.md) and [current status](docs/v1-status.md). Capsule Memory is an experimental storage and synchronization utility for existing agent memories and skills; no runtime checks have been completed, and no support SLA is promised.
+
+For agent-led setup, use the [task-specific prompts](prompts/README.md). Owner setup, relay preparation, enrolled devices and MCP clients have separate instructions; no daemon or background publisher is included.
 
 ## Find the relevant guide
 

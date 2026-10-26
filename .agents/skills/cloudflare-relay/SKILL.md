@@ -1,6 +1,6 @@
 ---
 name: cloudflare-relay
-description: Design or change agent-memory Cloudflare Workers, Durable Objects, R2 publication, notifications, provider capabilities, and cost controls. Does not authorize provisioning or deployment.
+description: Design or change capsule-memory Cloudflare Workers, Durable Objects, R2 publication, notifications, provider capabilities, and cost controls. Does not authorize provisioning or deployment.
 ---
 
 # Cloudflare relay

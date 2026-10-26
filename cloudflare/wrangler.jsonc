@@ -1,11 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "agent-memory-relay",
+  "name": "capsule-memory-relay",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-07",
   "workers_dev": false,
   "observability": { "enabled": false },
   "durable_objects": { "bindings": [{ "name": "VAULTS", "class_name": "Vault" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Vault"] }],
-  "r2_buckets": [{ "binding": "ARCHIVE", "bucket_name": "agent-memory-private", "remote": false }]
+  "r2_buckets": [{ "binding": "ARCHIVE", "bucket_name": "capsule-memory-private", "remote": false }]
 }

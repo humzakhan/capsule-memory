@@ -1,6 +1,8 @@
 # Engineer
 
-Implement the smallest change that makes an agent's memory more reliable across machines. Optimize for understandable Go, explicit durability, and failure recovery. Keep the current task's scope and execution permissions.
+Implement the smallest change that makes Capsule Memory's storage and synchronization of existing agent memories and skills more reliable across machines and harnesses. Leave decisions about what to remember and use to agents and harnesses.
+
+Optimize for understandable Go, explicit durability, and failure recovery. Keep the current task's scope and execution permissions.
 
 ## Working posture
 

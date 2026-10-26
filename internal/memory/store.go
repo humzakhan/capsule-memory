@@ -61,6 +61,7 @@ func (s *Service) getMeta(ctx context.Context,key string,v any) error {
 	var b []byte;if err:=s.db.QueryRowContext(ctx,"SELECT value FROM meta WHERE key=?",key).Scan(&b);err!=nil{return err};return decode(b,v)
 }
 func (s *Service) control(signed Signed) (Control,error) {
+	// Legacy v1 protocol domain is fixed for compatibility; see docs/renaming.md.
 	var c Control;pub,err:=unbase(s.config.OwnerPublic,32);if err!=nil{return c,err};if err=verify("agent-memory/control/v1",signed,ed25519.PublicKey(pub),&c);err!=nil{return c,err};return c,validateControl(c,s.config.Vault)
 }
 func (s *Service) current(ctx context.Context) (Control,Signed,error) {

@@ -17,7 +17,7 @@ requires internet access. There is no authored fake lockfile.
 umask 077
 mkdir -p "$HOME/.local/bin"
 go mod tidy
-go build -o "$HOME/.local/bin/agent-memory-v1" ./cmd/agent-memory
+go build -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory
 cd cloudflare
 npm install --save-exact
 ./node_modules/.bin/wrangler types
@@ -38,7 +38,7 @@ source checkout, shared directory, cloud sync folder, or container image.
 ## 2. Run the focused local E2E
 
 ```sh
-node e2e/run.mjs --cli "$HOME/.local/bin/agent-memory-v1"
+node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
 ```
 
 The script initializes disposable synthetic devices, chooses loopback ports,
@@ -62,10 +62,10 @@ open so the private paths remain available. The initializer emits only public
 deployment values and identity metadata; do not print `device.json` or `owner.json`.
 
 ```sh
-AM_DEMO="$(mktemp -d "${TMPDIR:-/tmp}/agent-memory-demo.XXXXXX")"
+AM_DEMO="$(mktemp -d "${TMPDIR:-/tmp}/capsule-memory-demo.XXXXXX")"
 AM_OWNER="$AM_DEMO/owner"
 AM_CHILD="$AM_DEMO/child"
-AM_BIN="$HOME/.local/bin/agent-memory-v1"
+AM_BIN="$HOME/.local/bin/capsule-memory"
 export AM_DEMO AM_OWNER AM_CHILD AM_BIN
 "$AM_BIN" --home "$AM_OWNER" init \
   --relay http://127.0.0.1:8787 --allow-loopback-http > "$AM_DEMO/public-init.json"
@@ -90,7 +90,7 @@ in the first terminal:
 ```sh
 cd cloudflare
 ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8787 \
-  --persist-to /absolute/private/agent-memory-demo.XXXXXX/relay-state
+  --persist-to /absolute/private/capsule-memory-demo.XXXXXX/relay-state
 ```
 
 No Cloudflare login or token is needed for local-only emulation. Do not add
@@ -125,7 +125,7 @@ Configure a compatible MCP client to execute this absolute command with these
 fixed arguments. Keep diagnostics separate from stdio JSON-RPC:
 
 ```sh
-"$HOME/.local/bin/agent-memory-v1" --home /absolute/private/device-home \
+"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home \
   mcp --scope YOUR_OPAQUE_SCOPE_ID
 ```
 
@@ -183,7 +183,7 @@ rm -r -- "$AM_DEMO"
 unset AM_DEMO AM_OWNER AM_CHILD AM_BIN AM_SCOPE
 ```
 
-If E2E retained a separate `agent-memory-e2e-*` directory, inspect its printed
+If E2E retained a separate `capsule-memory-e2e-*` directory, inspect its printed
 path and remove that directory manually after stopping any remaining processes.
 Do not delete an actual device home or upload retained artifacts. Dependency
 directories and the demo binary can be removed separately when no longer needed.

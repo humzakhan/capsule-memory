@@ -25,6 +25,7 @@ func (s *Service) request(ctx context.Context,method,path,scope string,body []by
 	if scope!="" {
 		if err=s.scope(scope);err!=nil{return err}
 		nonce:=make([]byte,24);if _,err=rand.Read(nonce);err!=nil{return err};n:=hex.EncodeToString(nonce);ts:=strconv.FormatInt(time.Now().Unix(),10)
+		// Legacy v1 protocol domain is fixed for compatibility; see docs/renaming.md.
 		input:="agent-memory/request/v1\n"+method+"\n"+req.URL.RequestURI()+"\n"+s.config.Vault+"\n"+scope+"\n"+s.config.Device+"\n"+ts+"\n"+n+"\n"+digest(body)+"\n"
 		key,err:=unbase(s.config.DevicePrivate,64);if err!=nil{return err}
 		req.Header.Set("X-AM-Device",s.config.Device);req.Header.Set("X-AM-Scope",scope);req.Header.Set("X-AM-Time",ts);req.Header.Set("X-AM-Nonce",n);req.Header.Set("X-AM-Signature",base64.StdEncoding.EncodeToString(ed25519.Sign(ed25519.PrivateKey(key),[]byte(input))))

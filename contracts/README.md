@@ -2,7 +2,7 @@
 
 These files describe the **decrypted logical record model**, using synthetic content. They are planning artifacts, not a final wire protocol, generated client library, or approved cryptographic specification.
 
-The current [v1 implementation contract](../docs/v1-contract.md) supports memory and skill text records. Summary examples here describe the wider target and are not accepted by the v1 Go service. Exact signed framing is defined in that contract; runtime interoperability remains unverified.
+The current [v1 implementation contract](../docs/v1-contract.md) supports memory and skill text records. Summary examples here describe the wider target and are not accepted by the v1 Go service. Exact signed framing is defined in that contract; runtime interoperability remains unverified. The fixed legacy v1 domains remain unchanged by the Capsule Memory rename; see [rename compatibility](../docs/renaming.md).
 
 ## Included
 

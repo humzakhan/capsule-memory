@@ -66,6 +66,7 @@ func Init(ctx context.Context, home, relay string, loopback bool) (map[string]an
 	vault,err:=newID();if err!=nil{return nil,err};scope,err:=newID();if err!=nil{return nil,err};device,err:=newID();if err!=nil{return nil,err}
 	key:=make([]byte,32);if _,err=rand.Read(key);err!=nil{return nil,err}
 	control:=Control{1,vault,"1",[]Scope{{scope,"1"}},[]Device{{device,base64.StdEncoding.EncodeToString(devicePub),[]string{scope},false}}}
+	// Legacy v1 protocol domain is fixed for compatibility; see docs/renaming.md.
 	signed,err:=sign("agent-memory/control/v1",control,ownerPriv);if err!=nil{return nil,err}
 	c:=Config{Version:1,Relay:strings.TrimRight(relay,"/"),Vault:vault,Device:device,OwnerPublic:base64.StdEncoding.EncodeToString(ownerPub),DevicePrivate:base64.StdEncoding.EncodeToString(devicePriv),Keys:map[string]ScopeKey{scope:{"1",base64.StdEncoding.EncodeToString(key)}},Loopback:loopback,Bootstrap:[]Signed{signed}}
 	if err=writeNew(filepath.Join(home,"owner.json"),map[string]string{"private_key_b64":base64.StdEncoding.EncodeToString(ownerPriv)});err!=nil{return nil,err}

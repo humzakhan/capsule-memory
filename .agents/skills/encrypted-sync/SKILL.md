@@ -1,6 +1,6 @@
 ---
 name: encrypted-sync
-description: Design or review agent-memory E2EE, revisions, durable synchronization, conflicts, deletion, enrollment, rekeying, and signed skill releases. Use for protocol invariants, not generic networking.
+description: Design or review capsule-memory E2EE, revisions, durable synchronization, conflicts, deletion, enrollment, rekeying, and signed skill releases. Use for protocol invariants, not generic networking.
 ---
 
 # Encrypted synchronization

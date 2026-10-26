@@ -1,4 +1,6 @@
-# V1 implementation contract
+# Capsule Memory V1 implementation contract
+
+Branding does not change the fixed legacy v1 cryptographic domains below. See [rename compatibility](renaming.md) before changing any signing or AAD bytes.
 
 Implementation target for the two-hour build. This specializes the architecture; runtime behavior is unverified until executed. Implementers must preserve these exact cross-language bytes and report unsupported behavior honestly.
 

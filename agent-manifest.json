@@ -1,0 +1,55 @@
+{
+  "format": "capsule-memory-discovery/v1",
+  "standard": false,
+  "name": "capsule-memory",
+  "display_name": "Capsule Memory",
+  "repository": "https://github.com/humzakhan/capsule-memory",
+  "description": "A utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses.",
+  "status": "experimental-runtime-unverified",
+  "execution_authorization": "none; follow the user's task, repository instructions and permitted execution route",
+  "entrypoints": {
+    "readme": "README.md",
+    "agent_instructions": "AGENTS.md",
+    "index": "llms.txt",
+    "setup_prompts": "prompts/README.md",
+    "discovery_guide": "docs/agent-discovery.md",
+    "runtime_evidence": "docs/v1-status.md",
+    "runbook": "docs/run-v1.md"
+  },
+  "cli": {
+    "binary": "capsule-memory",
+    "source": "cmd/capsule-memory",
+    "sync": "manual CLI sync; no daemon or separate push/pull commands"
+  },
+  "mcp": {
+    "transport": "stdio",
+    "command": "ABSOLUTE_BINARY_PATH",
+    "args_template": ["--home", "PRIVATE_DEVICE_HOME", "mcp", "--scope", "GRANTED_SCOPE_ID"],
+    "scope": "fixed at launch; includes write/delete authority; no read-only profile",
+    "tools": ["memory_store", "memory_recall", "memory_get", "memory_delete", "sync_status", "skill_list", "skill_fetch"],
+    "remote_endpoint": null,
+    "registry_publication": "not performed"
+  },
+  "trust": {
+    "search": "device-local SQLite FTS5",
+    "archive": "encrypted content with visible authorization/traffic metadata",
+    "keys": "restricted local files; no native keystore integration",
+    "enrollment": "independent device identity; currently grants all owner-held current scopes",
+    "skills": "staged until exact owner approval and local read-as-text activation; no execution",
+    "secrets_in_prompts": false
+  },
+  "tasks": [
+    {"id": "first-run", "prompt": "prompts/01-first-run.md"},
+    {"id": "owner-setup", "prompt": "prompts/02-owner-setup.md"},
+    {"id": "relay-setup", "prompt": "prompts/03-relay-setup.md"},
+    {"id": "enroll-device", "prompt": "prompts/04-enroll-device.md"},
+    {"id": "connect-mcp", "prompt": "prompts/05-connect-mcp.md"},
+    {"id": "capture-and-sync", "prompt": "prompts/06-capture-and-sync.md"},
+    {"id": "conflicts-and-deletion", "prompt": "prompts/07-conflicts-and-deletion.md"},
+    {"id": "recover-device", "prompt": "prompts/08-recover-device.md"},
+    {"id": "review-skill", "prompt": "prompts/09-review-skill.md"},
+    {"id": "security-operations", "prompt": "prompts/10-security-operations.md"}
+  ],
+  "unsupported": ["background-daemon", "remote-mcp", "automatic-capture", "turnkey-key-rotation", "executable-skill-installation", "central-plaintext-search"],
+  "note": "Project-specific documentation metadata, not an installer, registry server.json, protocol response or tested capability advertisement."
+}

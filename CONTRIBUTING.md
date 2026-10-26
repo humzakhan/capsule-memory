@@ -1,4 +1,6 @@
-# Contributing to agent-memory
+# Contributing to Capsule Memory
+
+Improve Capsule Memory as a lightweight utility for securely storing and synchronizing existing agent memories and skills. Agents and harnesses own memory behavior; the utility provides shared encrypted storage and device-local keys and search.
 
 Make a small, reviewable change with synthetic data and honest evidence. The v1 source is experimental: installs, builds, formatters, typechecks, tests, and E2E remain **NOT RUN**. Read [delivery status](docs/v1-status.md) before relying on behavior.
 

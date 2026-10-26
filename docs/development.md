@@ -26,7 +26,7 @@ No general web framework, ORM, vector database, distributed broker, or frontend 
 
 ## Go practice
 
-Keep domain behavior independent of transport and harness details. The current entrypoint is `cmd/agent-memory`, with domain code under `internal/memory`; extend cohesive packages rather than adding an empty clean-architecture tree. Consumer-owned interfaces belong at storage, crypto, and transport boundaries where testing or alternate implementations require them.
+Keep domain behavior independent of transport and harness details. The current entrypoint is `cmd/capsule-memory`, with domain code under `internal/memory`; extend cohesive packages rather than adding an empty clean-architecture tree. Consumer-owned interfaces belong at storage, crypto, and transport boundaries where testing or alternate implementations require them.
 
 Use explicit errors and transactions. Keep context cancellation and shutdown observable. Bound goroutines, buffers, retries, body sizes, and archive batches. Avoid global state, hidden work in constructors, reflection-heavy plumbing, speculative caches, and optimization without measurements.
 

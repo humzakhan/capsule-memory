@@ -1,6 +1,8 @@
 # Security policy
 
-agent-memory is experimental and has no runtime-verified or security-audited release. Focused source inspection has occurred; dependency resolution, builds, typechecks, tests, E2E, and deployment security remain unverified. Use synthetic data while establishing acceptance for your intended environment.
+Capsule Memory is an experimental utility for securely storing and synchronizing existing agent memories and skills. There is no runtime-verified or security-audited release.
+
+Focused source inspection has occurred; dependency resolution, builds, typechecks, tests, E2E, and deployment security remain unverified. Use synthetic data while establishing acceptance for your intended environment.
 
 ## Report a vulnerability privately
 

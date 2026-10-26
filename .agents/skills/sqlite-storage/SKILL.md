@@ -1,6 +1,6 @@
 ---
 name: sqlite-storage
-description: Design or change agent-memory SQLite transactions, migrations, outbox persistence, local search, backup, and rebuild behavior. Use for local storage changes rather than Cloudflare database work.
+description: Design or change capsule-memory SQLite transactions, migrations, outbox persistence, local search, backup, and rebuild behavior. Use for local storage changes rather than Cloudflare database work.
 ---
 
 # SQLite storage

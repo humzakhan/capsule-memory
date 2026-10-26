@@ -1,4 +1,4 @@
-module agent-memory
+module github.com/humzakhan/capsule-memory
 
 go 1.24.0
 

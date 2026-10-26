@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 )
+// Legacy v1 protocol domain is fixed for compatibility; see docs/renaming.md.
 func aad(e Envelope) []byte {return []byte("agent-memory/aead/v1\n"+e.Vault+"\n"+e.Scope+"\n"+e.Device+"\n"+e.Epoch+"\n"+e.Transport+"\n")}
 func (s *Service) encrypt(r Revision) ([]byte,error) {
 	k,ok:=s.config.Keys[r.Scope];if !ok{return nil,ErrInvalid}
