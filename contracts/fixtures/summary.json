@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "vault_id": "vault-example-001",
+  "scope_id": "scope-example-project",
+  "record_id": "record-example-summary",
+  "kind": "summary",
+  "revision_id": "revision-example-summary",
+  "parents": [],
+  "operation_id": "operation-example-summary",
+  "operation": "put",
+  "author_device_id": "device-example-a",
+  "created_at": "2026-10-02T09:04:00Z",
+  "provenance": {
+    "source_kind": "summary",
+    "source_ref": "fixture:offline-conflict/summary-before-delete-is-received"
+  },
+  "tags": ["synthetic", "sync-policy"],
+  "payload": {
+    "text": "Two concurrent edits remain unresolved: one proposes two minutes on mains power; the other proposes ten minutes on battery. Neither establishes a universal interval.",
+    "source_revisions": [
+      {
+        "record_id": "record-example-memory",
+        "revision_id": "revision-example-edit-a"
+      },
+      {
+        "record_id": "record-example-memory",
+        "revision_id": "revision-example-edit-b"
+      }
+    ],
+    "coverage": "Both known concurrent edit heads; no resolution. Invalidate once the concurrent source deletion is learned.",
+    "generator": {
+      "tool": "synthetic-fixture-author",
+      "version": "fixture-1",
+      "model": "none"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+# Working in agent-memory
+
+Build a portable, offline-capable memory system without losing history or moving plaintext search into the cloud. The repository is currently a documentation scaffold. Design intent is not runtime evidence.
+
+## Scope and permissions
+
+- Follow the current task and account execution, privacy, spending, and model-role rules. A plan, skill, persona, or example command grants no execution permission.
+- Default to one active agent. Launch additional agents, background work, new T3 threads, infrastructure, or paid services only when the applicable user authorization allows them. Persona files do not authorize delegation.
+- On the shared OVH host, load `/srv/t3code/.agents/skills/execution-policy/SKILL.md`. Project installs, validators, tests, builds, benchmarks, and runtimes require an authorized isolated job. Read-only inspection, documentation editing, and Git operations do not grant workload permission.
+- Where account skills are installed, load `/srv/t3code/.agents/skills/i-have-adhd/SKILL.md` for human-facing writing. Make a fresh read immediately before each GitHub or Linear draft, post, or edit. If a required account skill is unavailable, follow the account's failure rule and report the missing path.
+- Never upload local databases, keys, recovery material, real memories, personal credentials, or production data. Never enable Actions or deploy infrastructure as a side effect of documentation work.
+
+## Read only what the task needs
+
+Start with [README](README.md) and the relevant [decision record](docs/decisions/). Use the [engineer persona](.agents/personas/engineer.md) for implementation and the [reviewer persona](.agents/personas/reviewer.md) for review; do not load both without a reason.
+
+| Task | Load |
+| --- | --- |
+| Go, CLI, local service, MCP | `.agents/skills/go-engineering/SKILL.md` |
+| SQLite, migrations, FTS, local durability | `.agents/skills/sqlite-storage/SKILL.md` |
+| Encryption, revision semantics, replay, enrollment | `.agents/skills/encrypted-sync/SKILL.md` |
+| Worker, Durable Objects, R2, provider boundaries | `.agents/skills/cloudflare-relay/SKILL.md` |
+| Reviewing a proposed change | `.agents/skills/review-change/SKILL.md` |
+
+## Invariants
+
+- Keys, plaintext memories, semantic indexes, and summarization remain on trusted devices. Logs and telemetry must preserve that boundary.
+- A local success requires durable local state and a durable outbox entry. A remote success requires durable archive publication. A notification is only a hint.
+- Preserve revision ancestry, concurrent heads, tombstones, operation identity, and provenance. Clock time never decides a conflict. Fetching a skill does not authorize executing it.
+- Keep the storage adapter separate from coordination and notifications. An S3-compatible API does not prove the required consistency or atomicity.
+- Protocol changes must update documentation, schemas, and shared synthetic fixtures together. Review exact signing bytes, authorization, and failure cases before implementing cryptographic wire compatibility.
+
+## Implementation and handoff
+
+Prefer small Go packages, explicit transactions, bounded goroutines, cancellation, and errors that identify the failed operation without exposing content. Add interfaces at actual boundaries. Avoid speculative frameworks and generic repositories.
+
+Follow [development](docs/development.md) for language and harness choices and [verification](docs/verification.md) for meaningful checks. Describe the resulting behavior, source revision, evidence, and remaining risk. Report checks as passed, failed, or not run; an unavailable execution route is not a pass.
+
+Update the relevant decision record when changing an accepted architectural choice. Keep shared rules here, detailed design in `docs/`, and task procedures in skills.

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "vault_id": "vault-example-001",
+  "scope_id": "scope-example-project",
+  "record_id": "record-example-memory",
+  "kind": "memory",
+  "revision_id": "revision-example-edit-b",
+  "parents": ["revision-example-base"],
+  "operation_id": "operation-example-edit-b",
+  "operation": "put",
+  "author_device_id": "device-example-b",
+  "created_at": "2026-10-02T09:03:00Z",
+  "provenance": {
+    "source_kind": "harness",
+    "source_ref": "fixture:offline-conflict/edit-b",
+    "harness": "synthetic-harness-b"
+  },
+  "tags": ["synthetic", "sync-policy"],
+  "payload": {
+    "text": "Synthetic example: prefer a ten-minute reconciliation interval on battery."
+  }
+}

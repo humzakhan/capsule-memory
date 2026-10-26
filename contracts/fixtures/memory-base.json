@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "vault_id": "vault-example-001",
+  "scope_id": "scope-example-project",
+  "record_id": "record-example-memory",
+  "kind": "memory",
+  "revision_id": "revision-example-base",
+  "parents": [],
+  "operation_id": "operation-example-base",
+  "operation": "put",
+  "author_device_id": "device-example-a",
+  "created_at": "2026-10-01T09:00:00Z",
+  "provenance": {
+    "source_kind": "manual",
+    "source_ref": "fixture:offline-conflict/base"
+  },
+  "tags": ["synthetic", "sync-policy"],
+  "payload": {
+    "text": "Synthetic example: prefer a five-minute reconciliation interval."
+  }
+}
