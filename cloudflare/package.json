@@ -1,0 +1,9 @@
+{
+  "name": "agent-memory-relay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": { "dev": "wrangler dev --local --ip 127.0.0.1", "types": "wrangler types" },
+  "devDependencies": { "wrangler": "4.129.1" }
+}
