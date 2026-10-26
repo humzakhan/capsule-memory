@@ -14,7 +14,7 @@ import (
 // replacements receive content-derived ids and an explicit correction event.
 func reconcileEvent(ctx context.Context,q memory.Queryer,key,scope,native string,event records.Event)(records.Event,*records.Event,error){
  event.NativeID=native;event.ID=native
- rows,e:=q.QueryContext(ctx,`SELECT ev.value,c.session FROM chunks c JOIN sessions s ON s.session=c.session JOIN revisions r ON r.revision=c.revision JOIN json_each(r.body,'$.body.events') ev WHERE s.session_key=? AND s.scope=? AND (json_extract(ev.value,'$.native_id')=? OR json_extract(ev.value,'$.id')=?) LIMIT 1001`,key,scope,native,native);if e!=nil{return event,nil,e}
+ rows,e:=q.QueryContext(ctx,`SELECT json_extract(r.body,'$.body.events['||ev.ordinal||']'),ev.session FROM event_lookup ev JOIN sessions s ON s.session=ev.session JOIN revisions r ON r.revision=ev.revision WHERE s.session_key=? AND ev.scope=? AND (ev.native_id=? OR ev.event_id=?) LIMIT 1001`,key,scope,native,native);if e!=nil{return event,nil,e}
  type observed struct{event records.Event;session string};var prior []observed
  for rows.Next(){var raw []byte;var old observed;if rows.Scan(&raw,&old.session)!=nil||json.Unmarshal(raw,&old.event)!=nil{rows.Close();return event,nil,memory.ErrStorage};prior=append(prior,old)};e=rows.Err();rows.Close();if e!=nil{return event,nil,e};if len(prior)>1000{return event,nil,memory.ErrInvalid}
  groups:=map[string][]records.Event{};seen:=map[string]bool{}

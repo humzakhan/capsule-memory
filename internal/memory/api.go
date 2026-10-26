@@ -21,6 +21,7 @@ var (
  ErrHeadsChanged=errors.New("record heads changed during preparation; retry")
  ErrProfileBusy=errors.New("profile is owned by the capsule-memory daemon or another process; use the daemon IPC client")
  ErrSyncBusy=errors.New("scope sync busy")
+ ErrMissingRevision=errors.New("input revision not available locally")
 )
 type LockMode int
 const(LockShared LockMode=iota;LockExclusive)
@@ -44,12 +45,13 @@ func (s *Service) Read(ctx context.Context,fn func(Queryer)error)error{tx,e:=s.r
 func (s *Service) Update(ctx context.Context,fn func(*sql.Tx)error)error{s.wmu.Lock();defer s.wmu.Unlock();return s.updateLocked(ctx,fn)}
 func (s *Service) updateLocked(ctx context.Context,fn func(*sql.Tx)error)error{tx,e:=s.db.BeginTx(ctx,nil);if e!=nil{return ErrStorage};defer tx.Rollback();if e=fn(tx);e!=nil{return e};if tx.Commit()!=nil{return ErrStorage};return nil}
 func (s *Service) Heads(ctx context.Context,q Queryer,scope,record string)([]Revision,bool,error){if e:=s.scope(scope);e!=nil{return nil,false,e};a,e:=recordRevisions(ctx,q,scope,record);if e!=nil{return nil,false,e};h,d:=state(a);return h,d,nil}
-func (s *Service) Revision(ctx context.Context,q Queryer,id string)(Revision,error){var b []byte;var r Revision;if q.QueryRowContext(ctx,"SELECT body FROM revisions WHERE revision=?",id).Scan(&b)!=nil{return r,ErrInvalid};if decode(b,&r)!=nil{return r,ErrStorage};if s.scope(r.Scope)!=nil{return Revision{},ErrInvalid};return r,nil}
+func (s *Service) Revision(ctx context.Context,q Queryer,id string)(Revision,error){var b []byte;var r Revision;if e:=q.QueryRowContext(ctx,"SELECT body FROM revisions WHERE revision=?",id).Scan(&b);e!=nil{if e==sql.ErrNoRows{return r,ErrMissingRevision};return r,ErrStorage};if decode(b,&r)!=nil{return r,ErrStorage};if s.scope(r.Scope)!=nil{return Revision{},ErrInvalid};return r,nil}
 func (s *Service) Coverage(ctx context.Context,scope string)(Coverage,error){return s.coverage(ctx,scope)}
 type PutInput struct{Scope,Kind,Record string;Operation string;Parents []string;Restores []string;Text string;Body any;Provenance Provenance;Tags []string}
 type Prepared struct{Revision Revision;Envelope []byte;headsAtPrepare []string;implicitParents bool}
 func headIDs(h []Revision)[]string{a:=make([]string,0,len(h));for _,r:=range h{a=append(a,r.ID)};sort.Strings(a);return a}
-func (s *Service) Prepare(ctx context.Context,in PutInput)(Prepared,error){
+func (s *Service) Prepare(ctx context.Context,in PutInput)(Prepared,error){return s.prepare(ctx,in,nil)}
+func (s *Service) prepare(ctx context.Context,in PutInput,seal func(*Revision)error)(Prepared,error){
  var out Prepared;if e:=s.scope(in.Scope);e!=nil{return out,e};c,e:=s.Control(ctx);if e!=nil{return out,e};_,epoch,e:=c.grant(s.configuration().Device,in.Scope);if e!=nil||s.configuration().Keys[in.Scope].Epoch!=epoch{return out,ErrInvalid}
  v:=1;if records.V2Kinds[in.Kind]{v=2;if e=s.RequireV2();e!=nil{return out,e}}else if in.Kind!="memory"&&in.Kind!="skill"{return out,ErrInvalid}
  if in.Record==""{in.Record,e=newID();if e!=nil{return out,e}};if !idPattern.MatchString(in.Record){return out,ErrInvalid}
@@ -59,8 +61,8 @@ func (s *Service) Prepare(ctx context.Context,in PutInput)(Prepared,error){
  if in.Operation==""{in.Operation="put"};if in.Operation=="put"&&len(in.Parents)>1{in.Operation="resolve"};if in.Tags==nil{in.Tags=[]string{}}
  id,e:=newID();if e!=nil{return out,e};op,e:=newID();if e!=nil{return out,e}
  r:=Revision{Version:v,Vault:s.configuration().Vault,Scope:in.Scope,Record:in.Record,Kind:in.Kind,ID:id,Parents:in.Parents,Restores:in.Restores,OperationID:op,Operation:in.Operation,Author:s.configuration().Device,Created:time.Now().UTC().Format(time.RFC3339Nano),Provenance:in.Provenance,Tags:in.Tags}
- if r.Operation!="delete"{if v==1{r.Payload=&Payload{in.Text}}else{r.Body,e=json.Marshal(in.Body);if e!=nil{return out,e}}}
- if e=validateRevision(r);e!=nil{return out,e};b,e:=json.Marshal(r);if e!=nil{return out,e};if v==2&&len(b)>frame.ChunkHardMax{return out,frame.ErrTooLarge}
+ if r.Operation!="delete"{if v==1{r.Payload=&Payload{in.Text}}else{if seal!=nil{e=seal(&r)}else{r.Body,e=json.Marshal(in.Body)};if e!=nil{return out,e}}}
+ if e=validateRevision(r);e!=nil{return out,e};if e=s.verifyOwnerInsight(r);e!=nil{return out,e};b,e:=json.Marshal(r);if e!=nil{return out,e};if v==2&&len(b)>frame.ChunkHardMax{return out,frame.ErrTooLarge}
  out.Envelope,e=s.encryptPlain(r,b);if e!=nil{return Prepared{},e};out.Revision=r;return out,nil
 }
 func (s *Service) Commit(ctx context.Context,set []Prepared,extra func(context.Context,*sql.Tx)error)error{
@@ -71,7 +73,7 @@ func (s *Service) Commit(ctx context.Context,set []Prepared,extra func(context.C
    var exists int;if e=tx.QueryRowContext(ctx,"SELECT count(*) FROM revisions WHERE revision=?",r.ID).Scan(&exists);e!=nil{return ErrStorage}
    if exists==0&&p.implicitParents{h,_,e:=s.Heads(ctx,tx,r.Scope,r.Record);if e!=nil{return e};if !equalStrings(headIDs(h),p.headsAtPrepare){return ErrHeadsChanged}}
    if e=insertRevision(ctx,tx,r);e!=nil{return e};if _,e=tx.ExecContext(ctx,"INSERT INTO outbox(revision,scope,envelope) VALUES(?,?,?) ON CONFLICT(revision) DO NOTHING",r.ID,r.Scope,p.Envelope);e!=nil{return ErrStorage}
-   if exists==0{if e=s.apply(ctx,tx,r,ApplyLocal);e!=nil{return e}}
+   if exists==0{if e=s.apply(ctx,tx,r,ApplyLocal);e!=nil{return e};if r.Version==2&&r.Operation!="delete"&&(r.Provenance.SourceKind=="derived"||r.Provenance.SourceKind=="projection"){withdrawal:=false;if r.Kind==records.KindProjection{var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return ErrInvalid};withdrawal=p.State=="withdrawn"||p.State=="hidden"};if !withdrawal{if e=CheckConsent(ctx,tx,[]records.SourceRef{{Record:r.Record,Revision:r.ID,Kind:r.Kind}});e!=nil{return e}}}}
   };if extra!=nil{if e=extra(ctx,tx);e!=nil{return e}};return nil
  })
 }
@@ -80,15 +82,17 @@ func equalStrings(a,b []string)bool{if len(a)!=len(b){return false};for i:=range
 type ApplyOrigin int
 const(ApplyLocal ApplyOrigin=iota;ApplyReplay)
 type Applier interface{Apply(context.Context,*sql.Tx,Revision,ApplyOrigin)error;Rebuild(context.Context,*sql.Tx)error}
+type RevisionHook func(context.Context,*sql.Tx,Revision)error
+func(s *Service) OnRevision(h RevisionHook){s.revisionHooks=append(s.revisionHooks,h)}
 func (s *Service) RegisterApplier(kind string,a Applier){if !records.V2Kinds[kind]||a==nil{panic("invalid applier")};if s.appliers[kind]!=nil{panic("duplicate applier")};s.appliers[kind]=a}
 func (s *Service) apply(ctx context.Context,tx *sql.Tx,r Revision,origin ApplyOrigin)error{
  if r.Version==2{a:=s.appliers[r.Kind];if a==nil{return ErrUnsupportedRecord};if e:=a.Apply(ctx,tx,r,origin);e!=nil{return e}}
- if s.schemaVersion==2{return s.markSuperseded(ctx,tx,r)};return nil
+ if s.schemaVersion==2{if e:=s.RefreshStale(ctx,tx,[]string{r.Record});e!=nil{return e};for _,h:=range s.revisionHooks{if e:=h(ctx,tx,r);e!=nil{return e}}};return nil
 }
 func (s *Service) currentTx(ctx context.Context,q Queryer)(Control,Signed,error){var b []byte;var signed Signed;if e:=q.QueryRowContext(ctx,"SELECT value FROM meta WHERE key='current_control'").Scan(&b);e!=nil{return Control{},signed,e};if e:=decode(b,&signed);e!=nil{return Control{},signed,e};c,e:=s.control(signed);return c,signed,e}
 func (s *Service) Control(ctx context.Context)(Control,error){c,_,e:=s.currentTx(ctx,s.reader);return c,e}
 func (s *Service) rebuildV2(ctx context.Context,tx *sql.Tx)error{
- for _,table:=range []string{"deps","retracted_events","projects","sessions","chunks","bindings","suppressions","seen_events","candidate_keys","ledger","bridge_grants","knowledge","aggregation_grants","session_search"}{if _,e:=tx.ExecContext(ctx,"DELETE FROM "+table);e!=nil{return ErrStorage}}
+ for _,table:=range []string{"deps","retracted_events","projects","manifest_origins","manifest_bindings","sessions","chunks","bindings","suppressions","seen_events","event_lookup","candidate_keys","projection_records","ledger","bridge_grants","knowledge","aggregation_grants","session_search"}{if _,e:=tx.ExecContext(ctx,"DELETE FROM "+table);e!=nil{return ErrStorage}}
  for _,kind:=range []string{records.KindProject,records.KindSessionManifest,records.KindSessionChunk,records.KindSuppression,records.KindSummary,records.KindInsight,records.KindKnowledge,records.KindProjection,records.KindBridgeGrant,records.KindAggregationGrant,records.KindJob}{
   if a:=s.appliers[kind];a!=nil{if e:=a.Rebuild(ctx,tx);e!=nil{return e}}else{var n int;if tx.QueryRowContext(ctx,"SELECT count(*) FROM revisions WHERE kind=?",kind).Scan(&n)!=nil{return ErrStorage};if n>0{return ErrUnsupportedRecord}}
  };return s.RecomputeStale(ctx,tx)
@@ -113,6 +117,6 @@ func(s *Service) UnrestoredDeletions(ctx context.Context,q Queryer,record string
 // after releasing other read snapshots. Any source revision, signed control or
 // key-map replacement invalidates the proof; it never performs network I/O.
 func(s *Service) SnapshotFence(ctx context.Context,q Queryer)(func(context.Context)bool,error){
- var high int64;var control []byte;if e:=q.QueryRowContext(ctx,"SELECT COALESCE(max(rowid),0),(SELECT value FROM meta WHERE key='current_control') FROM revisions").Scan(&high,&control);e!=nil{return nil,e};cfg:=s.configuration()
- return func(ctx context.Context)bool{current:=s.configuration();if current.Device!=cfg.Device||current.Vault!=cfg.Vault||len(current.Keys)!=len(cfg.Keys){return false};for id,key:=range cfg.Keys{if current.Keys[id]!=key{return false}};same:=false;e:=s.Read(ctx,func(q Queryer)error{var now int64;var signed []byte;if e:=q.QueryRowContext(ctx,"SELECT COALESCE(max(rowid),0),(SELECT value FROM meta WHERE key='current_control') FROM revisions").Scan(&now,&signed);e!=nil{return e};same=now==high&&equalBytes(control,signed);return nil});return e==nil&&same},nil
+ var high,consentHigh int64;var control,policy []byte;if e:=q.QueryRowContext(ctx,"SELECT COALESCE(max(rowid),0),(SELECT value FROM meta WHERE key='current_control'),COALESCE((SELECT max(rowid) FROM consent_roots),0),COALESCE((SELECT body FROM policy WHERE name='session'),X'') FROM revisions").Scan(&high,&control,&consentHigh,&policy);e!=nil{return nil,e};cfg:=s.configuration()
+ return func(ctx context.Context)bool{current:=s.configuration();if current.Device!=cfg.Device||current.Vault!=cfg.Vault||len(current.Keys)!=len(cfg.Keys){return false};for id,key:=range cfg.Keys{if current.Keys[id]!=key{return false}};same:=false;e:=s.Read(ctx,func(q Queryer)error{var now,consentNow int64;var signed,currentPolicy []byte;if e:=q.QueryRowContext(ctx,"SELECT COALESCE(max(rowid),0),(SELECT value FROM meta WHERE key='current_control'),COALESCE((SELECT max(rowid) FROM consent_roots),0),COALESCE((SELECT body FROM policy WHERE name='session'),X'') FROM revisions").Scan(&now,&signed,&consentNow,&currentPolicy);e!=nil{return e};same=now==high&&consentNow==consentHigh&&equalBytes(control,signed)&&equalBytes(policy,currentPolicy);return nil});return e==nil&&same},nil
 }

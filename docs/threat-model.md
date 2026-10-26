@@ -77,6 +77,15 @@ atomic, and previously disclosed text cannot be recalled. Consent withdrawal
 holds unsent outbox revisions durably; a relay request already in flight may
 already have published before withdrawal.
 
+The G5 independent assertion requires an owner signature over its exact revision,
+operation, ordered ancestry, author and proof-free body digest. Reviewer equals
+the envelope author; ordinary review remains writer-attested and provides no
+cryptographic human-review authority. Invalid signed records block replay/rebuild;
+revocation does not remove poison already journaled. Owner-key rotation remains
+out of scope. Cross-vault publication cannot verify source consent without an
+open source profile and retains those bytes locally. Already-submitted bytes can
+race withdrawal, and previously published data requires explicit deletion.
+
 Derived content is untrusted. A retained independent owner insight explicitly
 severs deleted evidence instead of claiming an inaccessible source. Local model
 inputs use escaped JSON data under fixed prompts, with no tools; endpoints enforce

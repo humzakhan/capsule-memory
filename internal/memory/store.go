@@ -12,10 +12,11 @@ import (
 	"sync"
 	"time"
 
+ "github.com/humzakhan/capsule-memory/internal/records"
 	_ "modernc.org/sqlite"
 )
 
-type Service struct { db *sql.DB; reader *sql.DB; config Config; configMu sync.RWMutex; home string; wmu sync.Mutex; syncGuard sync.Mutex; syncMu map[string]chan struct{}; appliers map[string]Applier; staleHooks []StaleHook; grantHooks []GrantCheck; schemaVersion int; profileLock *os.File }
+type Service struct { db *sql.DB; reader *sql.DB; config Config; configMu sync.RWMutex; home string; wmu sync.Mutex; syncGuard sync.Mutex; syncMu map[string]chan struct{}; appliers map[string]Applier; staleHooks []StaleHook; revisionHooks []RevisionHook; grantHooks []GrantCheck; publicationCheck func(context.Context,records.ScopedRef)error; schemaVersion int; profileLock *os.File }
 const schema = `
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY,value BLOB NOT NULL);
 CREATE TABLE IF NOT EXISTS controls(generation TEXT PRIMARY KEY,signed BLOB NOT NULL,receipt TEXT);

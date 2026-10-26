@@ -6,6 +6,17 @@ The accepted implementation compresses every schema-v2 revision with isolated DE
 
 ## Proposed decision
 
+Accepted repair amendment (2026-10-26): manual link withdrawal is durably terminal,
+with generation-bound jobs, leases and observed source ancestry. All exact
+consumed events influence derivations independently of citations. Capture append
+and incremental affected-group indexing replace per-apply full reconciliation.
+Consent holds unpublished automatic descendants; cross-vault upload rechecks
+source consent and fails closed when unavailable. G5 uses the frozen
+independent-insight/v1 owner proof, binding revision, operation, ordered ancestry,
+author and proof-free content. Ordinary review is writer-attested. See the
+[final source protocol](../session-protocol.md) for wire/DDL details. These are
+source decisions; runtime, formatting and compilation remain NOT RUN.
+
 Extend Capsule Memory with an opt-in session module. An enabled local Go daemon imports supported harness histories, publishes encrypted immutable session chunks, and runs permitted local jobs to generate summaries and memory/decision candidates. Capture, publication, derivation, and promotion have independent controls.
 
 Use a dedicated session vault with independent keys and enrollment by default. Retain project scopes and a locally approved project identity map inside it. Keep selected knowledge in the existing memory vault; controlled projection connects the two. The [detailed design](../session-history.md) defines capture, durability, source dependencies, grants, and phased acceptance.

@@ -74,9 +74,28 @@ creates a new private file. Without `--out`, plaintext JSONL goes to stdout.
 
 `source pause --source ID` blocks reads. Resume requires explicit `--resolution
 skip|include`; skip moves the baseline and include retains it. `source disable`
-withdraws consent and atomically holds every unpublished chunk and manifest for
-that source. A manual sync also honors holds. Re-enabling a source does not release
+withdraws consent and atomically holds every unpublished automatic descendant
+of that source, including summaries, insights and source projections. Cross-vault
+target publication rechecks source consent before sending; without an open source
+profile it retains automatic descendants locally. A manual sync also honors holds. Re-enabling a source does not release
 old held revisions. Physical erasure and destructive retention are not implemented.
+
+Legacy schema-1 manual sync keeps its existing behavior. An explicit schema-v2
+manual sync may publish while background publication is off, but automatic
+cross-vault exports require an open source profile and an exact source-consent
+check immediately before POST. A direct target-only sync retains those bytes
+when the source/router is unavailable; an error is temporary, confirmed withdrawal
+creates a durable hold. Holds are never silently released. Delete, hidden and
+withdrawn lifecycle cleanup remains publishable after source loss.
+Independent opaque withdrawal markers can publish without private assertion
+parents. A dependent tombstone still waits if its parent is held or publication
+is ambiguous; private bytes are never released to unblock it. Per-scope
+publication status distinguishes Held/CleanupWaitingAncestry from
+PendingMarkers/ReadyMarkers and records temporary publication failures.
+An independently owner-proofed kept assertion can also report waiting_ancestry
+when its same-record parent is private/held. It remains valid locally: the proof
+severs evidence dependencies, not revision ancestry. No parent release, implicit
+clone or new owner re-authoring CLI is provided.
 
 Default tool capture keeps names, status and linkage, omitting tool bodies.
 Redaction runs before chunk serialization, search, model input, compression or
@@ -173,8 +192,10 @@ shift the pinned order; deletion/suppression is rechecked on every page. Raw exp
 retains corrected originals and correction records. A conflicting branch sequence
 fails bounded session.read explicitly; raw snapshot export preserves all rows.
 
-File size/modification changes start a new bounded reconciliation generation;
-this includes ordinary appends. Native IDs preserve unchanged content, changed
+Ordinary appends resume at the acknowledged byte offset. Identity changes,
+truncation, bounded prefix/tail mismatch or a same-size rewrite start a bounded
+reconciliation generation. The acknowledged tail digest is separate from adapter
+state; it never hashes the entire file. Native IDs preserve unchanged content, changed
 native content emits a replacement plus correction, and missing native content
 is retracted only at a complete generation end. Unchanged positional content is
 reused only at the exact old position; changed or missing positional evidence
@@ -183,6 +204,9 @@ byte budgets include these reads and never reset automatically.
 
 Codex checkpoint adapter state is version 1 and strictly decoded with a 64 KiB
 limit, a 256-entry bound and validated hash/reference fields. Local checkpoint
-metadata also records observed file size/modification and caught-up state.
+metadata also records observed file size/modification, acknowledged tail digest
+and caught-up state. T3 checkpoints persist a completed history-walk watermark;
+unchanged sequence polls skip old history. Changed sequences reconcile under page,
+event and byte bounds; oversized pages or stalled cursors quarantine visibly.
 Capture status reports pending streams and buffered totals; aggregate queues
 include capture-derived jobs across all open profiles.

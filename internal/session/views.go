@@ -12,10 +12,10 @@ import (
 
 // Every manifest keeps its own row, including continuations. Recompute groups
 // from current immutable heads so arrival order cannot select a different view.
-func(a *applier) reconcileManifests(ctx context.Context,tx *sql.Tx)error{
- if e:=a.reconcileSuppressions(ctx,tx);e!=nil{return e};rows,e:=tx.QueryContext(ctx,"SELECT DISTINCT record,scope FROM revisions WHERE kind='session_manifest' LIMIT 100001");if e!=nil{return e}
- type entry struct{id,scope string;body records.SessionManifest;hidden,withdrawn bool}
- var entries []entry
+func(a *applier) reconcileManifests(ctx context.Context,tx *sql.Tx,seeds ...string)error{
+ if e:=manifestAffected(ctx,tx,seeds);e!=nil{return e};rows,e:=tx.QueryContext(ctx,"SELECT DISTINCT record,scope FROM manifest_origins WHERE (?=0 OR record IN (SELECT record FROM manifest_affected)) LIMIT 100001",len(seeds));if e!=nil{return e}
+ type entry struct{id,scope string;body records.SessionManifest;hidden,withdrawn,changed bool}
+ var entries []entry;associationCount:=0
  for rows.Next(){var v entry;if rows.Scan(&v.id,&v.scope)!=nil{rows.Close();return memory.ErrStorage};entries=append(entries,v)};e=rows.Err();rows.Close();if e!=nil{return e};if len(entries)>100000{return memory.ErrStaleOverflow}
  parent:=map[string]string{};byKey:=map[string]string{};bindings:=map[string]string{}
  var root func(string)string;root=func(id string)string{p:=parent[id];if p==""||p==id{return id};parent[id]=root(p);return parent[id]}
@@ -25,7 +25,7 @@ func(a *applier) reconcileManifests(ctx context.Context,tx *sql.Tx)error{
   var raw []byte;if err=tx.QueryRowContext(ctx,"SELECT body FROM revisions WHERE record=? AND json_extract(body,'$.operation')!='delete' ORDER BY revision LIMIT 1",v.id).Scan(&raw);err!=nil{return err};var r memory.Revision;if json.Unmarshal(raw,&r)!=nil||json.Unmarshal(r.Body,&v.body)!=nil{return memory.ErrInvalid}
   if !v.hidden{if json.Unmarshal(hh[0].Body,&v.body)!=nil{return memory.ErrInvalid}}
   // Retain strong origin association through conflicts and tombstones.
-  bindingRows,err:=tx.QueryContext(ctx,"SELECT DISTINCT json_extract(b.value,'$.harness'),json_extract(b.value,'$.native_id'),json_extract(b.value,'$.strength') FROM revisions r JOIN json_each(r.body,'$.body.bindings') b WHERE r.record=? LIMIT 17",v.id);if err!=nil{return err};for bindingRows.Next(){var b records.Binding;if bindingRows.Scan(&b.Harness,&b.NativeID,&b.Strength)!=nil{bindingRows.Close();return memory.ErrStorage};v.body.Bindings=append(v.body.Bindings,b)};err=bindingRows.Err();bindingRows.Close();if err!=nil{return err};v.body.Bindings=dedupBindings(v.body.Bindings);if len(v.body.Bindings)>16{return memory.ErrInvalid}
+  bindingRows,err:=tx.QueryContext(ctx,"SELECT harness,native_id,'strong' FROM manifest_bindings WHERE record=? LIMIT 100001",v.id);if err!=nil{return err};for bindingRows.Next(){var b records.Binding;if bindingRows.Scan(&b.Harness,&b.NativeID,&b.Strength)!=nil{bindingRows.Close();return memory.ErrStorage};v.body.Bindings=append(v.body.Bindings,b)};err=bindingRows.Err();bindingRows.Close();if err!=nil{return err};v.body.Bindings=dedupBindings(v.body.Bindings);associationCount+=len(v.body.Bindings);if associationCount>100000{return memory.ErrStaleOverflow}
   var suppressed int;if err=tx.QueryRowContext(ctx,"SELECT count(*) FROM suppressions WHERE session_key=?",v.body.SessionKey).Scan(&suppressed);err!=nil{return err};v.hidden=v.hidden||suppressed>0;v.withdrawn=v.withdrawn||suppressed>0
   parent[v.id]=v.id;k:=v.scope+":"+v.body.SessionKey;if old:=byKey[k];old!=""{join(v.id,old)}else{byKey[k]=v.id}
  }
@@ -37,13 +37,15 @@ func(a *applier) reconcileManifests(ctx context.Context,tx *sql.Tx)error{
  sort.Slice(entries,func(i,j int)bool{if (entries[i].body.Origin.Harness=="t3")!=(entries[j].body.Origin.Harness=="t3"){return entries[i].body.Origin.Harness=="t3"};return entries[i].id<entries[j].id})
  for _,v:=range entries{if v.hidden||v.body.Continues!=""{continue};g:=root(v.id);if canonical[g]==""{canonical[g]=v.id}}
  for _,v:=range entries{if v.body.Continues==""&&canonical[root(v.id)]==""{canonical[root(v.id)]=v.id}}
- if _,e=tx.ExecContext(ctx,"DELETE FROM bindings");e!=nil{return e}
- for _,v:=range entries{del:=0;if v.hidden{del=1};view:=canonical[root(v.id)];if view==v.id{view=""};if view==""&&v.body.Continues!=""{view=v.body.Continues}
+ if _,e=tx.ExecContext(ctx,"DELETE FROM bindings WHERE session IN (SELECT record FROM manifest_affected) OR ?=0",len(seeds));e!=nil{return e}
+ for i:=range entries{v:=&entries[i];del:=0;if v.hidden{del=1};view:=canonical[root(v.id)];if view==v.id{view=""};if view==""&&v.body.Continues!=""{view=v.body.Continues}
+  var oldDeleted int;var oldView sql.NullString;oldErr:=tx.QueryRowContext(ctx,"SELECT deleted,view_of FROM sessions WHERE session=?",v.id).Scan(&oldDeleted,&oldView);v.changed=oldErr==sql.ErrNoRows||oldDeleted!=del||oldView.String!=view;if oldErr!=nil&&oldErr!=sql.ErrNoRows{return oldErr}
   if _,e=tx.ExecContext(ctx,`INSERT INTO sessions(session,session_key,scope,project_id,harness,state,view_of,deleted) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(session) DO UPDATE SET session_key=excluded.session_key,scope=excluded.scope,project_id=excluded.project_id,harness=excluded.harness,state=excluded.state,view_of=excluded.view_of,deleted=excluded.deleted`,v.id,v.body.SessionKey,v.scope,v.body.ProjectID,v.body.Origin.Harness,v.body.State,view,del);e!=nil{return e}
   for _,b:=range v.body.Bindings{if b.Strength=="strong"{if _,e=tx.ExecContext(ctx,"INSERT OR IGNORE INTO bindings VALUES(?,?,?)",b.Harness,b.NativeID,v.id);e!=nil{return e}}}
  }
  // Publish the complete group state before visibility checks and indexing.
- if e=a.m.recomputeRetractions(ctx,tx,"");e!=nil{return e}
- for _,v:=range entries{if v.hidden{if _,e=tx.ExecContext(ctx,"DELETE FROM session_search WHERE session=?",v.id);e!=nil{return e}}else if e=a.reindexSession(ctx,tx,v.id);e!=nil{return e}}
+ // Refresh only changed visibility groups and their descendants.
+ seeds=nil;for _,v:=range entries{if !v.changed{continue};seeds=append(seeds,v.id);rows,e:=tx.QueryContext(ctx,"SELECT record FROM chunks WHERE session=? LIMIT 100001",v.id);if e!=nil{return e};for rows.Next(){var id string;if rows.Scan(&id)!=nil{rows.Close();return memory.ErrStorage};seeds=append(seeds,id);if len(seeds)>100000{rows.Close();return memory.ErrStaleOverflow}};e=rows.Err();rows.Close();if e!=nil{return e}};if e=a.m.svc.RefreshStale(ctx,tx,seeds);e!=nil{return e}
+ for _,v:=range entries{if !v.changed{continue};if v.hidden{if _,e=tx.ExecContext(ctx,"DELETE FROM session_search WHERE session=?",v.id);e!=nil{return e}}else if e=a.reindexSession(ctx,tx,v.id);e!=nil{return e}}
  return nil
 }

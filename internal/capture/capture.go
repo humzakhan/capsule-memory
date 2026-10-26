@@ -11,7 +11,7 @@ import (
 
 type Source struct { ID, Harness, Adapter, StoreIdentity string; Config json.RawMessage }
 type Stream struct { Key, Generation string; Size int64; Modified time.Time }
-type Checkpoint struct { Stream, Generation, Position, PrefixDigest, FileIdentity, AdapterState, ObservedModified string; ObservedSize int64; Reconciling,Discarding,CaughtUp bool }
+type Checkpoint struct { Stream, Generation, Position, PrefixDigest, TailDigest, FileIdentity, AdapterState, ObservedModified string; ObservedSize int64; Reconciling,Discarding,CaughtUp bool }
 type Limits struct { MaxBytes int64; StopAt int64; EndBounded bool; MaxEvents, MaxPages int; Stability time.Duration }
 type Observation struct {
 	Origin records.Origin

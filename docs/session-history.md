@@ -8,7 +8,14 @@ Every schema-v2 record is compressed with a fresh raw DEFLATE stream **before en
 
 Promoted assertions are schema-v2 `knowledge`, never v1 memory copies. Content, target lifecycle and the owner-signed bridge grant share the same project/personal scope. Every retrieval checks lifecycle and exact target revision. Strict mode requires a source replay started during the request plus visible exact dependency heads, bounded to ten seconds; offline, busy, incomplete and target-only reads hide strict results. Historical results carry `current:false` unless freshly checked, plus last verified coverage. A 24-hour re-attestation cadence is not a freshness guarantee. Cross-vault deletion is asynchronous and cannot recall already disclosed text.
 
-Personal aggregation requires an owner-signed grant and destination readers must have every input scope. Proposed grant changes, rollup execution and commit all enforce that subset. Replayed jobs require current author grants. Source deletion/supersession invalidates the transitive dependency graph; overflow aborts the whole operation. Explicitly retained insights become independent owner-authored assertions with no generator or evidence.
+Personal aggregation requires an owner-signed grant and destination readers must have every input scope. Proposed grant changes, rollup execution and commit all enforce that subset. Replayed jobs require current author grants. Source deletion/supersession invalidates the transitive dependency graph; overflow aborts the whole operation. Explicitly retained insights become independent owner-key-authorized assertions
+with a proof bound to their exact new revision and proof-free content digest,
+no generator or evidence. Ordinary review is writer-attested, not owner proof.
+Manual projection withdrawal is terminal for that link; re-promotion needs a new
+explicit request. Generation-bound leases and observed parents fence old work.
+Consent withdrawal holds unpublished automatic descendants, including target
+exports at publish-time source consent checks. All exact consumed prompt events
+participate in influence invalidation, independently of selected citations.
 
 The daemon is Linux/macOS only. T3 uses owner-configured, broad read-token HTTP access to pinned allowlisted history routes; no token is discovered or minted. Claude and Codex disk formats are version-pinned and unverified; Codex App Server is not spawned. Generic imports preserve declared origin and suppression. All controls are off initially. Cross-vault setup remains `off` or explicitly `enabled_unaccepted`; published plaintext cache eviction is visibly `not_implemented`. No service, hook, model, credentials or infrastructure has been installed or used by this source work.
 

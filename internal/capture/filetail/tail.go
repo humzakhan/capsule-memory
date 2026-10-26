@@ -81,7 +81,9 @@ func read(ctx context.Context,c Config,st capture.Stream,cp capture.Checkpoint,l
  p,e:=Path(c.Root,st.Key);if e!=nil{return b,e};f,e:=os.Open(p);if e!=nil{return b,capture.ErrUnavailable};defer f.Close();fi,e:=f.Stat();if e!=nil||!fi.Mode().IsRegular(){return b,capture.ErrUnavailable}
  off:=int64(0);if cp.Position!=""{off,e=strconv.ParseInt(cp.Position,10,64);if e!=nil||off<0{return b,capture.ErrInvalid}}
  identity:=Identity(fi);prefixLen:=off;if prefixLen>64<<10{prefixLen=64<<10};prefix:=make([]byte,prefixLen);if _,e=f.ReadAt(prefix,0);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum:=sha256.Sum256(prefix)
- if cp.Position!=""&&((cp.ObservedModified!=""&&(cp.ObservedModified!=fi.ModTime().UTC().Format(time.RFC3339Nano)||cp.ObservedSize!=fi.Size()))||fi.Size()<off||(cp.FileIdentity!=""&&cp.FileIdentity!=identity)||(cp.PrefixDigest!=""&&cp.PrefixDigest!=hex.EncodeToString(sum[:]))){b.Reconcile=true;b.Next.Reconciling=true;off=0;seed:=sha256.Sum256([]byte(identity+":"+hex.EncodeToString(sum[:])+":"+strconv.FormatInt(fi.Size(),10)+":"+fi.ModTime().UTC().Format(time.RFC3339Nano)));b.Next.Generation=hex.EncodeToString(seed[:]);b.Next.PrefixDigest="";b.Next.Discarding=false;b.Next.AdapterState="";state.partial=nil}
+ tailChanged:=false
+ if cp.TailDigest!=""{start:=off-(64<<10);if start<0{start=0};tail:=make([]byte,off-start);if _,e=f.ReadAt(tail,start);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};digest:=sha256.Sum256(tail);tailChanged=cp.TailDigest!=hex.EncodeToString(digest[:])}
+ if cp.Position!=""&&((cp.ObservedModified!=""&&cp.ObservedSize==fi.Size()&&cp.ObservedModified!=fi.ModTime().UTC().Format(time.RFC3339Nano))||fi.Size()<off||(cp.FileIdentity!=""&&cp.FileIdentity!=identity)||(cp.PrefixDigest!=""&&cp.PrefixDigest!=hex.EncodeToString(sum[:]))||tailChanged){b.Reconcile=true;b.Next.Reconciling=true;off=0;seed:=sha256.Sum256([]byte(identity+":"+hex.EncodeToString(sum[:])+":"+strconv.FormatInt(fi.Size(),10)+":"+fi.ModTime().UTC().Format(time.RFC3339Nano)));b.Next.Generation=hex.EncodeToString(seed[:]);b.Next.PrefixDigest="";b.Next.Discarding=false;b.Next.AdapterState="";state.partial=nil}
  b.Reconcile=b.Reconcile||cp.Reconciling;b.Next.ObservedModified=fi.ModTime().UTC().Format(time.RFC3339Nano);b.Next.ObservedSize=fi.Size();b.Next.FileIdentity=identity;if b.Next.Generation==""{b.Next.Generation=identity};b.Next.Position=strconv.FormatInt(off,10)
  if time.Since(fi.ModTime())<lim.Stability{return b,nil}
  if state.start!=off||state.identity!=identity||!state.modified.Equal(fi.ModTime()){state.partial=nil};partial:=state.partial;state.partial=nil
@@ -95,5 +97,5 @@ func read(ctx context.Context,c Config,st capture.Stream,cp capture.Checkpoint,l
  }
  done:
  b.CaughtUp=off==stop&&!b.Next.Discarding&&len(state.partial)==0;b.Next.Position=strconv.FormatInt(off,10);b.ScannedBytes=readBytes
- prefixLen=off;if prefixLen>64<<10{prefixLen=64<<10};prefix=make([]byte,prefixLen);if _,e=f.ReadAt(prefix,0);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(prefix);b.Next.PrefixDigest=hex.EncodeToString(sum[:]);return b,nil
+ prefixLen=off;if prefixLen>64<<10{prefixLen=64<<10};prefix=make([]byte,prefixLen);if _,e=f.ReadAt(prefix,0);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(prefix);b.Next.PrefixDigest=hex.EncodeToString(sum[:]);tail:=make([]byte,prefixLen);if _,e=f.ReadAt(tail,off-prefixLen);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(tail);b.Next.TailDigest=hex.EncodeToString(sum[:]);return b,nil
 }

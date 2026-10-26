@@ -1,0 +1,39 @@
+{
+  "status": "HAND_AUTHORED; NOT RUN; no signatures, hashes or ciphertext computed",
+  "contract": "capsule-memory/independent-insight/v1",
+  "creation": [
+    "PrepareOwnerInsight allocates revision and operation IDs and ordered parents first",
+    "Marshal proof-free Insight; SHA-256 it; marshal OwnerAssertionBody in declared Go field order",
+    "OwnerSign signs domain newline base64 payload newline; exact prepared envelope is retried"
+  ],
+  "forgery_cases": {
+    "F1": "Evidence-free non-owner shape without proof: reject in Prepare, replay and rebuild",
+    "F2": "Malformed base64/signature length: shape rejection",
+    "F3": "Device-key or other non-owner-key signature: reject",
+    "F4": "Copied proof on new revision/operation/author/parents: reject",
+    "F5": "Any proof-free body field mutation: digest rejection",
+    "F6": "Different vault/scope/record: reject",
+    "F7": "Different envelope author: envelope or proof rejection",
+    "F8": "Reused revision ID with different bytes: identity conflict or verification rejection",
+    "F9": "Proof on evidence-bearing insight: reject",
+    "F10": "Evidence-free later edit without fresh proof: reject",
+    "F11": "Evidence removed and old proof copied: reject",
+    "F12": "Reviewer differs from revision author: reject, including ordinary reviewed insight",
+    "F13": "Contradictions, influence, auto_accept or generator with proof: reject",
+    "F14": "Separately authorized writer delete: existing tombstone semantics"
+  },
+  "positive_cases": {
+    "P1": "Owner keep during session deletion creates fresh exact-revision proof and no deps",
+    "P2": "Another device verifies against pinned OwnerPublic",
+    "P3": "Rebuild independently verifies shape, missing proof and cryptographic bindings",
+    "P4": "Concurrent unobserved parent causes rollback; retry creates new proof",
+    "P5": "Ordinary evidence-bearing insight has no proof and retains dependency semantics",
+    "P6": "Owner edit/accept creates fresh proof; non-owner fails",
+    "P7": "Future restore needs new proof binding restore operation and named deletions",
+    "P8": "Non-owner independent assertion restore rejected; no fresh owner proof can be produced",
+    "P9": "Profile without owner key using keep-insight fails Info.Owner and PrepareOwnerInsight ownerKey"
+  },
+  "ancestry": "Empty and nil ordered ancestry compare consistently; creation writes []",
+  "availability": "Invalid signed records fail closed; revocation does not remove poison already journaled; owner rotation out of scope",
+  "retry": "Exact prepared envelope/proof bytes remain identical on retry; legacy schema1/Config/domains unchanged"
+}

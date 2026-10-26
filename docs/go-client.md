@@ -327,7 +327,7 @@ The optional module adds authored source for `profile migrate`, `scope add`, sco
 `source add|configure|list|enable|disable|pause|resume|backfill`,
 `project map|unmap|exclude|include|suggest|list`, `policy get|set`,
 `session search|read|delete|restore|export|import`, `summary search`,
-`candidate list|accept|reject`, `derive assign|run`, `promote request|list|withdraw`,
+`candidate list|accept|reject`, `derive assign|retry|run`, `promote request|list|withdraw`,
 `bridge grant`, `aggregation grant`, and `hint`. Global `--daemon-home` selects the
 private daemon directory; `--home` still selects the profile.
 
@@ -355,10 +355,14 @@ the exported origin and native IDs are preserved on reimport. `session import
 --source ID --file /ABS/export.jsonl` uses the source's existing consent and
 approved paths; it does not grant capture or implicit historical backfill.
 
-`candidate accept --id ID [--text 'reviewed assertion']` preserves explicit human
+`candidate accept --id ID --revision OBSERVED_REVISION [--text 'reviewed assertion']` preserves explicit human
 edits. `session delete --session ID --keep-insight ID1,ID2` keeps selected assertions
-only as independent owner-authored statements, with no generator or source
-evidence. Other dependent accepted insights are withdrawn. Deletes preserve
+only as independent owner-key-authorized statements with a proof for the exact
+new revision, no generator and no source evidence. Ordinary evidence-bearing
+review is writer-attested; it does not cryptographically prove human review.
+Candidate reject also requires --revision. Rejecting an independent assertion
+returns an instruction to use separately authorized explicit deletion; edits or
+accepts require a fresh owner proof. Other dependent accepted insights are withdrawn. Deletes preserve
 immutable history and suppression; they are not physical erasure.
 
 Aggregation policy contains signed grant record IDs, not unsigned scope bundles.

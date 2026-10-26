@@ -29,7 +29,7 @@ Use the authored CLI command reference in [daemon operation](daemon.md) and [Go 
 
 Start with [synthetic adapter examples](../contracts/adapters/) and the documented import format. Keep source configuration private. Add/preview a source while disabled, approve an explicit project map and version pin, and inspect omissions before enabling capture. No harness version is runtime-accepted merely because its prefix matches. Unknown shapes/versions must quarantine visibly.
 
-Enabling capture establishes a future-only baseline. Historical backfill is a separate bounded request with explicit streams, time and byte bounds. Capture, publication, derivation, auto acceptance and cross-vault promotion are independent opt-ins. Pause requires a later explicit include/skip resolution. Disabling with withdrawal holds unpublished source revisions durably; manual sync must honor those holds.
+Enabling capture establishes a future-only baseline. Historical backfill is a separate bounded request with explicit streams, time and byte bounds. Capture, publication, derivation, auto acceptance and cross-vault promotion are independent opt-ins. Pause requires a later explicit include/skip resolution. Disabling with withdrawal holds unpublished automatic descendants durably; manual sync must honor those holds.
 
 T3 setup uses an **owner-configured future token file**, never an agent-discovered credential. The token is broad upstream: `orchestration:read` also reads server-readable files. The Capsule adapter uses only pinned allowlisted GET history routes with protocol 2, expected environment and owner version pins. Missing credentials report unavailable. Do not paste the token into prompts, fixtures, logs or source. Claude/Codex routes read version-pinned files; no SDK or Codex App Server is started.
 
@@ -59,12 +59,26 @@ Transcript events are escaped JSON lines inside a fixed transcript wrapper; the 
 
 ## 5. Verify review, grants and lifecycle with synthetic evidence
 
-Use [verification scenarios](verification.md#optional-session-module-acceptance-not-run). Exercise candidate accept/edit/reject and rerun suppression. Auto acceptance is separately off by default and limited to explicit project facts with user evidence, no contradictions and no promotion. Candidate normalization lowercases and collapses ASCII whitespace; it does not provide Unicode NFC or semantic paraphrase deduplication.
+Use [verification scenarios](verification.md#optional-session-module-acceptance-not-run). Exercise candidate accept/edit/reject using --revision from the displayed row,
+and rerun suppression. A changed head must reject the decision. Owner-only
+independent assertions need a fresh owner proof after edits/accept; reject directs
+the caller to separately authorized explicit deletion. Use derive retry --job KEY
+for an eligible failed/cancelled derivation; completed and consent-held jobs remain
+terminal. Auto acceptance is separately off by default and limited to explicit project facts with user evidence, no contradictions and no promotion. Candidate normalization lowercases and collapses ASCII whitespace; it does not provide Unicode NFC or semantic paraphrase deduplication.
 
 Personal weekly aggregation needs an owner-signed named grant. Every destination reader must also hold every source scope; attempt a later incompatible device grant/revocation and require rejection. Grant revocation updates the same grant record. Remote assignments need current author access to all inputs and destination, exact same-scope rules for session/project jobs and a valid aggregation grant for personal jobs. Derivation withdrawal cancels leased tokens so late results cannot commit.
 
 Cross-vault promotion remains `off`. An explicit future setup can enable `enabled_unaccepted`, which is not runtime acceptance. The target owner's grant identifies the **target profile signing device** and one project/personal scope. The source profile retains separate source identity. Knowledge, lifecycle and grant must share the target scope; legacy memory APIs must never expose v2 bodies. Queue destination stays the source scope; actual targets come from the durable projection row and are independently authorized.
 
-Read historical knowledge with its `current:false` and last verified time/heads. Strict reads must reconcile source scopes during that request and hide on offline/busy/incomplete/timeout conditions. Re-attestation after 24 hours is maintenance, not proof of currentness. Delete/correct an input and verify immediate local transitive hiding, eventual target withdrawal and no resurrection after late chunks, reimport or rebuild. Retained insights must become explicit independent owner assertions with empty evidence and no generator.
+Read historical knowledge with its `current:false` and last verified time/heads. Strict reads must reconcile source scopes during that request and hide on offline/busy/incomplete/timeout conditions. Re-attestation after 24 hours is maintenance, not proof of currentness. Delete/correct an input and verify immediate local transitive hiding, eventual target withdrawal and no resurrection after late chunks, reimport or rebuild. Retained insights must become independent owner assertions with an exact-revision
+owner proof, empty evidence and no generator. Replay and rebuild verify the proof.
+The same-record kept assertion may remain private with waiting_ancestry if its
+required parent was never published or is held. This preserves a valid local
+assertion and the revision DAG; it is not proof failure or authority to publish
+the held parent. No fresh-root re-authoring CLI is introduced here.
+Exercise queued/leased work before withdrawal, target-first crash recovery and
+repeated invalidation generations. Cross-vault target publication requires the
+source profile to be open for a fresh consent check; withdrawal is asynchronous
+for already-submitted or published bytes.
 
 Record saved-here, published and summarized separately. Inspect source gaps, quarantine, pending bytes, failed/blocked jobs, stale dependencies, replay coverage and `cache_eviction: not_implemented`. Replay remains one record per page and about 100 pages per tick; backfills can take many ticks. Stop the foreground daemon and owner-run local model when done. Do not install packaging templates or hooks without a separate request.

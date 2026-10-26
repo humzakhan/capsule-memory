@@ -1,0 +1,142 @@
+{
+  "status": "HAND_AUTHORED ORDERING RECIPES; NOT RUN",
+  "cases": [
+    {
+      "case": "append",
+      "order": [
+        "acknowledge bytes A",
+        "append bytes B",
+        "poll"
+      ],
+      "expected": "resume A offset in same generation; bounded prefix and acknowledged-tail checks"
+    },
+    {
+      "case": "rewrite",
+      "order": [
+        "acknowledge A",
+        "same-size modify file or change bounded digest",
+        "poll"
+      ],
+      "expected": "bounded reconcile generation; unresolved positional rewrite quarantines"
+    },
+    {
+      "case": "terminal_link",
+      "order": [
+        "lease project generation 1",
+        "owner withdraw generation 2",
+        "finish invalidation",
+        "resume old project"
+      ],
+      "expected": "old token/generation rejected; authenticated terminal target history prevents restore"
+    },
+    {
+      "case": "concurrent_terminal",
+      "order": [
+        "terminal source revision",
+        "concurrent/later nonterminal revision",
+        "replay and rebuild"
+      ],
+      "expected": "terminal intent retained for exact link binding"
+    },
+    {
+      "case": "target_first",
+      "order": [
+        "commit target",
+        "crash before source receipt",
+        "withdraw source consent",
+        "retry publication"
+      ],
+      "expected": "target automatic bytes held; source unavailable retains bytes; old source job cannot finalize newer generation"
+    },
+    {
+      "case": "repeat_invalidation",
+      "order": [
+        "invalidate",
+        "restore accepted source",
+        "invalidate same reason again"
+      ],
+      "expected": "new logical generation runs; generic done jobs remain deduplicated"
+    },
+    {
+      "case": "uncited_consumed",
+      "order": [
+        "infer using events A B C; cite A only",
+        "retract B before commit"
+      ],
+      "expected": "input fingerprint mismatch rolls back; if retracted after commit influence hides output"
+    },
+    {
+      "case": "surviving_ranges",
+      "order": [
+        "retract B",
+        "derive from A C"
+      ],
+      "expected": "separate exact surviving ranges; unconsumed B is not influence"
+    },
+    {
+      "case": "correction_order",
+      "order": [
+        "correction before target event",
+        "target event before correction",
+        "rebuild"
+      ],
+      "expected": "equivalent retraction index and visibility; closure overflow rolls back cursor"
+    },
+    {
+      "case": "candidate_race",
+      "order": [
+        "show revision R",
+        "concurrent head S",
+        "accept R"
+      ],
+      "expected": "expected revision and explicit ancestry reject unobserved S"
+    },
+    {
+      "case": "fresh_unknown",
+      "order": [
+        "target lifecycle valid",
+        "source offline or busy",
+        "historical/strict read"
+      ],
+      "expected": "historical current:false with reason; strict hidden; no destructive lifecycle mutation"
+    },
+    {
+      "case": "t3_idle",
+      "order": [
+        "complete bounded history walk",
+        "poll same sequence",
+        "poll changed sequence"
+      ],
+      "expected": "idle skips old history; changed sequence reconciles boundedly; stalled/oversized pages quarantine"
+    },
+    {
+      "case": "private_parent_cleanup",
+      "order": [
+        "target assertion remains local or ambiguously submitted",
+        "source consent withdrawn or source unavailable",
+        "publish opaque target cleanup marker before private assertion exists remotely"
+      ],
+      "expected": "dependent tombstone stays queued; exact bridge-authorized root marker publishes only after its owner grant is published; no held parent release or poisoned replay"
+    },
+    {
+      "case": "marker_target_only",
+      "order": [
+        "replay owner bridge grant",
+        "replay opaque marker with no knowledge/source revision",
+        "later receive knowledge or nonterminal/conflicting/deleted marker head",
+        "rebuild"
+      ],
+      "expected": "terminal history hides only exact logical link/source/target binding; no private revision needed; malformed/invalid authority fails closed; nonterminal cleanup can retire under newer generation"
+    },
+    {
+      "case": "same_record_owner_keep_private_parent",
+      "order": [
+        "insight parent remains private or consent-held",
+        "DeleteSession keep seals a verified independent assertion on the same record",
+        "attempt publication without confirmed parent receipt",
+        "compare with already-published or replayed ancestry"
+      ],
+      "expected": "valid retained local assertion reports waiting_ancestry; proof severs evidence/consent dependencies but preserves the DAG; published ancestry permits normal publication; no implicit clone/delete/new ID, grant widening, ancestry skip or held-parent upload; no fresh-root CLI is implied"
+    }
+  ]
+}

@@ -27,6 +27,29 @@ Plaintext body cache eviction is **not implemented**, including for published re
 
 ## Next evidence
 
+The combined repair pass adds terminal link generations, exact consumed-event
+influence and snapshot checks, transitive consent holds, indexed affected-group
+refresh, append-preserving capture, durable T3 completion, fair session scheduling,
+expected-revision candidate decisions and independently verified G5 owner proofs.
+Contracts include hand-authored recipes only; no signatures or computed vectors
+were fabricated. Cross-vault target publication retains queued automatic bytes
+until source consent can be checked. Independent exact-revision review and all
+execution acceptance remain pending.
+
+Cleanup publication preserves revision ancestry. A child tombstone or lifecycle
+change waits when its parent is local-only, held or lacks a confirmed receipt;
+replayed and acknowledged parents can publish normally. Minimal independent
+withdrawal markers can publish without private assertion revisions, using the
+existing authenticated scope/bridge-grant binding. Status separates held bytes,
+`waiting_ancestry`, cleanup waiting on ancestry and pending/ready markers.
+
+DeleteSession keep retains the same insight record. Its verified owner proof
+severs evidence and consent dependencies, not revision ancestry. A kept assertion
+whose parent remains private/held is valid retained local work with
+`waiting_ancestry`, not proof failure. No implicit clone, new ID, wider grant,
+ancestry skip or held-parent upload occurs. This pass adds no fresh-root owner
+CLI; empty-record PrepareOwnerInsight remains an internal capability.
+
 The coordinator must checkpoint the integrated source and complete independent source review. The owner can then use the [runbook](run-session.md) on an explicitly permitted machine/job, with disposable synthetic profiles and a local model. Preserve the exact commit, tool versions, commands, failures and retained artifacts. A skipped or unavailable check remains NOT RUN.
 
 ## Integration representation

@@ -30,7 +30,7 @@ func(h *Host) register(){
 		{ops.CapCandidateReview,[]string{"candidate.accept","candidate.reject"}},
 		{ops.CapSessionRead,[]string{"session.search","session.read"}},
 		{ops.CapHint,[]string{"capture.hint"}},
-		{ops.CapAdmin,[]string{"admin.source.add","admin.source.configure","admin.source.list","admin.source.enable","admin.source.disable","admin.source.pause","admin.source.resume","admin.source.backfill","admin.project.map","admin.project.unmap","admin.project.exclude","admin.project.include","admin.project.suggest","admin.project.list","admin.policy.get","admin.policy.set","admin.session.delete","admin.session.restore","admin.session.export","admin.session.import","admin.derive.assign","admin.derive.run","admin.promote.request","admin.promote.list","admin.promote.withdraw","admin.bridge.grant","admin.aggregation.grant","admin.sync.now","admin.scope.add","admin.device.create","admin.device.grant","admin.device.revoke","admin.rebuild","admin.skill.approve","admin.skill.activate","admin.legacy.status","admin.profile.info"}},
+		{ops.CapAdmin,[]string{"admin.source.add","admin.source.configure","admin.source.list","admin.source.enable","admin.source.disable","admin.source.pause","admin.source.resume","admin.source.backfill","admin.project.map","admin.project.unmap","admin.project.exclude","admin.project.include","admin.project.suggest","admin.project.list","admin.policy.get","admin.policy.set","admin.session.delete","admin.session.restore","admin.session.export","admin.session.import","admin.derive.assign","admin.derive.retry","admin.derive.run","admin.promote.request","admin.promote.list","admin.promote.withdraw","admin.bridge.grant","admin.aggregation.grant","admin.sync.now","admin.scope.add","admin.device.create","admin.device.grant","admin.device.revoke","admin.rebuild","admin.skill.approve","admin.skill.activate","admin.legacy.status","admin.profile.info"}},
 	}{for _,name:=range v.names{register(name,v.cap)}}
 }
 func(h *Host) dispatch(ctx context.Context,p *Profile,g ops.Grant,name string,in Params)(any,error){
@@ -44,8 +44,8 @@ func(h *Host) dispatch(ctx context.Context,p *Profile,g ops.Grant,name string,in
 	case "memory.store","memory.delete","memory.restore":op:="";if name=="memory.delete"{op="delete"};if name=="memory.restore"{op="restore"};authorSource:="harness";if g.Has(ops.CapAdmin){authorSource=""};return svc.Write(ctx,memory.WriteInput{Scope:in.Scope,Kind:in.Kind,Text:in.Text,TextSet:in.TextSet,Record:in.ID,Parents:in.Parents,Operation:op,Source:authorSource})
 	case "knowledge.search":if in.Mode==""{in.Mode="historical"};return p.Derive.SearchKnowledgeMode(ctx,g,in.Query,in.Limit,in.Mode)
 	case "candidate.list":return p.Derive.ListCandidates(ctx,g,in.Scope,in.Review,in.Limit)
-	case "candidate.accept":return p.Derive.Accept(ctx,g,in.ID,in.EditedText)
-	case "candidate.reject":return p.Derive.Reject(ctx,g,in.ID)
+	case "candidate.accept":return p.Derive.Accept(ctx,g,in.ID,in.Revision,in.EditedText)
+	case "candidate.reject":return p.Derive.Reject(ctx,g,in.ID,in.Revision)
 	case "session.search":return sess.Search(ctx,g,in.Query,in.Limit)
 	case "session.read":return sess.ReadSession(ctx,g,in.Session,in.Branch,in.From,in.MaxBytes)
 	case "capture.hint":sess.Hint(in.Source,in.Stream);return map[string]any{"hinted":true},nil
@@ -68,6 +68,7 @@ func(h *Host) dispatch(ctx context.Context,p *Profile,g ops.Grant,name string,in
 	case "admin.session.restore":return sess.RestoreSession(ctx,in.Session)
 	case "admin.session.export":return sess.ExportSnapshotPage(ctx,in.Session,in.From,in.MaxBytes,in.Snapshot)
 	case "admin.session.import":s,e:=sess.Source(ctx,in.Source);if e!=nil||s.Harness!="import"{return nil,memory.ErrInvalid};return sess.ImportStream(ctx,s,in.Path)
+	case "admin.derive.retry":return nil,svc.RetryJob(ctx,in.Job)
 	case "admin.derive.assign":return nil,p.Derive.Assign(ctx,in.Job,in.Device)
 	case "admin.derive.run":return p.Derive.RunOnce(ctx)
 	case "admin.promote.request":return h.BridgeFor(p.Name).Request(ctx,in.Insight,in.TargetProfile,in.TargetScope)

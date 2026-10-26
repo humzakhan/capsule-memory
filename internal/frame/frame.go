@@ -59,6 +59,7 @@ func Decode(b []byte) (byte,[]byte,error) {
  }
  if !utf8.Valid(out)||strictjson.Unique(out)!=nil{return 0,nil,ErrMalformed}
  var logical map[string]json.RawMessage;var version int
- if json.Unmarshal(out,&logical)!=nil||json.Unmarshal(logical["schema_version"],&version)!=nil||version!=2{return 0,nil,ErrMalformed}
+ if json.Unmarshal(out,&logical)!=nil||json.Unmarshal(logical["schema_version"],&version)!=nil{return 0,nil,ErrMalformed}
+ if version>2{return 0,nil,ErrUnsupported};if version!=2{return 0,nil,ErrMalformed}
  return b[6],out,nil
 }

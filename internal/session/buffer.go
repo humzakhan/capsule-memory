@@ -36,7 +36,7 @@ func(m *Module) flushBuffer(ctx context.Context,src capture.Source,st capture.St
   auditErr:=m.svc.Update(ctx,func(tx *sql.Tx)error{if e:=auditGap(ctx,tx,src.ID,st.Key,pending.changes.Next.Position,"rewrite_unresolved",1);e!=nil{return e};return quarantineStream(ctx,tx,src.ID,st.Key,"rewrite_unresolved")})
   if auditErr!=nil{pending.retry=true;m.buffers[key]=pending;return result,auditErr};delete(m.buffers,key);return result,e
  }
- if errors.Is(e,memory.ErrLeaseLost){delete(m.buffers,key);return result,e};if e==nil&&result.Blocked==""{delete(m.buffers,key)}else{pending.retry=true;m.buffers[key]=pending};return result,e
+ if errors.Is(e,memory.ErrLeaseLost){delete(m.buffers,key);return result,e};if e==nil&&(result.Blocked==""||result.Blocked=="suppressed_match"||result.Blocked=="lineage_bound"||result.Blocked=="chunk_metadata_bound"){delete(m.buffers,key)}else{pending.retry=true;m.buffers[key]=pending};return result,e
 }
 // FlushPending retries a failed commit before the adapter can read more bytes.
 // Time-based flushing also runs when a source has stopped appending.

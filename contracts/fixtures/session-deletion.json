@@ -50,5 +50,5 @@
       }
     }
   ],
-  "expectation": "All manifests sharing the key and late chunks hide. Summary_0001 is transitively stale. Reimport is suppressed. A retained independent owner insight has evidence:[], no generator, explicit basis, accepted/edited review and reviewer."
+  "expectation": "All manifests sharing the key and late chunks hide. summary_0001 is transitively stale. Reimport is suppressed. A retained independent owner insight requires evidence:[], no generator, explicit basis, accepted/edited review, reviewer equal to its revision author and an owner_proof bound to that exact revision, operation, ordered ancestry and proof-free body digest. No valid owner signature is fabricated here; see session-owner-proof.json."
 }

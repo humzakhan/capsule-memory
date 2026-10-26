@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strings"
+	"strconv"
 	"time"
 
 	"github.com/humzakhan/capsule-memory/internal/memory"
@@ -17,10 +18,10 @@ func Install(svc *memory.Service){
 	// Device identity is checked from revision-independent profile metadata by job appliers.
 	for _,kind:=range []string{records.KindSummary,records.KindInsight,records.KindJob}{svc.RegisterApplier(kind,&applier{svc:svc,kind:kind})}
 	svc.OnStale(func(ctx context.Context,tx *sql.Tx,affected []memory.StaleRef)error{
-		for _,ref:=range affected{if ref.Kind!=records.KindSummary{continue};hh,deleted,err:=svc.Heads(ctx,tx,ref.Scope,ref.Record);if err!=nil{return err};if deleted||len(hh)!=1{continue};var summary records.Summary;if json.Unmarshal(hh[0].Body,&summary)!=nil{return memory.ErrInvalid};visible,err:=memory.IsVisible(ctx,tx,summary.Subject);if err!=nil{return err};if !visible{continue}
+		for _,ref:=range affected{if ref.Kind!=records.KindSummary{continue};hh,deleted,err:=svc.Heads(ctx,tx,ref.Scope,ref.Record);if err!=nil{return err};if deleted||len(hh)!=1{continue};var summary records.Summary;if json.Unmarshal(hh[0].Body,&summary)!=nil{return memory.ErrInvalid};if summary.Level=="window"{continue};visible,err:=memory.IsVisible(ctx,tx,summary.Subject);if err!=nil{return err};if !visible{continue}
 			kind:="session_digest";priority:=2;if summary.Level=="project_day"{kind="project_rollup";priority=3};if summary.Level=="personal_week"{kind="personal_rollup";priority=3}
 			inputs:=[]records.SourceRef{};for _,old:=range summary.SourceHeads{var scope string;if tx.QueryRowContext(ctx,"SELECT scope FROM revisions WHERE record=? LIMIT 1",old.Record).Scan(&scope)!=nil{continue};heads,del,e:=svc.Heads(ctx,tx,scope,old.Record);if e!=nil{return e};if del{continue};for _,h:=range heads{inputs=append(inputs,records.SourceRef{Record:h.Record,Revision:h.ID,Kind:h.Kind})}}
-			if len(inputs)>0{if _,err=svc.EnqueueJob(ctx,tx,memory.JobSpec{Kind:kind,Scope:ref.Scope,Subject:summary.Subject,Destination:ref.Scope,Inputs:inputs,Priority:priority,Versions:summary.Generator.Model+"|"+summary.Generator.PromptVersion+"|"+summary.Generator.PolicyVersion});err!=nil{return err}}
+			var generation int64;if err=tx.QueryRowContext(ctx,"SELECT since FROM stale WHERE record=?",ref.Record).Scan(&generation);err!=nil{return err};if len(inputs)>0{if _,err=svc.EnqueueJob(ctx,tx,memory.JobSpec{Kind:kind,Scope:ref.Scope,Subject:summary.Subject,Destination:ref.Scope,Inputs:inputs,Priority:priority,Versions:summary.Generator.Model+"|"+summary.Generator.PromptVersion+"|"+summary.Generator.PolicyVersion+"|stale/"+strconv.FormatInt(generation,10)});err!=nil{return err}}
 		};return nil
 	})
 }
@@ -28,16 +29,16 @@ func (a *applier) Apply(ctx context.Context,tx *sql.Tx,r memory.Revision,origin 
 	if r.Operation=="delete"{if _,err:=tx.ExecContext(ctx,"DELETE FROM session_search WHERE record=?",r.Record);err!=nil{return err};_,err:=a.svc.MarkStale(ctx,tx,[]string{r.Record},"source_deleted");return err}
 	switch r.Kind{
 	case records.KindSummary:
-		var s records.Summary;if json.Unmarshal(r.Body,&s)!=nil{return memory.ErrInvalid};deps:=append(append([]records.SourceRef{},s.Sources...),s.Primary...);for _,finding:=range s.Findings{deps=append(deps,finding.Evidence...)};deps=uniqueRefs(deps);if err:=a.svc.SetDeps(ctx,tx,r,deps);err!=nil{return err};if err:=a.svc.SetCoverageDeps(ctx,tx,r,s.SourceHeads);err!=nil{return err}
+		var s records.Summary;if json.Unmarshal(r.Body,&s)!=nil{return memory.ErrInvalid};deps:=append(append([]records.SourceRef{},s.Sources...),s.Primary...);for _,finding:=range s.Findings{deps=append(deps,finding.Evidence...)};deps=uniqueRefs(append(deps,s.Influence...));if err:=a.svc.SetDeps(ctx,tx,r,deps);err!=nil{return err};if err:=a.svc.SetCoverageDeps(ctx,tx,r,s.SourceHeads);err!=nil{return err}
 		text:=[]string{};for _,f:=range s.Findings{text=append(text,f.Text)};if err:=a.index(ctx,tx,r,s.Subject,strings.Join(text,"\n"));err!=nil{return err}
 		if origin==memory.ApplyReplay&&s.Level!="window"{if _,err:=tx.ExecContext(ctx,"UPDATE jobs SET state='done',result_record=?,attempt_token=NULL,lease_until=NULL WHERE job_key=? AND scope=? AND destination=? AND state NOT IN ('cancelled','done')",r.Record,s.Generator.JobKey,r.Scope,r.Scope);err!=nil{return err}}
-		return a.svc.RecomputeStale(ctx,tx)
+		return nil
 	case records.KindInsight:
-		var in records.Insight;if json.Unmarshal(r.Body,&in)!=nil{return memory.ErrInvalid};deps:=append(append([]records.SourceRef{},in.Evidence...),in.Contradictions...);if err:=a.svc.SetDeps(ctx,tx,r,deps);err!=nil{return err}
+		if e:=a.svc.VerifyOwnerInsight(r);e!=nil{return e};var in records.Insight;if json.Unmarshal(r.Body,&in)!=nil{return memory.ErrInvalid};deps:=append(append([]records.SourceRef{},in.Evidence...),in.Contradictions...);deps=append(deps,in.Influence...);if err:=a.svc.SetDeps(ctx,tx,r,deps);err!=nil{return err}
 		// A human decision on any head suppresses regeneration. Rejection wins this cache tie;
 		// retrieval still exposes all conflicting heads and never resolves by this cache.
 		if _,err:=tx.ExecContext(ctx,"INSERT INTO candidate_keys(candidate_key,record,review) VALUES(?,?,?) ON CONFLICT(candidate_key) DO UPDATE SET record=CASE WHEN candidate_keys.review IN ('accepted','edited','rejected') THEN candidate_keys.record ELSE excluded.record END,review=CASE WHEN candidate_keys.review IN ('accepted','edited','rejected') THEN candidate_keys.review ELSE excluded.review END",in.CandidateKey,r.Record,in.Review);err!=nil{return err}
-		if err:=a.index(ctx,tx,r,in.ProjectID,in.Assertion);err!=nil{return err};return a.svc.RecomputeStale(ctx,tx)
+		if err:=a.index(ctx,tx,r,in.ProjectID,in.Assertion);err!=nil{return err};return nil
 	case records.KindJob:
 		var j records.Job;if json.Unmarshal(r.Body,&j)!=nil{return memory.ErrInvalid}
 		info,err:=a.svc.Info(ctx);if err!=nil{return err};if j.AssignedDevice!=info.Device{return nil}

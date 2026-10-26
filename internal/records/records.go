@@ -120,6 +120,8 @@ type Finding struct {
 	Evidence []SourceRef `json:"evidence" cm:"required"` // >=1 except open_question
 }
 type Summary struct {
+	Influence []SourceRef `json:"influence" cm:"required"`
+	InputFingerprint string `json:"input_fingerprint" cm:"required"`
 	Level       string      `json:"level" cm:"required"`   // "window"|"session"|"project_day"|"personal_week"
 	Subject     string      `json:"subject" cm:"required"` // session record id | project id | personal scope id
 	PeriodStart string      `json:"period_start,omitempty"`
@@ -133,6 +135,8 @@ type Summary struct {
 	Generator   Generator   `json:"generator" cm:"required"`
 }
 type Insight struct {
+
+	Influence []SourceRef `json:"influence,omitempty"`
 	Type           string      `json:"type" cm:"required"`      // "memory"|"decision"
 	Category       string      `json:"category" cm:"required"`  // "fact"|"preference"|"constraint"|"lesson"|"choice"|"idea"|"rejected_alternative"
 	Assertion      string      `json:"assertion" cm:"required"` // <=4096
@@ -148,6 +152,7 @@ type Insight struct {
 	CandidateKey   string      `json:"candidate_key" cm:"required"`           // §8.5
 	Supersedes     []string    `json:"supersedes,omitempty"`
 	Generator      *Generator  `json:"generator,omitempty"`     // nil for human-authored
+	OwnerProof *OwnerProof `json:"owner_proof,omitempty"`
 }
 type ScopedRef struct { Vault string `json:"vault" cm:"required"`; Scope string `json:"scope" cm:"required"`; Record string `json:"record" cm:"required"`; Revision string `json:"revision,omitempty"` }
 type Attestation struct {
@@ -157,6 +162,9 @@ type Attestation struct {
 	Coverage     string `json:"coverage" cm:"required"`      // "complete"|"partial"
 }
 type Projection struct {
+	Generation int64 `json:"generation" cm:"required"`
+	OwnerWithdrawn bool `json:"owner_withdrawn,omitempty"`
+ WithdrawalMarker bool `json:"withdrawal_marker,omitempty"`
 	LinkID       string      `json:"link_id" cm:"required"`
 	Role         string      `json:"role" cm:"required"`     // "source"|"target"
 	Source       ScopedRef   `json:"source" cm:"required"`

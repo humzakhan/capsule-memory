@@ -68,6 +68,10 @@ The following are authored synthetic scenarios, not test results. The session ta
 | Weekly aggregation followed by reader grant widening/revocation | Owner signature required; reader subset checked at grant change, run and commit |
 | Promotion crash after target commit, same-vault scopes, target-only replica | Idempotent exact v2 knowledge/lifecycle; strict target-only hidden; legacy APIs reject every v2 kind |
 | Live strict read during publish contention, source outage, incomplete catch-up or dependency edit | Ten-second request bound and fail closed; historical labels never imply currentness |
-| Source delete/keep-insight/reimport across two capture devices | Every matching manifest suppressed; retained independent assertion has no generator/evidence; no stale resurrection |
+| Source delete/keep-insight/reimport across two capture devices | Every matching manifest suppressed; retained independent assertion has no generator/evidence and a fresh exact-revision owner proof; no stale resurrection |
+| Missing, copied, non-owner or mutated owner proof; mismatched Reviewer/Author; rebuild without prior decrypt | Fail closed on shape/signature/context/content; no skipped replay or rebuild acceptance |
+| Independent owner edit/accept/reject and future restore | Fresh proof for edit/accept/restore; non-owner keep/restore fails; reject directs separately authorized explicit delete |
+| Target commit/source-receipt crash, late consent withdrawal, router missing/error and source-loss cleanup | Automatic exports retained/held by exact source ancestry; cleanup publishable; no silent hold release |
+| Private/ambiguous parent versus replayed/acknowledged parent; marker before knowledge; target-only replay and rebuild | No child POST before durable parent; opaque authenticated root marker needs no private assertion; invalid/unrelated marker rejected or cannot hide another binding |
 
 A manual walkthrough should inspect both primary and intermediate evidence, contradictions, completeness and untrusted labels without granting `session.read` implicitly. Search and returned snippets must respect scopes. Cross-vault withdrawal is asynchronous, and already disclosed plaintext is not recoverable. Cache eviction, binary attachments, cloud inference, embeddings, destructive retention and universal resumption remain outside acceptance.

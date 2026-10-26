@@ -93,7 +93,11 @@ missing or superseded sources hide dependents. An invalidation closure over
 staleness after deterministic applier order, while retaining durable local state.
 
 An evidence-free insight is permitted only for an independent owner assertion:
-no generator, explicit basis, accepted/edited review and a reviewer identity.
+no generator, explicit basis, accepted/edited review, empty evidence, contradictions
+and influence, and a verified `owner_proof` bound to this exact revision.
+`Reviewer` must equal the revision author. A device signature alone cannot claim
+this exception. Ordinary evidence-bearing review remains writer-attested; it is
+not cryptographic proof of human review or owner authority.
 Keeping an insight during session deletion writes that independent form; it does
 not retain a false evidence claim. This exception does not authorize automatic
 model acceptance or projection of auto-accepted material.
@@ -196,6 +200,154 @@ bridge grant, aggregation grant, job, then transitive stale state.
 
 ## Remaining acceptance
 
+The source repair contract below supersedes earlier implementation handoff
+wording about append reconciliation, citation-only influence and shape-only G5.
+
+### Exact owner assertions
+
+`OwnerProof{payload,signature}` is appended after Generator in Insight and omitted
+from ordinary bodies. The payload is strict standard-base64 JSON of
+`OwnerAssertionBody`, in this field order: version, vault_id, scope_id, record_id,
+revision_id, operation_id, operation, parents, restores, author_device_id,
+content_sha256. Version is 1; operation is put, resolve or restore. Ordered parents
+and restores bind the revision exactly; empty ancestry compares consistently with
+nil and creation emits empty arrays. IDs use the ordinary ID bounds; each ancestry
+list has at most 128 entries. The hash is lowercase SHA-256 of
+`json.Marshal(records.Insight)` with OwnerProof nil. Future insight fields must
+be omitted when empty to preserve old proof-free serialization.
+
+`PrepareOwnerInsight` requires the local owner key and seals after revision IDs,
+operation, author and parents exist. Existing `sign` / `OwnerSign` /
+`VerifyOwner` helpers sign the new domain using the existing pinned OwnerPublic.
+Decrypt checks local commits, replay and pending retries. The insight applier
+independently checks shape, missing proof, signature and every binding on rebuild.
+Retries retain the exact prepared envelope and proof. Invalid signed records
+fail closed without advancing replay; revoking their writer does not repair
+poison already journaled. Owner-key rotation is outside this contract.
+
+Owner edits or accepts of an independent assertion require a fresh proof.
+Candidate reject returns an actionable instruction to use a separately authorized
+explicit delete; it creates no new delete grant. Tombstones keep existing writer
+semantics. A future independent-insight restore must bind fresh IDs and restores;
+session restore restores manifests, not withdrawn insights.
+
+### Repair wire and local storage amendments
+
+Summary now requires `influence` and `input_fingerprint`; Insight adds optional
+`influence`. Influence contains every consumed prompt event, merged only across
+contiguous surviving array positions, independently of selected citations.
+Intermediate-summary influence propagates transitively. Coverage-only inputs
+never claim influence. Input fingerprints include rendered lines, heads, gaps and
+omissions; final/window commits and cached windows compare exact snapshots.
+Reference arrays allow 16,384 refs; job inputs remain 4,096. Dependency unions
+are bounded to 32,768 before coverage edges; overflow rejects, never truncates.
+
+Projection requires positive integer `generation` and adds optional
+`owner_withdrawn`, valid only with state withdrawn. OwnerWithdrawn is terminal for
+the exact logical link/source/target vault, scope and record binding across
+concurrent heads, later heads, replay and rebuild. It authenticates author intent
+through the envelope, separately from the G5 owner-key proof. Source coordination
+retains monotonic generation and terminal intent; jobs carry decimal generation
+in Versions, attempt tokens and observed source parents. Old work cannot finalize
+a new generation or write over authenticated target withdrawal. New promotion
+after withdrawal needs a new explicit request/link.
+
+Derived `projection_records` preserves every record/scope/link/role/target variant;
+`knowledge` keys link/scope/record. Historical terminal assertions remain indexed
+through deletion. Retrieval uses these indexes plus exact heads and grants.
+`manifest_origins`, `manifest_bindings` and `event_lookup` locate affected view
+groups and exact events. Correction apply indexes only that revision; immutable
+correction history is rebuilt only on rebuild. Stale refresh walks affected
+descendants, preserves unchanged markers and fires hooks only on transitions.
+Rebuild pages revisions and reconciles manifest groups separately. Closure
+overflow rolls back the whole operation and replay cursor.
+
+Local `projections` also pins source_vault, source_scope and target_vault, alongside
+source/target records and scope. This binding lets terminal intent survive even a
+later lifecycle tombstone without selecting an unrelated conflicting body.
+Cleanup can finish in durable coordination without implicitly restoring that
+deleted source lifecycle.
+
+Durable `consent_roots(revision,source_id)` and `outbox_hold` survive rebuild and
+re-enable. Withdrawal follows exact historical ancestry, holds unpublished
+automatic descendants and cancels affected leases. Derive/bridge commits recheck
+consent. Before upload, cross-vault target descendants require a source-profile
+consent check; unavailable source retains bytes locally, withdrawn consent adds
+a durable target hold. Already submitted bytes and published data cannot be
+recalled by this mechanism. It does not replace explicit archive deletion.
+
+The publish check runs immediately before POST, after closing target query rows,
+without a writer lock, nested cross-profile transactions or network under a
+writer lock. Router matching uses source vault/scope/record/revision and exact
+dependency ancestry, never a profile or link name as authority. Missing ancestry,
+nil router and router errors retain bytes temporarily; only confirmed withdrawal
+creates a durable hold. Every matching local source copy must be checkable.
+Cleanup tombstones and hidden/withdrawn lifecycle records are exempt from
+automatic export holds so source loss cannot prevent cleanup publication.
+Publication also requires every same-record parent to be known durable: either
+replayed from the relay, or a local outbox revision with an acknowledged receipt.
+A local-only or ambiguously submitted parent stays unconfirmed. Cleanup cannot
+release held parents or POST a child that would poison replica replay.
+
+Projection adds `withdrawal_marker:true` for minimal opaque cleanup. Source
+manual terminal intent uses a separate source-withdrawal record; target
+hidden/withdrawn intent uses a separate target-cleanup record. First marker
+revisions are independent roots; later marker-only ancestry is checked normally.
+They carry exact logical link/source/target vault, scope and record, generation,
+state/terminal intent and bridge grant. Both private revision IDs are omitted,
+dependencies are [], attestation absent and text_sha256 is the reserved all-zero
+sentinel, not an assertion digest. Projected/pending markers are invalid.
+Source markers require terminal owner intent; target markers require authenticated
+target scope authority and either historical same-vault source scope authority
+or the exact verified owner bridge grant for author/vaults/target scope.
+The applier/rebuild checks this independently of private source/target presence;
+pre-POST additionally requires the matching grant to be known published.
+Normal projections gain no ancestry exemption. Invalid/unrelated markers cannot
+hide a different logical link/binding. Terminal marker history survives later,
+conflicting or deleted heads and rebuild. Recoverable hidden markers are retired
+in the same target transaction as a newer valid projection; terminal history
+still prevents an owner-withdrawn link from returning.
+
+Cleanup with unpublished private parents remains queued while its independent
+marker can publish safely. `publication_block` records informational temporary
+reasons without releasing holds. Capture status exposes per-scope Held,
+PublicationBlocked, WaitingAncestry, CleanupWaitingAncestry, PendingMarkers and ReadyMarkers.
+Ready marker counts check parent publication and authenticated published grants
+in the local snapshot; MarkerStatusBounded labels a count limited to1000 markers.
+An owner-proofed kept insight still uses the same logical record and revision
+ancestry. OwnerProof severs evidence/consent dependencies, not the revision DAG.
+If a required parent is private/held, the verified independent assertion remains
+valid local work and reports `waiting_ancestry` / WaitingAncestry; this is not
+proof failure. Published/replayed ancestry can publish normally. No held parent
+is released, skipped or implicitly cloned. PrepareOwnerInsight with an empty
+record can internally create a new root, but no fresh-root owner CLI operation
+is supplied by this repair.
+Schema-1 legacy manual sync is unchanged. Direct target-only schema-v2 manual
+sync cannot publish automatic cross-vault exports without the source consent
+router. Re-enabling capture or rebuilding never releases an existing hold.
+
+CrossVault off cancels pending/leased exports and queues existing links for
+withdrawal while invalidation remains enabled. Source-aware reads deny current
+proof immediately; offline target-only propagation remains asynchronous.
+Unknown/offline/busy proof retries without destructive lifecycle writes.
+Historical resolver failures retain lifecycle-valid text with current:false and
+visible reason/coverage issues; strict hides it. Search ranks bounded eligible
+candidates across scopes and kinds, hides internal windows and marks partial
+coverage. Per-link bounds replace the former whole-vault projection scan.
+
+Scheduler-blocked aggregation reasons are local status. Session scheduling
+advances a durable rowid cursor past terminal failures; explicit admin derive
+retry resets only failed/cancelled derive jobs, never done or consent-held work.
+Candidate accept/edit/reject requires the observed revision ID and explicit
+parents; a concurrent unobserved head rolls the decision back. Edited text passes
+current redaction policy before persistence. LastSummary orders local insertion.
+
+Checkpoints add independent `tail_digest`; ordinary file appends retain offset.
+T3 walk completion is durable. Lineage/metadata overflow quarantines visibly
+without silently dropping audit data. Gap arrays aggregate by reason with counts;
+local source_gaps retains detailed audit. An unmigrated profile reports
+needs_migration while healthy profiles continue; migration remains explicit.
+
 Authored frame vectors use hand-computable stored DEFLATE blocks. They are not
 executed evidence. There are no new generated AES-GCM/Ed25519 vectors, test files,
 relay changes or protocol interop claims. The owner must run formatting, compiler,
@@ -214,7 +366,7 @@ require exact unambiguous current heads but do not claim every event was cited.
 `retracted_events(scope,session,event_id,correction_revision)` is reconstructed
 from immutable correction events, including corrections received before the
 source or summary. A native event-group retraction covers split parts. Raw chunks
-remain visible as provenance; dependent current heads that cite invalid evidence
+remain visible as provenance; dependent current heads that consumed retracted events, including uncited input,
 are hidden. Primary is rebuilt from surviving evidence before summary creation.
 A new revision of the same summary record replaces its live dependency edges and
 recomputes stale state in the same transaction. No permanent chunk retraction
@@ -238,7 +390,7 @@ no live proof remain current:false. Coverage never bypasses revision freshness
 or grant authorization. Legacy memory paths continue to reject v2 knowledge.
 
 A live proof also carries a request-local source fence over the immutable revision
-high-water mark, signed control and key-map identity. Resolve and retrieval check
+high-water mark, signed control, consent-root watermark, policy and key-map identity. Resolve and retrieval check
 that fence after releasing target snapshots. Source correction, grant withdrawal
 or key replacement during that interval invalidates current:true; strict hides,
 and historical output can remain visible only as current:false. There is no

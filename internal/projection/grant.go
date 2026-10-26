@@ -47,8 +47,8 @@ func Aggregation(ctx context.Context,q memory.Queryer,svc *memory.Service,id str
 	if err=CheckReaders(c,body.Sources,body.Destination);err!=nil{return body,err};return body,nil
 }
 func CheckAggregation(ctx context.Context,q memory.Queryer,svc *memory.Service,ids []string,inputs []records.SourceRef,destination string,c memory.Control)error{
-	for _,id:=range ids { b,err:=Aggregation(ctx,q,svc,id,c);if err!=nil||b.Destination!=destination{continue};allowed:=map[string]bool{};for _,s:=range b.Sources{allowed[s]=true};valid:=true
-		for _,in:=range inputs{r,e:=svc.Revision(ctx,q,in.Revision);if e!=nil||r.Record!=in.Record||!allowed[r.Scope]{valid=false;break}}
+	for _,id:=range ids { b,err:=Aggregation(ctx,q,svc,id,c);if err!=nil{if !errors.Is(err,memory.ErrInvalid)&&!errors.Is(err,ErrReadersExceedSources){return err};continue};if b.Destination!=destination{continue};allowed:=map[string]bool{};for _,s:=range b.Sources{allowed[s]=true};valid:=true
+		for _,in:=range inputs{r,e:=svc.Revision(ctx,q,in.Revision);if e!=nil{return e};if r.Record!=in.Record||!allowed[r.Scope]{valid=false;break}}
 		if valid{return nil}
 	};return ErrReadersExceedSources
 }

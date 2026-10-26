@@ -10,7 +10,7 @@
     "source": {
       "vault": "vault_0001",
       "scope": "scope_0001",
-      "record": "insight_0002",
+      "record": "insight_0001",
       "revision": "revision_insight_0002"
     },
     "review": "accepted"
@@ -21,7 +21,7 @@
     "source": {
       "vault": "vault_0001",
       "scope": "scope_0001",
-      "record": "insight_0002",
+      "record": "insight_0001",
       "revision": "revision_insight_0002"
     },
     "dependencies": [
@@ -55,7 +55,8 @@
       ],
       "verified_at": "2026-01-01T00:00:00Z",
       "coverage": "complete"
-    }
+    },
+    "generation": 1
   },
   "target_projection_body": {
     "link_id": "link_0001",
@@ -63,7 +64,7 @@
     "source": {
       "vault": "vault_0001",
       "scope": "scope_0001",
-      "record": "insight_0002",
+      "record": "insight_0001",
       "revision": "revision_insight_0002"
     },
     "dependencies": [
@@ -97,7 +98,8 @@
       ],
       "verified_at": "2026-01-01T00:00:00Z",
       "coverage": "complete"
-    }
+    },
+    "generation": 1
   },
   "bridge_grant_payload_before_base64": {
     "version": 1,
@@ -124,5 +126,5 @@
     "destination": "scope_personal",
     "revoked": false
   },
-  "expectation": "Knowledge, target projection and signed grant share target scope. Strict requires live VerifyFresh. Historical carries current:false. Generic IsVisible rejects knowledge."
+  "expectation": "Knowledge, target projection and signed grant share target scope. Strict requires live VerifyFresh. Historical carries current:false. Generic IsVisible rejects knowledge. Generation advances logically per link. An authenticated owner_withdrawn:true lifecycle is terminal across later/concurrent heads; re-promotion requires a new explicit link."
 }

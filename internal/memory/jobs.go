@@ -12,14 +12,19 @@ import (
  "github.com/humzakhan/capsule-memory/internal/records"
 )
 var ErrLeaseLost=errors.New("job lease lost; result discarded")
+// RetryJob is an explicit bounded owner action, never automatic resurrection of
+// completed work. Execution still rechecks consent, policy and authorization.
+func(s *Service) RetryJob(ctx context.Context,key string)error{
+ return s.Update(ctx,func(tx *sql.Tx)error{r,e:=tx.ExecContext(ctx,"UPDATE jobs SET state='pending',attempts=0,error_code=NULL,not_before=0,attempt_token=NULL,lease_until=NULL WHERE job_key=? AND kind IN ('session_digest','project_rollup','personal_rollup') AND state IN ('failed','cancelled') AND COALESCE(error_code,'')!='consent_withdrawn'",key);if e!=nil{return ErrStorage};n,e:=r.RowsAffected();if e!=nil{return ErrStorage};if n!=1{return ErrInvalid};return nil})
+}
 type JobSpec struct{Kind,Scope,Subject,Destination string;Inputs []records.SourceRef;Versions string;Priority int;NotBefore time.Time;AssignedDevice string}
 type Job struct{Key string;Spec JobSpec;Token string;Attempts int}
 func JobKey(spec JobSpec)string{a:=make([]string,0,len(spec.Inputs));for _,r:=range spec.Inputs{a=append(a,r.Revision)};sort.Strings(a);return digest([]byte("capsule-memory/job-key/v1\n"+spec.Kind+"\n"+spec.Scope+"\n"+spec.Subject+"\n"+strings.Join(a,",")+"\n"+spec.Versions+"\n"+spec.Destination+"\n"))}
 func (s *Service) EnqueueJob(ctx context.Context,tx *sql.Tx,spec JobSpec)(string,error){
  if e:=s.RequireV2();e!=nil{return "",e};if s.scope(spec.Scope)!=nil||s.scope(spec.Destination)!=nil||!idPattern.MatchString(spec.Subject)||len(spec.Inputs)>4096||spec.Priority<0||spec.Priority>4{return "",ErrInvalid};if spec.AssignedDevice==""{spec.AssignedDevice=s.configuration().Device};if !idPattern.MatchString(spec.AssignedDevice){return "",ErrInvalid}
- key:=JobKey(spec);b,e:=json.Marshal(spec.Inputs);if e!=nil{return "",e};if _,e=tx.ExecContext(ctx,"INSERT INTO local_seq VALUES('job',1) ON CONFLICT(name) DO UPDATE SET value=value+1");e!=nil{return "",ErrStorage}
+ held:=false;if spec.Kind!="bridge_invalidate"{if e:=CheckConsent(ctx,tx,spec.Inputs);e!=nil{if !errors.Is(e,ErrConsentWithdrawn){return "",e};held=true}};key:=JobKey(spec);b,e:=json.Marshal(spec.Inputs);if e!=nil{return "",e};if _,e=tx.ExecContext(ctx,"INSERT INTO local_seq VALUES('job',1) ON CONFLICT(name) DO UPDATE SET value=value+1");e!=nil{return "",ErrStorage}
  n:=spec.NotBefore.UnixMilli();if spec.NotBefore.IsZero(){n=0}
- _,e=tx.ExecContext(ctx,`INSERT INTO jobs(job_key,kind,scope,subject,inputs,destination,priority,state,not_before,assigned_device,seq,versions) VALUES(?,?,?,?,?,?,?,'pending',?,?,(SELECT value FROM local_seq WHERE name='job'),?) ON CONFLICT(job_key) DO UPDATE SET not_before=MAX(jobs.not_before,excluded.not_before) WHERE jobs.state='pending'`,key,spec.Kind,spec.Scope,spec.Subject,b,spec.Destination,spec.Priority,n,spec.AssignedDevice,spec.Versions);if e!=nil{return "",ErrStorage};return key,nil
+ _,e=tx.ExecContext(ctx,`INSERT INTO jobs(job_key,kind,scope,subject,inputs,destination,priority,state,not_before,assigned_device,seq,versions) VALUES(?,?,?,?,?,?,?,'pending',?,?,(SELECT value FROM local_seq WHERE name='job'),?) ON CONFLICT(job_key) DO UPDATE SET not_before=MAX(jobs.not_before,excluded.not_before) WHERE jobs.state='pending'`,key,spec.Kind,spec.Scope,spec.Subject,b,spec.Destination,spec.Priority,n,spec.AssignedDevice,spec.Versions);if e!=nil{return "",ErrStorage};if held{if _,e=tx.ExecContext(ctx,"UPDATE jobs SET state='blocked',error_code='consent_withdrawn',attempt_token=NULL,lease_until=NULL WHERE job_key=? AND state IN ('pending','leased')",key);e!=nil{return "",ErrStorage}};return key,nil
 }
 func (s *Service) SupersedePending(ctx context.Context,tx *sql.Tx,kind,subject,keep string)error{_,e:=tx.ExecContext(ctx,"UPDATE jobs SET state='cancelled',attempt_token=NULL,lease_until=NULL WHERE kind=? AND subject=? AND job_key!=? AND state='pending'",kind,subject,keep);if e!=nil{return ErrStorage};return nil}
 func (s *Service) LeaseJob(ctx context.Context,kinds []string,lease time.Duration)(*Job,error){

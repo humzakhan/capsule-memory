@@ -119,26 +119,27 @@ func (s *Service) SyncScope(ctx context.Context,scope string,opt SyncOptions) (o
 	d,epoch,err:=c.grant(s.configuration().Device,scope);if err!=nil{return out,errors.New("device revoked or scope not granted")};key,err:=unbase(s.configuration().DevicePrivate,64);if err!=nil{return out,err}
 	if base64.StdEncoding.EncodeToString(ed25519.PrivateKey(key).Public().(ed25519.PublicKey))!=d.Public||s.configuration().Keys[scope].Epoch!=epoch{return out,errors.New("identity or epoch unavailable; manual owner key distribution required")}
 	caught,err:=s.replayLimited(ctx,scope,c,signed,opt.MaxPages);if err!=nil{return out,err}
-	out.CaughtUp=caught;if caught&&!opt.ReplayOnly {
-		query:="SELECT revision,envelope FROM outbox WHERE scope=? AND receipt IS NULL";if s.schemaVersion==2{query+=" AND NOT EXISTS(SELECT 1 FROM outbox_hold h WHERE h.revision=outbox.revision)"};query+=" ORDER BY seq LIMIT ?";rows,err:=s.reader.QueryContext(ctx,query,scope,opt.MaxPublish);if err!=nil{return out,ErrStorage}
+	var publicationErr error;out.CaughtUp=caught;if caught&&!opt.ReplayOnly {
+		query:="SELECT revision,envelope FROM outbox WHERE scope=? AND receipt IS NULL";if s.schemaVersion==2{query+=" AND NOT EXISTS(SELECT 1 FROM outbox_hold h WHERE h.revision=outbox.revision)"};if s.schemaVersion==2{query+=" ORDER BY CASE WHEN EXISTS(SELECT 1 FROM revisions r WHERE r.revision=outbox.revision AND (json_extract(r.body,'$.operation')='delete' OR (r.kind='projection' AND json_extract(r.body,'$.body.state') IN ('hidden','withdrawn')))) THEN 0 ELSE 1 END,seq LIMIT ?"}else{query+=" ORDER BY seq LIMIT ?"};rows,err:=s.reader.QueryContext(ctx,query,scope,opt.MaxPublish);if err!=nil{return out,ErrStorage}
 		type queued struct{id string;body []byte};queue:=[]queued{};for rows.Next(){var q queued;if rows.Scan(&q.id,&q.body)!=nil{rows.Close();return out,ErrStorage};queue=append(queue,q)};err=rows.Err();rows.Close();if err!=nil{return out,ErrStorage}
 		for _,q:=range queue {
 			// Fail closed on stale epochs. Never regenerate exact ambiguous retry bytes.
 			if _,err=s.decrypt(q.body,scope,c);err!=nil{return out,errors.New("pending envelope no longer authorized; retained locally")}
    if s.schemaVersion==2{var held int;if err=s.reader.QueryRowContext(ctx,"SELECT count(*) FROM outbox_hold WHERE revision=?",q.id).Scan(&held);err!=nil{return out,ErrStorage};if held>0{continue}}
+   if s.schemaVersion==2{if err=s.checkPublication(ctx,q.id);err!=nil{if !errors.Is(err,ErrConsentWithdrawn){publicationErr=err;code:="source_consent_unavailable";if errors.Is(err,ErrUnpublishedParent){code="waiting_ancestry"};if errors.Is(err,ErrInvalid){code="authorization_invalid"};if e:=s.Update(ctx,func(tx *sql.Tx)error{_,e:=tx.ExecContext(ctx,"INSERT INTO publication_block VALUES(?,?) ON CONFLICT(revision) DO UPDATE SET reason=excluded.reason",q.id,code);return e});e!=nil{return out,e};continue};if err=s.Update(ctx,func(tx *sql.Tx)error{_,e:=tx.ExecContext(ctx,"INSERT OR IGNORE INTO outbox_hold VALUES(?,'consent_withdrawn')",q.id);return e});err!=nil{return out,err};continue}}
 			var receipt struct{Cursor string `json:"cursor"`;Duplicate bool `json:"duplicate"`}
 			if err=s.request(ctx,"POST",s.basePath()+"/records",scope,q.body,&receipt);err!=nil{return out,err};cmp,err:=compare(receipt.Cursor,"0");if err!=nil||cmp<=0{return out,ErrInvalid}
-			if err=s.Update(ctx,func(tx *sql.Tx)error{_,e:=tx.ExecContext(ctx,"UPDATE outbox SET receipt=? WHERE revision=?",receipt.Cursor,q.id);return e});err!=nil{return out,err};out.Published++
+			if err=s.Update(ctx,func(tx *sql.Tx)error{_,e:=tx.ExecContext(ctx,"UPDATE outbox SET receipt=? WHERE revision=?",receipt.Cursor,q.id);if e!=nil{return e};if s.schemaVersion==2{_,e=tx.ExecContext(ctx,"DELETE FROM publication_block WHERE revision=?",q.id)};return e});err!=nil{return out,err};out.Published++
 		}
 		if !opt.PublishOnly{out.CaughtUp,err=s.replayLimited(ctx,scope,c,signed,opt.MaxPages);if err!=nil{return out,err}}else if out.Published>0{out.CaughtUp=false}
 	}
-	out.Coverage,err=s.coverage(ctx,scope);if err!=nil{return out,err};if err=s.db.QueryRowContext(ctx,"SELECT count(*) FROM outbox WHERE scope=? AND receipt IS NULL",scope).Scan(&out.Pending);err!=nil{return out,ErrStorage};return out,nil
+	out.Coverage,err=s.coverage(ctx,scope);if err!=nil{return out,err};if err=s.db.QueryRowContext(ctx,"SELECT count(*) FROM outbox WHERE scope=? AND receipt IS NULL",scope).Scan(&out.Pending);err!=nil{return out,ErrStorage};return out,publicationErr
 }
 type SyncOptions struct{MaxPublish,MaxPages int;PublishOnly,ReplayOnly bool}
 func (s *Service) replayLimited(ctx context.Context,scope string,c Control,signed Signed,max int)(bool,error){for i:=0;i<max;i++{more,e:=s.replayPage(ctx,scope,c,signed);if e!=nil{return false,e};if !more{return true,nil}};return false,nil}
-type ScopeStatus struct{Coverage Coverage;Pending int;PendingBytes int64;Blocked string;LastReceipt string}
+type ScopeStatus struct{Held,WaitingAncestry,CleanupWaitingAncestry,PendingMarkers,ReadyMarkers,PublicationBlocked int;MarkerStatusBounded bool;Coverage Coverage;Pending int;PendingBytes int64;Blocked string;LastReceipt string}
 func (s *Service) ScopeStatus(ctx context.Context,scope string)(ScopeStatus,error){
- var out ScopeStatus;e:=s.Read(ctx,func(q Queryer)error{var err error;out,err=s.ScopeStatusQuery(ctx,q,scope);return err});return out,e
+ var out ScopeStatus;e:=s.Read(ctx,func(q Queryer)error{var err error;out,err=s.ScopeStatusQuery(ctx,q,scope);if err!=nil{return err};if s.schemaVersion==2{return s.publicationStatus(ctx,q,scope,&out)};return nil});return out,e
 }
 func (s *Service) ScopeStatusQuery(ctx context.Context,q Queryer,scope string)(ScopeStatus,error){
  var out ScopeStatus;if e:=s.scope(scope);e!=nil{return out,e};e:=func()error{

@@ -23,11 +23,12 @@ func TargetVisible(ctx context.Context,q memory.Queryer,target *memory.Service,r
 	heads,deleted,err:=target.Heads(ctx,q,scope,record);if err!=nil{return v,err};if deleted{v.Reason="deleted";return v,nil};if len(heads)!=1{return v,nil}
 	var stale int;if err=q.QueryRowContext(ctx,"SELECT count(*) FROM stale WHERE record=?",record).Scan(&stale);err!=nil{return v,err};if stale>0{return v,nil}
 	knowledge:=heads[0];v.Revision=knowledge.ID;var k records.Knowledge;if json.Unmarshal(knowledge.Body,&k)!=nil{return v,memory.ErrInvalid}
-	projections,err:=recordHeads(ctx,q,target,records.KindProjection);if err!=nil{return v,err};c,err:=SnapshotControl(ctx,q,target);if err!=nil{return v,err}
+	projections,err:=linkHeads(ctx,q,target,k.LinkID,"target",scope,record);if err!=nil{return v,err};c,err:=SnapshotControl(ctx,q,target);if err!=nil{return v,err}
+	terminal,e:=terminalLink(ctx,q,target,records.Projection{LinkID:k.LinkID,Role:"target",Source:k.Source,Target:records.ScopedRef{Vault:knowledge.Vault,Scope:scope,Record:record}});if e!=nil{return v,e};if terminal{v.Reason="withdrawn";return v,nil}
 	found:=false
 	for _,r:=range projections {
-		if r.Scope!=scope{continue};var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return v,memory.ErrInvalid};if p.Role!="target"||p.LinkID!=k.LinkID{continue};found=true
-		if !HasScope(c,r.Author,scope){v.Reason="grant_invalid";return v,nil};if p.State!="projected"{v.Reason=p.State;return v,nil}
+		if r.Scope!=scope{continue};var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return v,memory.ErrInvalid};if p.Role!="target"||p.LinkID!=k.LinkID{continue};if p.WithdrawalMarker{if p.Source.Vault!=k.Source.Vault||p.Source.Scope!=k.Source.Scope||p.Source.Record!=k.Source.Record||p.Target.Vault!=knowledge.Vault||p.Target.Scope!=scope||p.Target.Record!=record{continue};if e:=target.VerifyProjectionMarker(ctx,q,r,p,false);e!=nil{return v,e};if e:=targetGeneration(ctx,q,p);e!=nil&&!p.OwnerWithdrawn{continue};v.Reason=p.State;return v,nil};found=true
+		if !HasScope(c,r.Author,scope){v.Reason="grant_invalid";return v,nil};if e:=targetGeneration(ctx,q,p);e!=nil{v.Reason="pending";return v,nil};if p.State!="projected"{v.Reason=p.State;return v,nil}
 		if p.Target.Record!=record||p.Target.Revision!=knowledge.ID||p.Target.Scope!=scope||p.Target.Vault!=knowledge.Vault||p.Source!=k.Source||p.TextSHA256!=k.TextSHA256||hashText(k.Text)!=k.TextSHA256{return v,nil}
 		if p.Source.Vault==knowledge.Vault {
 			if !HasScope(c,r.Author,p.Source.Scope){v.Reason="grant_invalid";return v,nil}
