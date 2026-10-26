@@ -1,0 +1,5 @@
+{"timestamp":"2026-01-01T00:00:00Z","type":"session_meta","payload":{"id":"synthetic-codex-session","cwd":"/synthetic/project","cli_version":"fixture-only"}}
+{"timestamp":"2026-01-01T00:00:01Z","type":"turn_context","payload":{"turn_id":"synthetic-turn-1","model":"synthetic-model"}}
+{"timestamp":"2026-01-01T00:00:02Z","type":"event_msg","payload":{"type":"user_message","message":"Synthetic duplicate prompt."}}
+{"timestamp":"2026-01-01T00:00:02Z","type":"response_item","payload":{"type":"message","id":"synthetic-item-1","role":"user","content":[{"type":"input_text","text":"Synthetic duplicate prompt."}],"internal_chat_message_metadata_passthrough":{"turn_id":"synthetic-turn-1"}}}
+{"timestamp":"2026-01-01T00:00:03Z","type":"response_item","payload":{"type":"message","id":"synthetic-item-2","role":"assistant","content":[{"type":"output_text","text":"Synthetic response."}]}}

@@ -1,0 +1,3 @@
+{"capsule_import":1,"kind":"session","harness":"vendor.example/custom-agent","harness_version":"fixture-only","source_store_id":"synthetic-original-store","session_id":"synthetic-original-session","cwd":"/synthetic/project","title":"Synthetic origin-preserving reimport"}
+{"capsule_import":1,"kind":"event","session_id":"synthetic-original-session","event_id":"synthetic-native-event-1","seq":0,"role":"user","type":"message","text":"Synthetic retained native identity.","status":"final","time":"2026-01-01T00:00:00Z","native":{}}
+{"capsule_import":1,"kind":"event","session_id":"synthetic-original-session","event_id":"synthetic-native-event-2","seq":1,"role":"assistant","type":"message","text":"Synthetic mutable tail.","status":"partial","native":{}}

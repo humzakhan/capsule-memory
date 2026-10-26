@@ -1,0 +1,21 @@
+{
+  "notice": "Authored scenario data only; not parsed by project code, validated, signed or executed. Symbolic revisions below describe source-review traces.",
+  "scope": "scope_0001",
+  "session": "session_0001",
+  "raw_events": [
+    {"id":"event_0001","role":"user","type":"message","text":"Retracted synthetic choice."},
+    {"id":"event_0002","role":"user","type":"message","text":"Surviving synthetic constraint."}
+  ],
+  "correction": {"id":"correction_0001","role":"system","type":"correction","retracts":["event_0001"]},
+  "old_summary": {"record":"summary_0001","revision":"revision_summary_old","evidence":{"record":"chunk_0001","revision":"revision_chunk_0001","kind":"session_chunk","event_from":"event_0001","event_to":"event_0001"}},
+  "new_summary": {"record":"summary_0001","revision":"revision_summary_new","parents":["revision_summary_old"],"evidence":{"record":"chunk_0001","revision":"revision_chunk_0001","kind":"session_chunk","event_from":"event_0002","event_to":"event_0002"}},
+  "coverage": {"record":"chunk_0001","revision":"revision_chunk_0001","kind":"session_chunk"},
+  "expected_source_traces": [
+    "Source first then correction: old summary hides; raw originals remain.",
+    "Correction first then source and late old summary: old summary hides.",
+    "New same-record summary revision: valid event_0002 evidence becomes visible; coverage never bypasses exact-head freshness or authorization.",
+    "Rebuild: reconstruct corrections and current-head edges, preserving these outcomes.",
+    "Delete then restore: raw rows hide while deleted; after explicit restore the correction still hides the old evidence. Independent owner assertions remain independent.",
+    "Concurrent target replacement: resolver revision mismatch hides the returned row. Source correction or grant withdrawal cannot reuse a prior current proof."
+  ]
+}

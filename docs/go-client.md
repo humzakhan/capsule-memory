@@ -290,11 +290,11 @@ outside this slice.
 
 The SQLite driver has one open/idle connection per process, per-connection WAL,
 FULL synchronous, foreign-key and five-second busy-timeout settings. SQLite
-serializes concurrent processes; there is no separate singleton IPC daemon in
-this slice. MCP processes share the durable DB through that bounded connection.
+serializes concurrent direct processes. For the legacy manual path described in
+this section, MCP processes share the durable DB through a bounded connection; the optional daemon path below uses exclusive profile ownership.
 An agent calling MCP has that process's fixed-scope write/delete authority.
 Launch read-only integrations only when such authority is appropriate; there is
-no finer-grained harness grant mechanism yet.
+a separate capability grant for the optional IPC MCP path described below.
 
 V1 bounds include a 2 MiB signed envelope, 1 MiB UTF-8 text, at most 128 parents,
 64 scopes, 256 devices, and 256 bootstrap control generations for profile
@@ -319,3 +319,59 @@ vet, race checks, tests, cross-language crypto execution, SQLite crash/WAL
 behavior, MCP handshakes, relay/cache-reset integration, and real R2 durability
 checks are all NOT RUN.** The coordinator owns acceptance, integration,
 inspection, and Git publication.
+
+## Optional session commands and daemon clients
+
+The optional module adds authored source for `profile migrate`, `scope add`, scoped
+`device create|grant|revoke-scope|import-keys`, `daemon init|run|client add`,
+`source add|configure|list|enable|disable|pause|resume|backfill`,
+`project map|unmap|exclude|include|suggest|list`, `policy get|set`,
+`session search|read|delete|restore|export|import`, `summary search`,
+`candidate list|accept|reject`, `derive assign|run`, `promote request|list|withdraw`,
+`bridge grant`, `aggregation grant`, and `hint`. Global `--daemon-home` selects the
+private daemon directory; `--home` still selects the profile.
+
+Read [daemon setup](daemon.md) before any owner execution. All session runtime,
+formatting, compilation and harness compatibility checks are **NOT RUN**. The integrated source includes event-aware correction regeneration and arbitrary
+origin labels; independent source review and owner execution remain pending.
+
+Existing legacy flags and JSON results remain the manual interface. V2 direct
+sync/rebuild installs every module applier, while daemon-owned legacy commands
+route to the same memory/skill services through local authorized IPC. New-client
+knowledge is never returned by legacy `get`, `recall`, or skill tools.
+
+For an IPC MCP client, use `mcp --client NAME --token-file /PRIVATE/NAME.token`.
+Its grant determines the tool set. `knowledge_search` accepts `mode:historical`
+(default) or `mode:strict`; strict calls the live freshness resolver and fails
+closed. Historical output includes `current`, `last_verified_at`,
+`last_verified_heads`, coverage and untrusted labels. `session_search` and
+`session_read` require explicit session.read. Grant status.read so the MCP process
+can obtain its own grant and status; admin/hint grants are refused by MCP.
+
+Raw session search uses `--query`; bounded reads use `--session`, `--branch`,
+`--from-seq`, and `--max-bytes`. `session export --session ID [--out NEW_FILE]`
+writes redacted capsule-transcript/v1 JSONL. IPC export pages remain bounded;
+the exported origin and native IDs are preserved on reimport. `session import
+--source ID --file /ABS/export.jsonl` uses the source's existing consent and
+approved paths; it does not grant capture or implicit historical backfill.
+
+`candidate accept --id ID [--text 'reviewed assertion']` preserves explicit human
+edits. `session delete --session ID --keep-insight ID1,ID2` keeps selected assertions
+only as independent owner-authored statements, with no generator or source
+evidence. Other dependent accepted insights are withdrawn. Deletes preserve
+immutable history and suppression; they are not physical erasure.
+
+Aggregation policy contains signed grant record IDs, not unsigned scope bundles.
+`aggregation grant --name N --sources S1,S2 --destination PERSONAL` calls the
+owner-signed grant operation. For bridge grants, `--bridge-device` identifies the
+target signing device; source vault/device identity is recorded separately.
+The bridge queue's local destination is the source scope; the actual cross-vault
+target is authorized from the durable projection. Promotion is off by default.
+
+Session integration details: origin harness labels are bounded namespaces rather
+than adapter names. `project exclude/include --path` manages explicit local path
+denials. Backfill requires event times and explicit byte/stream bounds. Snapshot
+export paging adds `snapshot` to request/response; callers must return the token
+unchanged after page one. `session.read` reports `Branch` and `Branches`; concurrent
+capture branches remain separate. `knowledge.search` proof results name the exact
+target revision, and the returned row must match that revision after the resolver.

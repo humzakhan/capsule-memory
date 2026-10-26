@@ -14,6 +14,9 @@ import (
 	"regexp"
 	"time"
 	"unicode/utf8"
+ "github.com/humzakhan/capsule-memory/internal/frame"
+ "github.com/humzakhan/capsule-memory/internal/records"
+ "github.com/humzakhan/capsule-memory/internal/strictjson"
 )
 
 const MaxEnvelope = 2 << 20
@@ -78,6 +81,7 @@ type Revision struct {
 	Provenance Provenance `json:"provenance"`
 	Tags []string `json:"tags"`
 	Payload *Payload `json:"payload,omitempty"`
+ Body json.RawMessage `json:"body,omitempty"`
 }
 
 func newID() (string, error) {
@@ -95,20 +99,7 @@ func decode(b []byte, dst any) error {
 	return wireFields(b,dst)
 }
 // Reject duplicate keys before encoding/json can silently choose a value.
-func uniqueJSON(b []byte) error {
-	d:=json.NewDecoder(bytes.NewReader(b));d.UseNumber()
-	var value func(int)error
-	value=func(depth int)error{
-		if depth>32{return ErrInvalid};token,err:=d.Token();if err!=nil{return ErrInvalid}
-		delim,ok:=token.(json.Delim);if !ok{return nil}
-		switch delim {
-		case '{':seen:=map[string]bool{};for d.More(){key,err:=d.Token();if err!=nil{return ErrInvalid};name,ok:=key.(string);if !ok||seen[name]{return ErrInvalid};seen[name]=true;if err=value(depth+1);err!=nil{return err}};end,err:=d.Token();if err!=nil||end!=json.Delim('}'){return ErrInvalid}
-		case '[':for d.More(){if err=value(depth+1);err!=nil{return err}};end,err:=d.Token();if err!=nil||end!=json.Delim(']'){return ErrInvalid}
-		default:return ErrInvalid
-		};return nil
-	}
-	if err:=value(0);err!=nil{return err};if _,err:=d.Token();err!=io.EOF{return ErrInvalid};return nil
-}
+func uniqueJSON(b []byte) error { if strictjson.Unique(b)!=nil{return ErrInvalid};return nil }
 func fields(b []byte,required,optional []string) (map[string]json.RawMessage,error) {
 	var m map[string]json.RawMessage;if json.Unmarshal(b,&m)!=nil||m==nil{return nil,ErrInvalid};allowed:=map[string]bool{}
 	for _,k:=range required{v,ok:=m[k];if !ok||bytes.Equal(bytes.TrimSpace(v),[]byte("null")){return nil,ErrInvalid};allowed[k]=true};for _,k:=range optional{allowed[k]=true}
@@ -128,9 +119,9 @@ func wireFields(b []byte,dst any) error {
 		for _,v:=range scopes{if _,err=fields(v,[]string{"scope_id","key_epoch"},nil);err!=nil{return err}}
 		for _,v:=range devices{if _,err=fields(v,[]string{"device_id","public_key_b64","scope_ids","revoked"},nil);err!=nil{return err}}
 	case *Revision:
-		var m map[string]json.RawMessage;m,err=fields(b,[]string{"schema_version","vault_id","scope_id","record_id","kind","revision_id","parents","operation_id","operation","author_device_id","created_at","provenance","tags"},[]string{"payload","restores"});if err!=nil{return err}
+		var m map[string]json.RawMessage;m,err=fields(b,[]string{"schema_version","vault_id","scope_id","record_id","kind","revision_id","parents","operation_id","operation","author_device_id","created_at","provenance","tags"},[]string{"payload","restores","body"});if err!=nil{return err}
 		if _,err=fields(m["provenance"],[]string{"source_kind","source_ref"},[]string{"harness"});err!=nil{return err}
-		r:=dst.(*Revision);if r.Operation=="delete"{if _,ok:=m["payload"];ok{return ErrInvalid}}else{if _,err=fields(m["payload"],[]string{"text"},nil);err!=nil{return err}}
+		r:=dst.(*Revision);if r.Version==2 { if _,ok:=m["payload"];ok{return ErrInvalid};_,hasBody:=m["body"];if hasBody!=(r.Operation!="delete"){return ErrInvalid};_,hasRestores:=m["restores"];if hasRestores!=(r.Operation=="restore"){return ErrInvalid};return nil };if _,ok:=m["body"];ok{return ErrInvalid};if r.Operation=="delete"{if _,ok:=m["payload"];ok{return ErrInvalid}}else{if _,err=fields(m["payload"],[]string{"text"},nil);err!=nil{return err}}
 		_,hasRestores:=m["restores"];if hasRestores!=(r.Operation=="restore"){return ErrInvalid}
 	}
 	return err
@@ -174,15 +165,16 @@ func validateControl(c Control, vault string) error {
 	return nil
 }
 func validateRevision(r Revision) error {
+ if r.Version!=1&&r.Version!=2||r.Version==2&&!records.V2Kinds[r.Kind]{return ErrUnsupportedRecord}
 	for _,s:=range []string{r.Vault,r.Scope,r.Record,r.ID,r.OperationID,r.Author} {if !idPattern.MatchString(s){return ErrInvalid}}
-	if r.Version!=1 || (r.Kind!="memory"&&r.Kind!="skill") || len(r.Parents)>128 || len(r.Restores)>128 || len(r.Tags)>64 {return ErrInvalid}
+	if ((r.Version!=1 && r.Version!=2)||(r.Version==1 && r.Kind!="memory"&&r.Kind!="skill")||(r.Version==2 && !records.V2Kinds[r.Kind])) || len(r.Parents)>128 || len(r.Restores)>128 || len(r.Tags)>64 {return ErrInvalid}
 	if _,err:=time.Parse(time.RFC3339Nano,r.Created);err!=nil{return ErrInvalid}
 	if len(r.Created)>40 || len(r.Provenance.SourceRef)==0 || len(r.Provenance.SourceRef)>1024 || len(r.Provenance.Harness)>128 {return ErrInvalid}
-	switch r.Provenance.SourceKind {case "manual","harness","git","import": default:return ErrInvalid}
+	if r.Version==1 { switch r.Provenance.SourceKind {case "manual","harness","git","import": default:return ErrInvalid} } else {switch r.Provenance.SourceKind {case "capture","derived","projection","manual","import":default:return ErrInvalid}}
 	seen:=map[string]bool{};for _,p:=range r.Parents {if !idPattern.MatchString(p)||p==r.ID||seen[p]{return ErrInvalid};seen[p]=true}
 	seen=map[string]bool{};for _,p:=range r.Restores {if !idPattern.MatchString(p)||seen[p]{return ErrInvalid};seen[p]=true}
 	seen=map[string]bool{};for _,t:=range r.Tags {if t==""||len(t)>64||seen[t]{return ErrInvalid};seen[t]=true}
-	if r.Operation=="delete" {if r.Payload!=nil{return ErrInvalid}} else if r.Payload==nil || len(r.Payload.Text)>MaxText || !utf8.ValidString(r.Payload.Text) {return ErrInvalid}
+	if r.Version==1 {if len(r.Body)>0{return ErrInvalid};if r.Operation=="delete" {if r.Payload!=nil{return ErrInvalid}} else if r.Payload==nil || len(r.Payload.Text)>MaxText || !utf8.ValidString(r.Payload.Text) {return ErrInvalid}} else {if r.Payload!=nil{return ErrInvalid};if r.Operation=="delete"{if len(r.Body)!=0{return ErrInvalid}}else if len(r.Body)>frame.MaxDecoded||records.Validate(r.Kind,r.Body)!=nil{return ErrInvalid}}
 	switch r.Operation {case "put","delete":if len(r.Restores)!=0{return ErrInvalid};case "resolve":if len(r.Parents)<2||len(r.Restores)!=0{return ErrInvalid};case "restore":if len(r.Parents)==0||len(r.Restores)==0{return ErrInvalid};default:return ErrInvalid}
 	return nil
 }

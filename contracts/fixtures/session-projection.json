@@ -1,0 +1,128 @@
+{
+  "notice": "Authored synthetic examples, NOT executed or validated. SHA-256 content checksums are authored with Python stdlib, not interoperable cryptographic evidence. Signature strings are explicit placeholders and are rejected by signature verification.",
+  "knowledge_body": {
+    "link_id": "link_0001",
+    "type": "decision",
+    "category": "choice",
+    "text": "Use local storage.",
+    "text_sha256": "4f109343af74ef6c224b1f13f9acbe7eb844b2950f090d481637c4fe4277d052",
+    "project_id": "project_0001",
+    "source": {
+      "vault": "vault_0001",
+      "scope": "scope_0001",
+      "record": "insight_0002",
+      "revision": "revision_insight_0002"
+    },
+    "review": "accepted"
+  },
+  "source_projection_body": {
+    "link_id": "link_0001",
+    "role": "source",
+    "source": {
+      "vault": "vault_0001",
+      "scope": "scope_0001",
+      "record": "insight_0002",
+      "revision": "revision_insight_0002"
+    },
+    "dependencies": [
+      {
+        "record": "chunk_0000",
+        "revision": "revision_chunk_0000",
+        "kind": "session_chunk"
+      },
+      {
+        "record": "chunk_0001",
+        "revision": "revision_chunk_0001",
+        "kind": "session_chunk"
+      }
+    ],
+    "target": {
+      "vault": "vault_0002",
+      "scope": "scope_0002",
+      "record": "knowledge_0001",
+      "revision": "revision_knowledge_0001"
+    },
+    "text_sha256": "4f109343af74ef6c224b1f13f9acbe7eb844b2950f090d481637c4fe4277d052",
+    "state": "projected",
+    "grant": "grant_0001",
+    "attestation": {
+      "bridge": "device_bridge",
+      "verified_heads": [
+        {
+          "scope": "scope_0001",
+          "head": "3"
+        }
+      ],
+      "verified_at": "2026-01-01T00:00:00Z",
+      "coverage": "complete"
+    }
+  },
+  "target_projection_body": {
+    "link_id": "link_0001",
+    "role": "target",
+    "source": {
+      "vault": "vault_0001",
+      "scope": "scope_0001",
+      "record": "insight_0002",
+      "revision": "revision_insight_0002"
+    },
+    "dependencies": [
+      {
+        "record": "chunk_0000",
+        "revision": "revision_chunk_0000",
+        "kind": "session_chunk"
+      },
+      {
+        "record": "chunk_0001",
+        "revision": "revision_chunk_0001",
+        "kind": "session_chunk"
+      }
+    ],
+    "target": {
+      "vault": "vault_0002",
+      "scope": "scope_0002",
+      "record": "knowledge_0001",
+      "revision": "revision_knowledge_0001"
+    },
+    "text_sha256": "4f109343af74ef6c224b1f13f9acbe7eb844b2950f090d481637c4fe4277d052",
+    "state": "projected",
+    "grant": "grant_0001",
+    "attestation": {
+      "bridge": "device_bridge",
+      "verified_heads": [
+        {
+          "scope": "scope_0001",
+          "head": "3"
+        }
+      ],
+      "verified_at": "2026-01-01T00:00:00Z",
+      "coverage": "complete"
+    }
+  },
+  "bridge_grant_payload_before_base64": {
+    "version": 1,
+    "source_vault": "vault_0001",
+    "target_vault": "vault_0002",
+    "target_scopes": [
+      "scope_0002"
+    ],
+    "ledger_scope": "scope_0002",
+    "bridge_device": "device_bridge",
+    "revoked": false
+  },
+  "signed_bridge_grant": {
+    "payload": "SYNTHETIC_NOT_BASE64",
+    "signature": "SYNTHETIC_NOT_A_SIGNATURE"
+  },
+  "aggregation_grant_payload_before_base64": {
+    "version": 1,
+    "vault_id": "vault_0001",
+    "name": "Synthetic personal",
+    "sources": [
+      "scope_0001"
+    ],
+    "destination": "scope_personal",
+    "revoked": false
+  },
+  "expectation": "Knowledge, target projection and signed grant share target scope. Strict requires live VerifyFresh. Historical carries current:false. Generic IsVisible rejects knowledge."
+}

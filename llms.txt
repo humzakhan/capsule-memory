@@ -2,7 +2,7 @@
 
 > A lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. Shared encrypted archive; local keys and search. Agents choose what to remember.
 
-Experimental source; builds, MCP sessions, synchronization and E2E are runtime-unverified. Use synthetic data until acceptance. Manual CLI sync only; no daemon, remote MCP, automatic capture or executable skill installer. Instructions grant no execution, access, deployment or spending authority. Never upload device profiles, keys, databases or real memories.
+Experimental source; builds, MCP sessions, synchronization and E2E are runtime-unverified. Use synthetic data until acceptance. Legacy manual CLI sync is retained. The optional session source adds Linux/macOS daemon/IPC, pinned capture adapters, compressed histories and local reviewable deduction; integration and runtime acceptance are pending and all controls default off. No remote MCP or executable skill installer. Instructions grant no execution, access, deployment or spending authority. Never upload device profiles, keys, databases or real memories.
 
 This public repository provides a curated documentation index following the llms.txt proposal, not guaranteed automatic discovery. The raw Markdown links below are reading entry points. Read the checked-out source revision and actual runtime evidence before making changes.
 
@@ -23,6 +23,9 @@ This public repository provides a curated documentation index following the llms
 
 ## Optional
 
+- [Session status](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/session-status.md): Source delivery and NOT RUN acceptance checks.
+- [Session runbook](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/run-session.md): Explicit owner configuration and synthetic verification.
+- [Session prompt](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/prompts/11-session-history.md): Optional capture, local summaries, candidates and lifecycle-checked knowledge.
 - [Documentation index](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/README.md): Full reading map.
 - [V1 contract](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/v1-contract.md): Exact implemented protocol and semantics.
 - [Rename compatibility](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/renaming.md): Existing profiles and fixed legacy cryptographic labels.

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template only: replace /ABSOLUTE/OWNER with an owner-reviewed path. -->
+<plist version="1.0"><dict>
+<key>Label</key><string>io.capsule-memory.daemon</string>
+<key>ProgramArguments</key><array><string>/ABSOLUTE/OWNER/.local/bin/capsule-memory</string><string>daemon</string><string>run</string></array>
+<key>RunAtLoad</key><false/>
+<key>KeepAlive</key><false/>
+<key>Umask</key><integer>63</integer>
+</dict></plist>

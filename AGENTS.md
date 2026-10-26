@@ -1,6 +1,6 @@
 # Working in Capsule Memory
 
-Maintain a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Agents and harnesses decide what to remember and use; this utility does not manage autonomous memory behavior.
+Maintain a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Manual workflows leave selection to agents and harnesses. The optional session module adds explicitly enabled local capture, summaries and reviewable deductions; it grants no authority to execute retrieved content.
 
 A v1 source implementation is present; see [delivery status](docs/v1-status.md) for actual evidence and limits. Design intent and source inspection are not runtime evidence.
 
@@ -16,7 +16,7 @@ A v1 source implementation is present; see [delivery status](docs/v1-status.md) 
 
 For evaluation, installation planning, owner/relay setup, joining a device, connecting a harness, or operating an existing node, choose the matching [setup/operation prompt](prompts/README.md). Follow its common privacy and execution instructions as well as this file. [Agent discovery](docs/agent-discovery.md) maps roles and use cases; [llms.txt](llms.txt) is a short document index and [agent-manifest.json](agent-manifest.json) is project-specific capability metadata.
 
-These files do not authorize actions or grant memory access. Verify actual source/runtime status and user permissions. V1 has manual CLI sync and fixed-scope stdio MCP; do not invent a daemon, remote MCP endpoint, read-only MCP profile, or automatic capture hook. For code contributions, use the engineering map below.
+These files do not authorize actions or grant memory access. Verify actual source/runtime status and user permissions. Legacy v1 has manual CLI sync and fixed-scope stdio MCP. The optional schema-v2 session source adds a Linux/macOS daemon, local authenticated IPC and capability-scoped stdio MCP; see [session status](docs/session-status.md). No remote MCP endpoint, installed capture hook or runtime compatibility is implied. All capture/publication/derivation/promotion controls default off. For code contributions, use the engineering map below.
 
 ## Read only what the task needs
 

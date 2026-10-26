@@ -14,12 +14,14 @@
     "setup_prompts": "prompts/README.md",
     "discovery_guide": "docs/agent-discovery.md",
     "runtime_evidence": "docs/v1-status.md",
-    "runbook": "docs/run-v1.md"
+    "runbook": "docs/run-v1.md",
+    "session_status": "docs/session-status.md",
+    "session_runbook": "docs/run-session.md"
   },
   "cli": {
     "binary": "capsule-memory",
     "source": "cmd/capsule-memory",
-    "sync": "manual CLI sync; no daemon or separate push/pull commands"
+    "sync": "legacy manual CLI sync; optional Linux/macOS daemon with independent capture/publication/derivation controls, all off initially"
   },
   "mcp": {
     "transport": "stdio",
@@ -34,7 +36,7 @@
     "search": "device-local SQLite FTS5",
     "archive": "encrypted content with visible authorization/traffic metadata",
     "keys": "restricted local files; no native keystore integration",
-    "enrollment": "independent device identity; currently grants all owner-held current scopes",
+    "enrollment": "independent device identity; selective scope grants/key packages in v2; runtime unverified",
     "skills": "staged until exact owner approval and local read-as-text activation; no execution",
     "secrets_in_prompts": false
   },
@@ -48,8 +50,21 @@
     {"id": "conflicts-and-deletion", "prompt": "prompts/07-conflicts-and-deletion.md"},
     {"id": "recover-device", "prompt": "prompts/08-recover-device.md"},
     {"id": "review-skill", "prompt": "prompts/09-review-skill.md"},
-    {"id": "security-operations", "prompt": "prompts/10-security-operations.md"}
+    {"id": "security-operations", "prompt": "prompts/10-security-operations.md"},
+    {"id": "session-history", "prompt": "prompts/11-session-history.md"}
   ],
-  "unsupported": ["background-daemon", "remote-mcp", "automatic-capture", "turnkey-key-rotation", "executable-skill-installation", "central-plaintext-search"],
+  "session_module": {
+    "status": "source-authored-integration-pending-runtime-NOT-RUN",
+    "default_enabled": false,
+    "platforms": ["linux", "macos"],
+    "capture": ["version-pinned Claude JSONL", "version-pinned Codex rollout", "pinned T3 HTTP", "owner-declared transcript import"],
+    "compression": "fresh DEFLATE per schema-v2 revision before encryption/upload; 4KiB padding; 1MiB decoded cap; 896KiB writer revision cap",
+    "inference": "owner-configured loopback HTTP only; no proxy, redirects or tools; bounded budgets",
+    "knowledge": "v2 lifecycle-checked content; strict live freshness; historical verification labels; untrusted",
+    "cross_vault": "off by default; explicit enabled_unaccepted setup",
+    "cache_eviction": "not_implemented",
+    "services_installed": false
+  },
+  "unsupported": ["remote-mcp", "turnkey-key-rotation", "executable-skill-installation", "central-plaintext-search", "published-body-cache-eviction", "cloud-inference", "binary-attachments"],
   "note": "Project-specific documentation metadata, not an installer, registry server.json, protocol response or tested capability advertisement."
 }

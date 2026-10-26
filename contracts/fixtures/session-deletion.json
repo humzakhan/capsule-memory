@@ -1,0 +1,54 @@
+{
+  "notice": "Authored synthetic examples, NOT executed or validated. SHA-256 content checksums are authored with Python stdlib, not interoperable cryptographic evidence. Signature strings are explicit placeholders and are rejected by signature verification.",
+  "revisions": [
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "session_0001",
+      "kind": "session_manifest",
+      "revision_id": "revision_delete_0001",
+      "parents": [
+        "revision_session_0001"
+      ],
+      "operation_id": "operation_delete_0001",
+      "operation": "delete",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "capture",
+        "source_ref": "synthetic"
+      },
+      "tags": []
+    },
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "suppression_0001",
+      "kind": "suppression",
+      "revision_id": "revision_suppression_0001",
+      "parents": [],
+      "operation_id": "operation_suppression_0001",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "derived",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "session_key": "1e8b45b17406e574411462a32d28a9e361879ce24b410db43a1a90323569fd68",
+        "origin": {
+          "source_store": "synthetic-store",
+          "harness": "import",
+          "native_session_id": "synthetic-session"
+        },
+        "session": "session_0001",
+        "reason": "deleted"
+      }
+    }
+  ],
+  "expectation": "All manifests sharing the key and late chunks hide. Summary_0001 is transitively stale. Reimport is suppressed. A retained independent owner insight has evidence:[], no generator, explicit basis, accepted/edited review and reviewer."
+}

@@ -6,9 +6,9 @@
 [![Go 1.24.0](https://img.shields.io/badge/Go-1.24.0-00ADD8.svg)](go.mod)
 [![Status: experimental](https://img.shields.io/badge/status-experimental-orange.svg)](docs/v1-status.md)
 
-Capsule Memory is a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. A shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Agents and harnesses decide what to remember and use; the utility does not manage autonomous memory behavior.
+Capsule Memory securely stores and synchronizes agent memories and skills across machines and harnesses. A shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Manual workflows leave selection to agents and harnesses. An optional session module adds explicitly enabled conversation capture, local summaries and reviewable memory/decision candidates.
 
-The experimental source includes a Go CLI, a scoped MCP server, local SQLite search, and encrypted manual synchronization through Cloudflare.
+The experimental source includes a Go CLI, scoped MCP, local SQLite search and encrypted synchronization through Cloudflare. The session feature is being integrated on `feat/session-history`; [session status](docs/session-status.md) separates authored source from runtime evidence. The feature defaults off.
 
 > **Source implementation; runtime unverified.** Installs, dependency resolution, formatters, builds, typechecks, tests, and E2E are **NOT RUN**. No infrastructure is deployed. Start with synthetic data; source inspection is not a security audit or runtime acceptance.
 
@@ -33,7 +33,9 @@ Existing agent context should remain available across sessions, machines, and ha
 | Cloudflare Worker, Durable Object, and R2 adapter | R2 is the first implemented storage adapter; provider behavior unverified |
 | Local skill approval and activation | Exact owner-approved Markdown revision, `read-as-text` only; approvals do not sync |
 
-**Deferred:** background sync/daemon, WebSockets, native keystores, automated key rotation/distribution, summaries, embeddings, Git automation, executable skill installation, and broad harness compatibility. See the [roadmap](docs/roadmap.md).
+**Optional session source:** Linux/macOS daemon and authenticated local IPC, version-pinned Claude/Codex/T3/import capture, compressed encrypted histories, loopback local inference, reviewable candidates and lifecycle-checked v2 knowledge. Compilation and runtime are **NOT RUN**. See [session history](docs/session-history.md), [status](docs/session-status.md) and [runbook](docs/run-session.md).
+
+**Deferred:** WebSockets, native keystores, automated key rotation, embeddings, published-body cache eviction, Git automation and executable skill installation. Harness/platform compatibility remains unverified. See the [roadmap](docs/roadmap.md).
 
 ## Set up with an agent
 
@@ -60,7 +62,7 @@ If execution is unavailable, prepare exact commands and label checks NOT RUN.
 
 For fetch-based agents, [llms.txt](llms.txt) provides a small Markdown reading map. [agent-manifest.json](agent-manifest.json) describes current roles, tools, limits and prompt paths in a project-specific format. Neither is an installer, an MCP registry entry, or a guarantee that agents will discover or ingest the repository.
 
-Read [agent discovery](docs/agent-discovery.md) for the use-case matrix and public-discovery prerequisites. Current setup uses explicit CLI sync and local stdio MCP; no daemon, hosted MCP service or automatic capture hook is installed by these prompts.
+Read [agent discovery](docs/agent-discovery.md) for the use-case matrix and public-discovery prerequisites. Legacy setup uses explicit CLI sync and local stdio MCP. [Session setup](prompts/11-session-history.md) describes optional daemon/IPC operation. These prompts install no service or hook and expose no hosted MCP endpoint.
 
 ## How it fits together
 
@@ -72,7 +74,7 @@ flowchart LR
     D <--> E[(R2 encrypted archive)]
 ```
 
-Each device keeps plaintext, content keys, and its search index locally. The relay authenticates devices and orders publication; the archive-head update is the intended durable publication boundary. There is no cloud plaintext search or background service in this slice.
+Each device keeps plaintext, content keys, and its search index locally. The relay authenticates devices and orders publication; the archive-head update is the intended durable publication boundary. Optional session background work runs on an explicitly enabled trusted device; there is no cloud plaintext search.
 
 The [architecture](docs/architecture.md) also describes future components. Use the [v1 contract](docs/v1-contract.md) and [delivery status](docs/v1-status.md) for the implemented scope.
 
