@@ -1,6 +1,6 @@
 # 0004: Optional session archive and local derivation
 
-**Status:** accepted design, source implementation in progress, 2026-10-26. Compilation, formatting, tests, adapter compatibility, inference and runtime acceptance are **NOT RUN**. See [session status](../session-status.md).
+**Status:** accepted design, source implementation authored, 2026-10-26. Compilation, formatting, tests, adapter compatibility, inference and runtime acceptance are **NOT RUN**. See [session status](../session-status.md).
 
 The accepted implementation compresses every schema-v2 revision with isolated DEFLATE before encryption/upload, preserving legacy v1 protocol bytes. Selected assertions use v2 knowledge in the same scope as their lifecycle and owner grant. Strict retrieval requires live source reconciliation during the request; historical retrieval reports its verification coverage. Personal aggregation requires owner-signed authorization with reader-subset checks at control changes and rollup run/commit. [Implementation amendments](../session-history.md#accepted-implementation-amendments) supersede conflicting wording below while preserving the original decision detail.
 
@@ -10,7 +10,7 @@ Accepted repair amendment (2026-10-26): manual link withdrawal is durably termin
 with generation-bound jobs, leases and observed source ancestry. All exact
 consumed events influence derivations independently of citations. Capture append
 and incremental affected-group indexing replace per-apply full reconciliation.
-Consent holds unpublished automatic descendants; cross-vault upload rechecks
+Consent holds unpublished automatic descendants; same-vault and cross-vault upload rechecks
 source consent and fails closed when unavailable. G5 uses the frozen
 independent-insight/v1 owner proof, binding revision, operation, ordered ancestry,
 author and proof-free content. Ordinary review is writer-attested. See the

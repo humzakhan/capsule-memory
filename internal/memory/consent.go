@@ -12,7 +12,7 @@ var ErrConsentWithdrawn=errors.New("source consent withdrawn; automatic work hel
 var ErrConsentUnavailable=errors.New("source consent unavailable; open the source profile before publishing automatic descendants")
 var ErrUnpublishedParent=errors.New("parent publication unconfirmed; revision retained without releasing private ancestry")
 
-// Direct sync without a source router retains cross-vault descendants locally.
+// Direct sync without a source router retains promoted descendants locally.
 func(s *Service) SetPublicationCheck(fn func(context.Context,records.ScopedRef)error){s.configMu.Lock();defer s.configMu.Unlock();s.publicationCheck=fn}
 func(s *Service) checkPublication(ctx context.Context,id string)error{
  r,e:=s.Revision(ctx,s.reader,id);if e!=nil{return e}
@@ -29,7 +29,7 @@ func(s *Service) checkPublication(ctx context.Context,id string)error{
   switch r.Kind{case records.KindKnowledge:var k records.Knowledge;if json.Unmarshal(r.Body,&k)!=nil{return ErrInvalid};ref=k.Source
   case records.KindProjection:var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return ErrInvalid};if p.Role!="target"||p.State=="hidden"||p.State=="withdrawn"{continue};ref=p.Source
   default:continue}
-  if ref.Vault==r.Vault{continue};if check==nil{return ErrConsentUnavailable};if e=check(ctx,ref);e!=nil{return e}
+  if check==nil{return ErrConsentUnavailable};if e=check(ctx,ref);e!=nil{return e}
  };return nil
 }
 

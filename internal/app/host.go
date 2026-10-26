@@ -17,6 +17,7 @@ import (
 	"github.com/humzakhan/capsule-memory/internal/memory"
 	"github.com/humzakhan/capsule-memory/internal/ops"
 	"github.com/humzakhan/capsule-memory/internal/projection"
+	"github.com/humzakhan/capsule-memory/internal/records"
 	"github.com/humzakhan/capsule-memory/internal/session"
 )
 type Profile struct{Name string;Svc *memory.Service;Session *session.Module;Derive *derive.Runner;Bridge *projection.Bridge;wired bool}

@@ -1,10 +1,10 @@
 # Session module source status
 
-**Integrated source authored; independent source review and runtime acceptance pending.** This record describes work on `feat/session-history` from base `a08ffd8fb7a2fcd3d0f4b848fb919295d6dbf758`, 2026-10-26. It does not establish a compiled binary or working harness/model integration. The initial proposal is preserved in [session history](session-history.md).
+**Integrated source authored and source review findings addressed; runtime acceptance pending.** This record describes work on `feat/session-history` from base `a08ffd8fb7a2fcd3d0f4b848fb919295d6dbf758`, 2026-10-26. It does not establish a compiled binary or working harness/model integration. The initial proposal is preserved in [session history](session-history.md).
 
 | Area | Source location | Execution evidence |
 | --- | --- | --- |
-| Schema-v2 records, DEFLATE frame, revision/outbox transactions, migrations, scope grants and stale closure | `internal/records`, `internal/frame`, `internal/memory` | NOT RUN; integrated source requires independent review |
+| Schema-v2 records, DEFLATE frame, revision/outbox transactions, migrations, scope grants and stale closure | `internal/records`, `internal/frame`, `internal/memory` | NOT RUN; source inspection only |
 | Capture, redaction, suppression, durable checkpoints, daemon/IPC/MCP/CLI | `internal/capture`, `internal/session`, `internal/daemon`, `internal/app` | NOT RUN; adapters have no accepted runtime version |
 | Local loopback-only OpenAI-compatible inference | `internal/inference/inference.go` | Authored; NOT RUN |
 | Session/window summaries, daily project and opted-in weekly personal rollups, candidate review, budget/lease checks | `internal/derive` | Authored; NOT RUN |
@@ -32,9 +32,17 @@ influence and snapshot checks, transitive consent holds, indexed affected-group
 refresh, append-preserving capture, durable T3 completion, fair session scheduling,
 expected-revision candidate decisions and independently verified G5 owner proofs.
 Contracts include hand-authored recipes only; no signatures or computed vectors
-were fabricated. Cross-vault target publication retains queued automatic bytes
-until source consent can be checked. Independent exact-revision review and all
-execution acceptance remain pending.
+were fabricated. Same-vault and cross-vault target publication retain queued
+automatic bytes until source consent can be checked.
+
+Independent source reviews examined the initial implementation and repairs. The
+focused final review at `d42c525` found two import errors and a same-vault consent
+bypass. The coordinator corrected all three and reread the affected paths; no
+compiler or runtime was used. That review traced owner proof, withdrawal markers,
+publication consent, bridge generations, candidate decisions and lock ordering.
+It did not deeply re-review capture, correction influence, scheduling, freshness,
+compression, migrations, schemas or fixtures. This is source-only PR evidence,
+not a blanket security approval or execution acceptance.
 
 Cleanup publication preserves revision ancestry. A child tombstone or lifecycle
 change waits when its parent is local-only, held or lacks a confirmed receipt;
@@ -50,7 +58,7 @@ whose parent remains private/held is valid retained local work with
 ancestry skip or held-parent upload occurs. This pass adds no fresh-root owner
 CLI; empty-record PrepareOwnerInsight remains an internal capability.
 
-The coordinator must checkpoint the integrated source and complete independent source review. The owner can then use the [runbook](run-session.md) on an explicitly permitted machine/job, with disposable synthetic profiles and a local model. Preserve the exact commit, tool versions, commands, failures and retained artifacts. A skipped or unavailable check remains NOT RUN.
+The next evidence is an authorized isolated build and behavior pass using the [runbook](run-session.md), with disposable synthetic profiles and a local model. Preserve the exact commit, tool versions, commands, failures and retained artifacts. A skipped or unavailable check remains NOT RUN.
 
 ## Integration representation
 

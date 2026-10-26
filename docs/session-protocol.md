@@ -271,7 +271,7 @@ deleted source lifecycle.
 Durable `consent_roots(revision,source_id)` and `outbox_hold` survive rebuild and
 re-enable. Withdrawal follows exact historical ancestry, holds unpublished
 automatic descendants and cancels affected leases. Derive/bridge commits recheck
-consent. Before upload, cross-vault target descendants require a source-profile
+consent. Before upload, same-vault and cross-vault target descendants require a source-profile
 consent check; unavailable source retains bytes locally, withdrawn consent adds
 a durable target hold. Already submitted bytes and published data cannot be
 recalled by this mechanism. It does not replace explicit archive deletion.

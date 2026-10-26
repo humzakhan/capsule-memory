@@ -49,6 +49,15 @@
       "expected": "target automatic bytes held; source unavailable retains bytes; old source job cannot finalize newer generation"
     },
     {
+      "case": "same_vault_consent",
+      "order": [
+        "commit knowledge into another scope of the same vault",
+        "withdraw source consent before target publication",
+        "retry publication through the source router"
+      ],
+      "expected": "exact source consent is checked despite matching vault IDs; confirmed withdrawal durably holds target bytes; nil or unavailable router retains bytes without upload"
+    },
+    {
       "case": "repeat_invalidation",
       "order": [
         "invalidate",
