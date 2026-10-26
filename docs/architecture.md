@@ -56,7 +56,7 @@ For personal content, GitHub is a reviewed import/export surface, not a second m
 
 ## Local store and retrieval
 
-Use SQLite with FTS5 first. It provides one embedded transactional store for durable revisions, outbox rows, cursors, visibility, summary dependencies, and search. Choose the actual Go driver after verifying FTS5, backup support, migration behavior, CGO implications, and the target platforms. Keep that decision explicit.
+Use SQLite with FTS5 first. It provides one embedded transactional store for durable revisions, outbox rows, cursors, visibility, summary dependencies, and search. V1 pins `modernc.org/sqlite` v1.39.1; see [Go client dependencies](go-client.md#dependencies-and-source-decision). Runtime FTS5 behavior, backups, migrations, and platform compatibility still require validation. Summary dependencies belong to the broader target, not the implemented slice.
 
 Use lexical search plus scope, kind, tags, source, and recency filters. Rank relevance first; freshness and pinned status can contribute. Do not hide alternative conflict heads or stale-summary warnings. Embeddings wait until a measured retrieval benchmark shows a need; if added, generate them on devices and version them by model and chunking scheme.
 

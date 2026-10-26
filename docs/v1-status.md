@@ -1,6 +1,6 @@
 # V1 delivery status
 
-This page records the v1 source delivery on `feat/usable-v1`. **No runtime check has been executed.** Source is authored and inspected; usable runtime behavior is still unproven. An authored test is not a passed test.
+This page records the v1 source delivery, now integrated into `main`. **No runtime check has been executed.** Source is authored and inspected; usable runtime behavior is still unproven. An authored test is not a passed test.
 
 ## Required implementation and evidence
 
@@ -15,7 +15,7 @@ This page records the v1 source delivery on `feat/usable-v1`. **No runtime check
 | Skill trust | [Approvals and activation](../internal/memory/skills.go): owner signature, scope/revision/digest, current-head eligibility | Local text activation authored; runtime NOT RUN |
 | Focused E2E suite | [One black-box journey](../e2e/run.mjs) with twelve scenarios covering the five behavior groups | Authored; NOT RUN |
 | Focused inspection | [Findings and fixes](v1-inspection.md); initial source `3b73b6e8ea28c833fb64cd2a6a75204b885b35ea` | One source inspection and concrete-fix rechecks; no broad repeat review |
-| Delivery | [Implementation branch](https://github.com/humzakhan/agent-memory/tree/feat/usable-v1), [run/cleanup commands](run-v1.md) | Final handoff records verified remote commit; no deployment or merge |
+| Delivery | [Implementation source](https://github.com/humzakhan/agent-memory/tree/18f2d323dd56d2bb03e0088d0ff49822e61955ea), [run/cleanup commands](run-v1.md) | Original handoff recorded the verified remote implementation commit; documentation consolidation preserves its ancestry on `main`. No deployment or runtime acceptance. |
 
 ## Runtime acceptance
 

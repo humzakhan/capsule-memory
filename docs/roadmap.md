@@ -8,7 +8,7 @@ Architecture, decisions, threat model, draft logical contracts, project skills, 
 
 ## 1. Local durable core
 
-Choose and pin a supported Go toolchain and SQLite driver after a bounded platform/FTS5 decision. Introduce the minimum CLI and application/store packages, schema migrations, record revisions, tombstones, visibility, durable outbox, and FTS5 recall.
+Go 1.24.0 and `modernc.org/sqlite` v1.39.1 are pinned. The minimum CLI and application/store packages, schema migrations, record revisions, tombstones, visibility, durable outbox, and FTS5 recall are authored. Platform/FTS5 runtime acceptance remains pending.
 
 Exit evidence: local writes and queued state survive the relevant crash boundaries; search respects scope and deletion; index repair preserves pending writes. Use synthetic records. A local-only slice must not pretend unencrypted data is safe for remote upload.
 

@@ -50,4 +50,4 @@ Authenticate ciphertext, signatures, and vault/scope/epoch context; reject cross
 
 A malicious sole provider can withhold or replay old valid state. Devices can compare remembered heads and exchange known checkpoints to detect some inconsistencies, but a fresh device lacks an independent freshness witness. Availability, global fork prevention, traffic secrecy, and protection from a compromised enrolled endpoint are outside version one's guarantees.
 
-Keep local offline work durable and maintain a separately authorized encrypted backup strategy. An archive in one account is not an independent backup against account loss. No backup service or storage spending is authorized by this scaffold.
+Keep local offline work durable and maintain a separately authorized encrypted backup strategy. An archive in one account is not an independent backup against account loss. This repository does not authorize backup services or storage spending.

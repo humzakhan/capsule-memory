@@ -12,21 +12,21 @@ Documentation authoring and read-only file/Git inspection are permitted within t
 
 ## Language and library choices
 
-V1 pins Go 1.24+, the official Go MCP SDK v1.4.0, modernc SQLite v1.39.1, and Wrangler v4.129.1 via npm. See the implementation runbooks for source evidence and platform limits. The table below records the broader selection criteria; installed compatibility remains unverified.
+V1 targets Go 1.24.0 and pins the official Go MCP SDK v1.4.0, modernc SQLite v1.39.1, and Wrangler v4.129.1 via npm with Node 22+. See the implementation runbooks for source evidence and platform limits. The table below separates source choices from pending acceptance; installed compatibility remains unverified.
 
-| Boundary | Starting choice | Still to decide with implementation |
+| Boundary | Current source choice | Pending evidence or deferred work |
 | --- | --- | --- |
-| Local service and CLI | Go, standard packages, explicit construction | Supported Go version, platform matrix, CLI argument library only if needed |
-| MCP | Official Go SDK; stdio bridge to local service | SDK version and compatible harness capabilities |
-| Local data | SQLite and FTS5, explicit SQL | Driver, CGO/static packaging, backup and migration integration |
-| Relay | TypeScript, native Workers/DO APIs, Wrangler tooling | Runtime compatibility date, package manager, pinned versions |
-| Cryptography | Reviewed existing libraries and authenticated encryption | Exact primitives, framing, wrapping, nonce discipline, interoperability vectors |
+| Local CLI | Go 1.24.0, standard packages, explicit construction | Platform builds; background service deferred |
+| MCP | Official Go SDK v1.4.0; fixed-scope stdio process | SDK runtime behavior and specific harness compatibility |
+| Local data | modernc SQLite v1.39.1 and FTS5, explicit SQL | Runtime FTS5, packaging, backups, migrations |
+| Relay | TypeScript, native Workers/DO APIs, Wrangler v4.129.1, npm | Dependency lockfile, typechecks, provider acceptance |
+| Cryptography | AES-256-GCM, Ed25519, explicit v1 framing | Runtime interoperability, security review; automated key distribution deferred |
 
 No general web framework, ORM, vector database, distributed broker, or frontend is needed for the first slice. Dependencies must earn their maintenance cost. The [Go SDK list](https://modelcontextprotocol.io/docs/sdk) is the source for MCP SDK support, not a promise about every harness feature.
 
 ## Go practice
 
-Keep domain behavior independent of transport and harness details. Begin with `cmd/agent-memory` and a few cohesive internal packages only when code lands; do not create an empty clean-architecture tree. Consumer-owned interfaces belong at storage, crypto, and transport boundaries where testing or alternate implementations require them.
+Keep domain behavior independent of transport and harness details. The current entrypoint is `cmd/agent-memory`, with domain code under `internal/memory`; extend cohesive packages rather than adding an empty clean-architecture tree. Consumer-owned interfaces belong at storage, crypto, and transport boundaries where testing or alternate implementations require them.
 
 Use explicit errors and transactions. Keep context cancellation and shutdown observable. Bound goroutines, buffers, retries, body sizes, and archive batches. Avoid global state, hidden work in constructors, reflection-heavy plumbing, speculative caches, and optimization without measurements.
 

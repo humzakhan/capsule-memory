@@ -9,7 +9,7 @@ download/build and 2–5 minutes for the focused E2E if the authored source work
 ## 1. Install and build locally
 
 Use the Go version required by `go.mod`, Node 22+ supported by the pinned Wrangler,
-and npm. Clone/check out the implementation branch through your normal Git
+and npm. Clone/check out `main` through your normal Git
 workflow, then run these commands from the repository root. Dependency resolution
 requires internet access. There is no authored fake lockfile.
 
@@ -26,7 +26,7 @@ cd ..
 
 Wrangler is pinned in `cloudflare/package.json`; owner installation creates a
 real `package-lock.json` for review. Its first installation does not have frozen
-transitive versions. Ask the coordinator to review and track the generated
+transitive versions. Ask the maintainer to review and track the generated
 lockfile before relying on `npm ci`.
 `wrangler types` generates runtime declarations; it does not itself typecheck
 the source. Runtime API compatibility and TypeScript checking remain unverified.
