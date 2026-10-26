@@ -2,7 +2,7 @@
 
 Start at [the prompt index](../prompts/README.md). Capsule Memory is a utility for securely storing and synchronizing existing agent memories and skills. Agents choose the content and when to use it. Discovery metadata and prompts do not authorize actions or grant memory access.
 
-**Status:** these entry points are authored documentation, not proof of agent adoption, runtime compatibility, or a successful install. The repository remains private until the owner explicitly changes visibility; unauthenticated agents and public search cannot read private content.
+**Status:** the repository is public, with readable Markdown and agent entry points. These are authored documentation, not proof of agent adoption, search indexing, runtime compatibility, or a successful install. Public access does not grant access to anyone's private memories, profiles or keys.
 
 ## Discovery layers
 
