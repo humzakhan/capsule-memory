@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/humzakhan/capsule-memory/internal/app"
@@ -16,12 +16,180 @@ import (
 	"github.com/humzakhan/capsule-memory/internal/ops"
 	"github.com/humzakhan/capsule-memory/internal/strictjson"
 )
-type Request struct{Version int `json:"v"`;ID string `json:"id"`;Client string `json:"client"`;Token string `json:"token"`;Method string `json:"method"`;Params json.RawMessage `json:"params"`}
-type WireError struct{Code string `json:"code"`;Message string `json:"message"`}
-type Response struct{Version int `json:"v"`;ID string `json:"id"`;OK bool `json:"ok"`;Result json.RawMessage `json:"result,omitempty"`;Error *WireError `json:"error,omitempty"`}
-func readLine(r *bufio.Reader,max int)([]byte,error){var out []byte;for{part,e:=r.ReadSlice('\n');if len(out)+len(part)>max{return nil,memory.ErrInvalid};out=append(out,part...);if e==bufio.ErrBufferFull{continue};if e!=nil{return nil,e};return out,nil}}
-func serve(ctx context.Context,home string,h *app.Host)error{dir:=filepath.Join(home,"run");if e:=privateDir(dir);e!=nil{return e};path:=filepath.Join(dir,"daemon.sock");if len(path)>=socketLimit(){return errors.New("daemon socket path exceeds platform limit")};if fi,e:=os.Lstat(path);e==nil{if fi.Mode()&os.ModeSocket==0{return memory.ErrInvalid};if e=os.Remove(path);e!=nil{return e}};listener,e:=net.ListenUnix("unix",&net.UnixAddr{Name:path,Net:"unix"});if e!=nil{return ErrUnavailable};defer listener.Close();defer os.Remove(path);if e=os.Chmod(path,0600);e!=nil{return e};stop:=context.AfterFunc(ctx,func(){listener.Close()});defer stop();slots:=make(chan struct{},32);done:=make(chan struct{},32);active:=0
-	defer func(){for active>0{select{case <-done:active--;case <-time.After(10*time.Second):return}}}()
-	for{conn,e:=listener.AcceptUnix();if e!=nil{if ctx.Err()!=nil{return nil};return ErrUnavailable};select{case slots<-struct{}{}:active++;go func(){defer func(){<-slots;done<-struct{}{}}();handle(ctx,conn,home,h)}();default:conn.Close()};for{select{case <-done:active--;default:goto next}};next:}
+
+type Request struct {
+	Version int             `json:"v"`
+	ID      string          `json:"id"`
+	Client  string          `json:"client"`
+	Token   string          `json:"token"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params"`
 }
-func handle(ctx context.Context,c *net.UnixConn,home string,h *app.Host){defer c.Close();if !peerAllowed(c){return};stop:=context.AfterFunc(ctx,func(){c.Close()});defer stop();r:=bufio.NewReaderSize(c,64<<10);for{_ = c.SetReadDeadline(time.Now().Add(time.Minute));line,e:=readLine(r,1<<20);if e!=nil{return};var req Request;resp:=Response{Version:1};if strictjson.Decode(line,1<<20,&req)!=nil||req.Version!=1||!safeName.MatchString(req.ID){return};resp.ID=req.ID;g,e:=Authenticate(home,req.Client,req.Token);var value any;if e==nil{value,e=h.Registry.Call(ctx,g,req.Method,req.Params)};if e!=nil{code:="internal";switch{case errors.Is(e,ops.ErrForbidden):code="forbidden";case errors.Is(e,ops.ErrUnknownMethod):code="unknown_method";case errors.Is(e,memory.ErrInvalid):code="invalid";case errors.Is(e,memory.ErrProfileBusy),errors.Is(e,memory.ErrSyncBusy):code="busy";case errors.Is(e,ErrUnavailable):code="unavailable"};resp.Error=&WireError{Code:code,Message:"operation "+code}}else{resp.OK=true;resp.Result,e=json.Marshal(value);if e!=nil{return}};b,e:=json.Marshal(resp);if e!=nil{return};if len(b)>8<<20{b,_=json.Marshal(Response{Version:1,ID:req.ID,Error:&WireError{Code:"invalid",Message:"response exceeds size bound"}})};_ = c.SetWriteDeadline(time.Now().Add(time.Minute));if _,e=c.Write(append(b,'\n'));e!=nil||e==io.EOF{return}}}
+
+type WireError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type Response struct {
+	Version int             `json:"v"`
+	ID      string          `json:"id"`
+	OK      bool            `json:"ok"`
+	Result  json.RawMessage `json:"result,omitempty"`
+	Error   *WireError      `json:"error,omitempty"`
+}
+
+func readLine(reader *bufio.Reader, max int) ([]byte, error) {
+	var out []byte
+	for {
+		part, err := reader.ReadSlice('\n')
+		if len(out)+len(part) > max {
+			return nil, memory.ErrInvalid
+		}
+		out = append(out, part...)
+		if err == bufio.ErrBufferFull {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return out, nil
+	}
+}
+
+func serve(ctx context.Context, home string, host *app.Host) error {
+	dir := filepath.Join(home, "run")
+	if err := privateDir(dir); err != nil {
+		return err
+	}
+	path := filepath.Join(dir, "daemon.sock")
+	if len(path) >= socketLimit() {
+		return errors.New("daemon socket path exceeds platform limit")
+	}
+	if info, err := os.Lstat(path); err == nil {
+		if info.Mode()&os.ModeSocket == 0 {
+			return memory.ErrInvalid
+		}
+		if err := os.Remove(path); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: path, Net: "unix"})
+	if err != nil {
+		return ErrUnavailable
+	}
+	defer listener.Close()
+	defer os.Remove(path)
+	if err := os.Chmod(path, 0600); err != nil {
+		return err
+	}
+
+	run, cancel := context.WithCancel(ctx)
+	stop := context.AfterFunc(run, func() { listener.Close() })
+	var handlers sync.WaitGroup
+	defer func() {
+		cancel()
+		stop()
+		handlers.Wait()
+	}()
+	slots := make(chan struct{}, 32)
+	for {
+		conn, err := listener.AcceptUnix()
+		if err != nil {
+			if run.Err() != nil {
+				return nil
+			}
+			return ErrUnavailable
+		}
+		select {
+		case slots <- struct{}{}:
+			handlers.Add(1)
+			go func() {
+				defer handlers.Done()
+				defer func() { <-slots }()
+				handle(run, conn, home, host)
+			}()
+		default:
+			conn.Close()
+		}
+	}
+}
+
+func handle(ctx context.Context, conn *net.UnixConn, home string, host *app.Host) {
+	defer conn.Close()
+	if !peerAllowed(conn) {
+		return
+	}
+	stop := context.AfterFunc(ctx, func() { conn.Close() })
+	defer stop()
+	reader := bufio.NewReaderSize(conn, 64<<10)
+	for {
+		if err := conn.SetReadDeadline(time.Now().Add(time.Minute)); err != nil {
+			return
+		}
+		line, err := readLine(reader, 1<<20)
+		if err != nil {
+			return
+		}
+		var request Request
+		if strictjson.Decode(line, 1<<20, &request) != nil || request.Version != 1 || !safeName.MatchString(request.ID) {
+			return
+		}
+		response := callRequest(ctx, home, host, request)
+		encoded, err := json.Marshal(response)
+		if err != nil {
+			return
+		}
+		if len(encoded) > 8<<20 {
+			encoded, _ = json.Marshal(Response{
+				Version: 1, ID: request.ID,
+				Error: &WireError{Code: "invalid", Message: "response exceeds size bound"},
+			})
+		}
+		if err := conn.SetWriteDeadline(time.Now().Add(time.Minute)); err != nil {
+			return
+		}
+		if _, err := conn.Write(append(encoded, '\n')); err != nil {
+			return
+		}
+	}
+}
+
+func callRequest(ctx context.Context, home string, host *app.Host, request Request) Response {
+	response := Response{Version: 1, ID: request.ID}
+	// Reload the private grant for each request so a persistent connection does
+	// not retain a revoked capability or scope grant.
+	grant, err := Authenticate(home, request.Client, request.Token)
+	var value any
+	if err == nil {
+		value, err = host.Registry.Call(ctx, grant, request.Method, request.Params)
+	}
+	if err == nil {
+		response.Result, err = json.Marshal(value)
+	}
+	if err != nil {
+		response.Error = operationError(err)
+		return response
+	}
+	response.OK = true
+	return response
+}
+
+func operationError(err error) *WireError {
+	code := "internal"
+	switch {
+	case errors.Is(err, ops.ErrForbidden):
+		code = "forbidden"
+	case errors.Is(err, ops.ErrUnknownMethod):
+		code = "unknown_method"
+	case errors.Is(err, memory.ErrInvalid):
+		code = "invalid"
+	case errors.Is(err, memory.ErrProfileBusy), errors.Is(err, memory.ErrSyncBusy):
+		code = "busy"
+	case errors.Is(err, ErrUnavailable):
+		code = "unavailable"
+	}
+	return &WireError{Code: code, Message: "operation " + code}
+}
