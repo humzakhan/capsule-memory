@@ -15,7 +15,7 @@ go vet ./...
 go test ./...
 ```
 
-These are pending checks, not successful evidence. The session task adds no automated tests; existing tests alone do not establish the session invariants. Run `gofmt` on the reviewed new/changed Go source and inspect its diff before acceptance. Formatting was deliberately NOT RUN on the shared host. Resolve build failures before loading real data.
+These are pending checks, not successful evidence. The original session delivery added no automated tests. Later focused regression source, when present, is not executed evidence; existing tests alone do not establish the session invariants. Run `gofmt` on the reviewed new/changed Go source only when separately authorized and inspect its diff before acceptance. Formatting was deliberately NOT RUN on the shared host. Resolve build failures before loading real data.
 
 ## 2. Prepare private profiles and migration
 
