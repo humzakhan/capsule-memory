@@ -5,10 +5,12 @@ description: Design or change capsule-memory Cloudflare Workers, Durable Objects
 
 # Cloudflare relay
 
+Apply the shared [maintainability contract](../../../docs/development.md#maintainability-contract) and [delivery/check gate](../../../docs/development.md#explicit-check-gate) within the current task and host permissions.
+
 Read [architecture](../../../docs/architecture.md), [the relay decision](../../../docs/decisions/0003-cloudflare-relay.md), and relevant [official sources](../../../docs/sources.md). Recheck current pricing and capabilities before changing a cost or platform claim.
 
 1. Keep the Worker and per-vault Durable Object content-blind. Authenticate devices, enforce opaque scope and epoch grants, bound requests, and avoid content-bearing telemetry.
-2. Publish immutable payloads and journal segments before conditionally advancing the durable archive head. Treat Durable Object state as coordination and a rebuildable cache, not the only copy of an acknowledged operation.
+2. Name recovery phases (head load, bounded traversal, validation, application, checkpoint) and publication phases so retries and acknowledgement ordering can be reviewed. Publish immutable payloads and journal segments before conditionally advancing the durable archive head. Treat Durable Object state as coordination and a rebuildable cache, not the only copy of an acknowledged operation.
 3. Use the hibernating WebSocket API for wake hints. Restore connection metadata from durable attachments. Never depend on an in-memory cursor, timer, or connected socket for correctness.
 4. Repair missed hints through reconnect and periodic head reconciliation. Bound fan-out, retry storms, reads, object sizes, and per-vault admission. Separate caller rate limits from provider billing guarantees.
 5. Keep object storage, coordination, and notification interfaces separate. Document missing atomic compare-and-swap or visibility guarantees instead of claiming portability from S3 API compatibility.

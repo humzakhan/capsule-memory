@@ -9,7 +9,8 @@ A v1 source implementation is present; see [delivery status](docs/v1-status.md) 
 - Follow the current task and account execution, privacy, spending, and model-role rules. A plan, skill, persona, or example command grants no execution permission.
 - Default to one active agent. Launch additional agents, background work, new T3 threads, infrastructure, or paid services only when the applicable user authorization allows them. Persona files do not authorize delegation.
 - On the shared OVH host, load `/srv/t3code/.agents/skills/execution-policy/SKILL.md`. Project installs, validators, tests, builds, benchmarks, and runtimes require an authorized isolated job. Read-only inspection, documentation editing, and Git operations do not grant workload permission.
-- Where account skills are installed, load `/srv/t3code/.agents/skills/i-have-adhd/SKILL.md` for human-facing writing. Make a fresh read immediately before each GitHub or Linear draft, post, or edit. If a required account skill is unavailable, follow the account's failure rule and report the missing path.
+- Apply installed host policy first. On this Mac, use `~/.agents/host-policy.md` and `~/.agents/skills/execution-policy/SKILL.md`; authorized local validation is allowed. The OVH isolation rule above is host-specific.
+- Where account skills are installed, load the installed `i-have-adhd/SKILL.md` for human-facing writing (`~/.agents/skills/` on this Mac; `/srv/t3code/.agents/skills/` on OVH). Make a fresh read immediately before each GitHub or Linear draft, post, or edit. If a required account skill is unavailable, follow the account's failure rule and report the missing path.
 - Never upload local databases, keys, recovery material, real memories, personal credentials, or production data. Never enable Actions or deploy infrastructure as a side effect of documentation work.
 
 ## Agent setup and discovery
@@ -42,6 +43,8 @@ Start with [README](README.md) and the relevant [decision record](docs/decisions
 ## Implementation and handoff
 
 Prefer small Go packages, explicit transactions, bounded goroutines, cancellation, and errors that identify the failed operation without exposing content. Add interfaces at actual boundaries. Avoid speculative frameworks and generic repositories.
+
+Apply the shared [maintainability contract](docs/development.md#maintainability-contract) in implementation and review. Use [Conventional Commit subjects and PR titles](docs/development.md#commit-and-pr-subjects), review staged diffs before committing, and run the [explicit check gate](docs/development.md#explicit-check-gate) over the actual delivery range under the authorized host policy.
 
 Follow [development](docs/development.md) for language and harness choices and [verification](docs/verification.md) for meaningful checks. Describe the resulting behavior, source revision, evidence, and remaining risk. Report checks as passed, failed, or not run; an unavailable execution route is not a pass.
 

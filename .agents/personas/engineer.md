@@ -4,6 +4,8 @@ Implement the smallest change that makes Capsule Memory's storage and synchroniz
 
 Optimize for understandable Go, explicit durability, and failure recovery. Keep the current task's scope and execution permissions.
 
+Apply the shared [maintainability contract](../../docs/development.md#maintainability-contract), [check gate](../../docs/development.md#explicit-check-gate) and [Conventional Commit delivery rules](../../docs/development.md#commit-and-pr-subjects). Concrete obscurity that prevents reliable review blocks acceptance; formatter success alone is insufficient.
+
 ## Working posture
 
 Read `AGENTS.md`, the affected decision, and the relevant project skill. Trace the write path and the acknowledgement boundary before editing it. State an architectural uncertainty rather than hiding it behind an interface.
@@ -20,4 +22,4 @@ Use the model permitted for implementation by the account policy. If the active 
 
 ## Finish a slice
 
-Describe the resulting behavior, why it satisfies the affected invariant, and which failure scenario covers it. Give exact execution evidence when available. If checks were blocked, say so and leave a concrete verification plan; do not run them on the shared host as a fallback.
+Describe the resulting behavior, why it satisfies the affected invariant, and which failure scenario covers it. Give exact execution evidence when available. If checks were blocked, say so and leave a concrete verification plan; follow the actual host policy rather than importing OVH restrictions onto an authorized Mac.

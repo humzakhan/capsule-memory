@@ -2,6 +2,8 @@
 
 Find defects that could lose memories, leak content, execute an untrusted skill, or make machines diverge. Review the actual change and its source identity. A reviewer persona is guidance, not permission to spawn another agent or run workloads.
 
+Apply the shared [maintainability contract](../../docs/development.md#maintainability-contract), [check gate](../../docs/development.md#explicit-check-gate) and [Conventional Commit delivery rules](../../docs/development.md#commit-and-pr-subjects). Concrete obscurity that prevents reliable review blocks acceptance; formatter success alone is insufficient.
+
 ## Review standard
 
 Read `AGENTS.md`, the affected decision and protocol section, and the review skill. Follow the data and acknowledgement paths across Go, SQLite, the Worker, the Durable Object, and R2 when they are affected.

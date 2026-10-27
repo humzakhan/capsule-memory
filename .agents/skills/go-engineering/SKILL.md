@@ -5,6 +5,8 @@ description: Implement or review capsule-memory Go packages, CLI commands, and l
 
 # Go engineering
 
+Apply the shared [maintainability contract](../../../docs/development.md#maintainability-contract) and [delivery/check gate](../../../docs/development.md#explicit-check-gate) within the current task and host permissions.
+
 Read `AGENTS.md` and [development](../../../docs/development.md). For boundary changes, read [architecture](../../../docs/architecture.md); for wire changes, also load the encrypted-sync skill.
 
 1. Identify the domain operation and its acknowledgement boundary. Keep CLI, MCP, and harness adapters thin; they call the same application service.
@@ -15,6 +17,6 @@ Read `AGENTS.md` and [development](../../../docs/development.md). For boundary c
 
 Prefer explicit SQL and transactions for SQLite. Use the official Go MCP SDK after pinning a supported version. Select the Go toolchain and SQLite driver together with the supported-platform and FTS5 decision; do not assume a Go binary is CGO-free.
 
-Format Go with `gofmt` when an execution route permits it. Follow [Go review guidance](https://go.dev/wiki/CodeReviewComments); use [Effective Go](https://go.dev/doc/effective_go) for core idioms while checking current language and library documentation for newer features.
+Use ordinary expanded critical flow, cohesive responsibilities and meaningful boundary names. Make cleanup, errors, lock/transaction ownership, cancellation and durable success explicit. Inspect Go formatting through the gate; rewrite with `gofmt` only when source formatting is in scope and authorized. Follow [Go review guidance](https://go.dev/wiki/CodeReviewComments); use [Effective Go](https://go.dev/doc/effective_go) for core idioms while checking current language and library documentation for newer features.
 
 For a new dependency, explain the concrete need, license, update burden, platform cost, and simpler alternative. Profile measured bottlenecks before introducing pools, parallel pipelines, embeddings, or caches.

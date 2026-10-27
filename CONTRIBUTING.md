@@ -2,14 +2,14 @@
 
 Improve Capsule Memory as a lightweight utility for securely storing and synchronizing existing agent memories and skills. Agents and harnesses own memory behavior; the utility provides shared encrypted storage and device-local keys and search.
 
-Make a small, reviewable change with synthetic data and honest evidence. The v1 source is experimental: installs, builds, formatters, typechecks, tests, and E2E remain **NOT RUN**. Read [delivery status](docs/v1-status.md) before relying on behavior.
+Make a small, reviewable change with synthetic data and honest evidence. The source is experimental; historical reports and the [dated setup baseline](docs/verification.md#setup-gate-baseline-2026-10-27) distinguish source checks from runtime acceptance. Read [delivery status](docs/v1-status.md) before relying on behavior.
 
 ## Start a contribution
 
 1. Read [AGENTS.md](AGENTS.md), [development guidance](docs/development.md), and the relevant [design decision](docs/decisions/). For larger behavior changes, discuss the outcome and affected boundary with the maintainer first.
 2. Create a focused branch from `main` in your checkout (or a fork when available). Follow the [owner-machine runbook](docs/run-v1.md) for dependency setup and the synthetic local journey.
 3. Update source, relevant docs, and synthetic fixtures together. Explain changes to protocol bytes, migrations, durability, scope authorization, or skill trust.
-4. Inspect the diff for secrets and unrelated changes. Run appropriate checks in your permitted environment; record the source revision, commands, and actual results. Mark skipped checks **NOT RUN** with a reason.
+4. Apply the [maintainability contract](docs/development.md#maintainability-contract). Review `git diff --cached` for secrets, generated outputs and unrelated changes before committing. Use [Conventional Commit subjects and PR titles](docs/development.md#commit-and-pr-subjects), including valid breaking `!` syntax. Run the [check gate](docs/development.md#explicit-check-gate) with the explicit delivery range in your permitted environment; record the source revision, commands, and actual results. Mark skipped checks **NOT RUN** with a reason.
 5. Submit a pull request using the [template](.github/pull_request_template.md), with the concrete outcome first, evidence, and material limits. Link longer design context rather than pasting logs.
 
 ## Data and privacy
@@ -22,7 +22,7 @@ Share only manually reviewed, redacted diagnostics. Public IDs, paths, and metad
 
 The source pins Go 1.24.0, the official MCP SDK v1.4.0, `modernc.org/sqlite` v1.39.1 (with libc v1.66.10), and Wrangler v4.129.1; the relay requires Node 22+. See [go.mod](go.mod) and [cloudflare/package.json](cloudflare/package.json).
 
-There is no `go.sum` or npm lockfile yet. The owner's authorized dependency resolution must generate real files for review. Do not fabricate checksums or describe the initial npm install as frozen. New dependencies need a concrete requirement, maintenance and license rationale, and platform implications.
+`go.sum` and `cloudflare/package-lock.json` are reviewed dependency-resolution outputs. Use `go mod download` and `npm ci --prefix cloudflare --ignore-scripts` for setup separately from the no-rewrite check gate. Review any subsequent manifest/lock changes and registry URLs. New dependencies need a concrete requirement, maintenance and license rationale, and platform implications.
 
 Use [verification scenarios](docs/verification.md) to select meaningful checks. The [E2E journey](e2e/README.md) is authored, not passed. Source reading and `git diff --check` establish only inspection and whitespace evidence; neither proves runtime behavior or security.
 

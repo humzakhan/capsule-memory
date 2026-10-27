@@ -5,10 +5,12 @@ description: Design or review capsule-memory E2EE, revisions, durable synchroniz
 
 # Encrypted synchronization
 
+Apply the shared [maintainability contract](../../../docs/development.md#maintainability-contract) and [delivery/check gate](../../../docs/development.md#explicit-check-gate) within the current task and host permissions.
+
 Read [protocol](../../../docs/protocol.md), [threat model](../../../docs/threat-model.md), and [contracts](../../../contracts/README.md). The current contract is a draft, not an approved cryptographic protocol.
 
 1. Name the logical operation, transport envelope, key epoch, and publication cursor separately. Persist encrypted bytes for retries. Bind authenticated context to vault, scope, device, epoch, version, object identity, and payload digest using a reviewed byte format.
-2. Trace crashes before and after local commit, upload, journal publication, acknowledgement, and cursor advance. Remote acknowledgement follows durable publication; a WebSocket message or orphan blob is not a commit.
+2. Keep prepare, validate, durable commit, publication and acknowledgement phases readable and distinctly named; preserve reviewed protocol bytes through structural changes. Trace crashes before and after local commit, upload, journal publication, acknowledgement, and cursor advance. Remote acknowledgement follows durable publication; a WebSocket message or orphan blob is not a commit.
 3. Preserve the revision DAG and all concurrent heads. A tombstone suppresses stale edits; restore is explicit and names the deletion. Never use timestamp order or arrival order to discard a branch.
 4. Treat revocation as an ordered control operation. Refresh authorization before publishing an offline queue. Re-encrypt under the permitted epoch only when still authorized, with a new transport identity and the same logical operation identity. Revocation cannot erase previously learned plaintext.
 5. Add shared synthetic examples and adversarial acceptance cases for changed semantics. Require reviewed signing bytes and real cross-language vectors before claiming interoperability.
