@@ -3,7 +3,19 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "engines": { "node": ">=22" },
-  "scripts": { "dev": "wrangler dev --local --ip 127.0.0.1", "types": "wrangler types" },
-  "devDependencies": { "wrangler": "4.129.1" }
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "wrangler dev --local --ip 127.0.0.1",
+    "types": "wrangler types",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format:check": "prettier --check \"src/**/*.ts\" package.json tsconfig.json .prettierrc.json"
+  },
+  "devDependencies": {
+    "wrangler": "4.129.1",
+    "@cloudflare/workers-types": "5.20260907.1",
+    "typescript": "5.9.3",
+    "prettier": "3.6.2"
+  }
 }
