@@ -95,7 +95,13 @@ func (s *Service) FetchSkill(ctx context.Context,scope,record string,history boo
 func (s *Service) ListSkills(ctx context.Context,scope string) ([]RecordView,error) {
 	if err:=s.scope(scope);err!=nil{return nil,err}
 	tx,err:=s.reader.BeginTx(ctx,&sql.TxOptions{ReadOnly:true});if err!=nil{return nil,ErrStorage};defer tx.Rollback()
-	rows,err:=tx.QueryContext(ctx,"SELECT DISTINCT record FROM revisions WHERE scope=? AND kind='skill' ORDER BY record LIMIT 100",scope);if err!=nil{return nil,ErrStorage}
+	rows,err:=tx.QueryContext(ctx,`SELECT DISTINCT r.record FROM revisions r
+		WHERE r.scope=? AND r.kind='skill'
+		AND NOT EXISTS (
+			SELECT 1 FROM revisions d WHERE d.scope=r.scope AND d.record=r.record
+			AND json_extract(d.body,'$.operation')='delete'
+			AND NOT EXISTS (SELECT 1 FROM restores x WHERE x.deletion=d.revision)
+		) ORDER BY r.record LIMIT 100`,scope);if err!=nil{return nil,ErrStorage}
 	ids:=[]string{};for rows.Next(){var id string;if rows.Scan(&id)!=nil{rows.Close();return nil,ErrStorage};ids=append(ids,id)};err=rows.Err();rows.Close();if err!=nil{return nil,ErrStorage}
 	out:=[]RecordView{};for _,id:=range ids{v,err:=s.recordView(ctx,tx,scope,id,false);if err!=nil{return nil,err};if !v.Deleted{out=append(out,v)}}
 	if err=tx.Commit();err!=nil{return nil,ErrStorage};return out,nil
