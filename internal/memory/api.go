@@ -65,18 +65,86 @@ func (s *Service) prepare(ctx context.Context,in PutInput,seal func(*Revision)er
  if e=validateRevision(r);e!=nil{return out,e};if e=s.verifyOwnerInsight(r);e!=nil{return out,e};b,e:=json.Marshal(r);if e!=nil{return out,e};if v==2&&len(b)>frame.ChunkHardMax{return out,frame.ErrTooLarge}
  out.Envelope,e=s.encryptPlain(r,b);if e!=nil{return Prepared{},e};out.Revision=r;return out,nil
 }
-func (s *Service) Commit(ctx context.Context,set []Prepared,extra func(context.Context,*sql.Tx)error)error{
- return s.Update(ctx,func(tx *sql.Tx)error{
-  c,_,e:=s.currentTx(ctx,tx);if e!=nil{return e}
-  for _,p:=range set{r:=p.Revision;if _,epoch,e:=c.grant(s.configuration().Device,r.Scope);e!=nil||s.configuration().Keys[r.Scope].Epoch!=epoch||r.Author!=s.configuration().Device{return ErrInvalid}
-   decoded,e:=s.decrypt(p.Envelope,r.Scope,c);if e!=nil{return e};a,_:=json.Marshal(decoded);b,_:=json.Marshal(r);if !equalBytes(a,b){return ErrInvalid}
-   var exists int;if e=tx.QueryRowContext(ctx,"SELECT count(*) FROM revisions WHERE revision=?",r.ID).Scan(&exists);e!=nil{return ErrStorage}
-   if exists==0&&p.implicitParents{h,_,e:=s.Heads(ctx,tx,r.Scope,r.Record);if e!=nil{return e};if !equalStrings(headIDs(h),p.headsAtPrepare){return ErrHeadsChanged}}
-   if e=insertRevision(ctx,tx,r);e!=nil{return e};if _,e=tx.ExecContext(ctx,"INSERT INTO outbox(revision,scope,envelope) VALUES(?,?,?) ON CONFLICT(revision) DO NOTHING",r.ID,r.Scope,p.Envelope);e!=nil{return ErrStorage}
-   if exists==0{if e=s.apply(ctx,tx,r,ApplyLocal);e!=nil{return e};if r.Version==2&&r.Operation!="delete"&&(r.Provenance.SourceKind=="derived"||r.Provenance.SourceKind=="projection"){withdrawal:=false;if r.Kind==records.KindProjection{var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return ErrInvalid};withdrawal=p.State=="withdrawn"||p.State=="hidden"};if !withdrawal{if e=CheckConsent(ctx,tx,[]records.SourceRef{{Record:r.Record,Revision:r.ID,Kind:r.Kind}});e!=nil{return e}}}}
-  };if extra!=nil{if e=extra(ctx,tx);e!=nil{return e}};return nil
- })
+func (s *Service) Commit(ctx context.Context, set []Prepared, extra func(context.Context, *sql.Tx) error) error {
+	s.wmu.Lock()
+	defer s.wmu.Unlock()
+	return s.commitLocked(ctx, set, extra)
 }
+
+// commitLocked owns one durable revision/outbox transaction. The caller owns wmu.
+func (s *Service) commitLocked(ctx context.Context, set []Prepared, extra func(context.Context, *sql.Tx) error) error {
+	return s.updateLocked(ctx, func(tx *sql.Tx) error {
+		control, _, err := s.currentTx(ctx, tx)
+		if err != nil {
+			return err
+		}
+		for _, prepared := range set {
+			revision := prepared.Revision
+			_, epoch, err := control.grant(s.configuration().Device, revision.Scope)
+			if err != nil || s.configuration().Keys[revision.Scope].Epoch != epoch || revision.Author != s.configuration().Device {
+				return ErrInvalid
+			}
+			decoded, err := s.decrypt(prepared.Envelope, revision.Scope, control)
+			if err != nil {
+				return err
+			}
+			actual, err := json.Marshal(decoded)
+			if err != nil {
+				return ErrInvalid
+			}
+			expected, err := json.Marshal(revision)
+			if err != nil || !equalBytes(actual, expected) {
+				return ErrInvalid
+			}
+			var exists int
+			if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM revisions WHERE revision=?", revision.ID).Scan(&exists); err != nil {
+				return ErrStorage
+			}
+			if exists == 0 && prepared.implicitParents {
+				heads, _, err := s.Heads(ctx, tx, revision.Scope, revision.Record)
+				if err != nil {
+					return err
+				}
+				if !equalStrings(headIDs(heads), prepared.headsAtPrepare) {
+					return ErrHeadsChanged
+				}
+			}
+			if err = insertRevision(ctx, tx, revision); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, "INSERT INTO outbox(revision,scope,envelope) VALUES(?,?,?) ON CONFLICT(revision) DO NOTHING", revision.ID, revision.Scope, prepared.Envelope); err != nil {
+				return ErrStorage
+			}
+			if exists != 0 {
+				continue
+			}
+			if err = s.apply(ctx, tx, revision, ApplyLocal); err != nil {
+				return err
+			}
+			if revision.Version != 2 || revision.Operation == "delete" || (revision.Provenance.SourceKind != "derived" && revision.Provenance.SourceKind != "projection") {
+				continue
+			}
+			if revision.Kind == records.KindProjection {
+				var projection records.Projection
+				if json.Unmarshal(revision.Body, &projection) != nil {
+					return ErrInvalid
+				}
+				if projection.State == "withdrawn" || projection.State == "hidden" {
+					continue
+				}
+			}
+			refs := []records.SourceRef{{Record: revision.Record, Revision: revision.ID, Kind: revision.Kind}}
+			if err = CheckConsent(ctx, tx, refs); err != nil {
+				return err
+			}
+		}
+		if extra != nil {
+			return extra(ctx, tx)
+		}
+		return nil
+	})
+}
+
 func equalBytes(a,b []byte)bool{return string(a)==string(b)}
 func equalStrings(a,b []string)bool{if len(a)!=len(b){return false};for i:=range a{if a[i]!=b[i]{return false}};return true}
 type ApplyOrigin int

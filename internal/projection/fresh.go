@@ -9,6 +9,7 @@ import (
 
 	"github.com/humzakhan/capsule-memory/internal/memory"
 	"github.com/humzakhan/capsule-memory/internal/records"
+ "github.com/humzakhan/capsule-memory/internal/session"
 )
 
 func Resolve(ctx context.Context,target *memory.Service,recordsIDs []string,mode Mode,fresh Freshness)(map[string]Visibility,error){
@@ -35,19 +36,25 @@ func Resolve(ctx context.Context,target *memory.Service,recordsIDs []string,mode
 }
 func (b *Bridge) VerifyFresh(ctx context.Context,links []string)(map[string]FreshResult,error){
 	policy,policyErr:=b.sess.Policy(ctx);if policyErr!=nil{return nil,policyErr};out:=map[string]FreshResult{};if len(links)>1000{return out,memory.ErrInvalid}
-	type dependency struct{ref records.SourceRef;evidence bool};type check struct{source,target records.ScopedRef;deps []dependency};checks:=map[string]check{};scopes:=map[string]bool{}
+	type dependency struct{ref records.SourceRef;evidence bool};type check struct{source,target records.ScopedRef;deps []dependency;generation int64};checks:=map[string]check{};scopes:=map[string]bool{}
 	err:=b.source.Read(ctx,func(q memory.Queryer)error{
 		for _,link:=range links{out[link]=FreshResult{Reason:"not_current"};p,e:=b.sourceProjection(ctx,q,link);if e!=nil||p.OwnerWithdrawn||p.State=="withdrawn"||p.State=="hidden"{continue};if p.Source.Vault!=p.Target.Vault&&policy.CrossVault!="enabled_unaccepted"{out[link]=FreshResult{Reason:"policy_disabled"};continue};deps:=[]dependency{};for _,ref:=range p.Dependencies{deps=append(deps,dependency{ref:ref,evidence:true})};deps=append(deps,dependency{ref:records.SourceRef{Record:p.Source.Record,Revision:p.Source.Revision,Kind:records.KindInsight},evidence:true})
 			valid:=true;seen:=map[dependency]bool{};expanded:=[]dependency{}
 			for len(deps)>0{dep:=deps[0];deps=deps[1:];if seen[dep]{continue};seen[dep]=true;d:=dep.ref;if len(seen)>100000{return memory.ErrStaleOverflow};r,e:=b.source.Revision(ctx,q,d.Revision);if e!=nil||r.Record!=d.Record||r.Vault!=p.Source.Vault||(d.Record==p.Source.Record&&d.Revision==p.Source.Revision&&r.Scope!=p.Source.Scope){valid=false;break};scopes[r.Scope]=true;expanded=append(expanded,dep)
 				rows,e:=q.QueryContext(ctx,"SELECT d.parent,d.parent_revision,d.event_from,d.event_to,d.evidence,COALESCE(r.kind,'') FROM deps d LEFT JOIN revisions r ON r.revision=d.parent_revision WHERE d.child_revision=?",d.Revision);if e!=nil{return e};for rows.Next(){var parent records.SourceRef;var evidence bool;if e=rows.Scan(&parent.Record,&parent.Revision,&parent.EventFrom,&parent.EventTo,&evidence,&parent.Kind);e!=nil{rows.Close();return e};deps=append(deps,dependency{ref:parent,evidence:evidence})};e=rows.Err();rows.Close();if e!=nil{return e}
-			};if valid{checks[link]=check{p.Source,p.Target,expanded}}
+			};if valid{checks[link]=check{p.Source,p.Target,expanded,p.Generation}}
 		};return nil
 	});if err!=nil{return out,err}
 	ordered:=[]string{};for scope:=range scopes{ordered=append(ordered,scope)};sort.Strings(ordered)
 	heads:=map[string]string{};for _,scope:=range ordered{res,e:=b.source.SyncScope(ctx,scope,memory.SyncOptions{ReplayOnly:true,MaxPages:100});if e!=nil||!res.CaughtUp{return out,nil};heads[scope]=res.Coverage.Head}
-	err=b.source.Read(ctx,func(q memory.Queryer)error{guard,e:=b.source.SnapshotFence(ctx,q);if e!=nil{return e};for link,c:=range checks{
-		latest,e:=b.sourceProjection(ctx,q,link);current:=e==nil&&latest.Source==c.source&&latest.Target==c.target&&latest.State!="withdrawn"&&latest.State!="hidden";used:=map[string]bool{}
+	err=b.source.Read(ctx,func(q memory.Queryer)error{
+		var raw []byte
+		policyErr:=q.QueryRowContext(ctx,"SELECT body FROM policy WHERE name='session'").Scan(&raw)
+		if policyErr!=nil&&policyErr!=sql.ErrNoRows{return policyErr}
+		currentPolicy:=session.Policy{CrossVault:"off"}
+		if policyErr==nil&&json.Unmarshal(raw,&currentPolicy)!=nil{return memory.ErrInvalid}
+		guard,e:=b.source.SnapshotFence(ctx,q);if e!=nil{return e};for link,c:=range checks{
+		latest,e:=b.sourceProjection(ctx,q,link);current:=e==nil&&latest.Source==c.source&&latest.Target==c.target&&latest.Generation==c.generation&&!latest.OwnerWithdrawn&&(latest.Source.Vault==latest.Target.Vault||currentPolicy.CrossVault=="enabled_unaccepted")&&latest.State!="withdrawn"&&latest.State!="hidden";used:=map[string]bool{}
 		for _,dep:=range c.deps{d:=dep.ref;r,e:=b.source.Revision(ctx,q,d.Revision);if e!=nil||b.source.CheckLocalScope(ctx,q,r.Scope)!=nil{current=false;break};visible,e:=memory.RefVisible(ctx,q,d,dep.evidence);if e!=nil||!visible{current=false;break};hh,deleted,e:=b.source.Heads(ctx,q,r.Scope,r.Record);if e!=nil||deleted||len(hh)!=1||hh[0].ID!=d.Revision{current=false;break};used[r.Scope]=true}
 		if current&&memory.CheckConsent(ctx,q,latest.Dependencies)!=nil{current=false};if current{refs:=[]ScopeHead{};for _,scope:=range ordered{if used[scope]{refs=append(refs,ScopeHead{Scope:scope,Head:heads[scope]})}};out[link]=FreshResult{Current:true,VerifiedHeads:refs,VerifiedAt:time.Now().UTC().Format(time.RFC3339Nano),source:c.source,target:c.target,link:link,guard:guard}}
 	};return nil});return out,err

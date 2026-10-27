@@ -13,24 +13,152 @@ var ErrConsentUnavailable=errors.New("source consent unavailable; open the sourc
 var ErrUnpublishedParent=errors.New("parent publication unconfirmed; revision retained without releasing private ancestry")
 
 // Direct sync without a source router retains promoted descendants locally.
-func(s *Service) SetPublicationCheck(fn func(context.Context,records.ScopedRef)error){s.configMu.Lock();defer s.configMu.Unlock();s.publicationCheck=fn}
-func(s *Service) checkPublication(ctx context.Context,id string)error{
- r,e:=s.Revision(ctx,s.reader,id);if e!=nil{return e}
- // Relay replay requires every same-record parent first. A privacy hold cannot
- // be bypassed by sending a child that would poison replay on another device.
- for _,parent:=range r.Parents{var pending int;if e=s.reader.QueryRowContext(ctx,"SELECT count(*) FROM outbox WHERE revision=? AND receipt IS NULL",parent).Scan(&pending);e!=nil{return ErrStorage};if pending!=0{return ErrUnpublishedParent}}
- // Cleanup carries no newly exported assertion and must survive source loss.
- if r.Operation=="delete"{return nil};if r.Kind==records.KindProjection{var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return ErrInvalid};if p.WithdrawalMarker{return s.VerifyProjectionMarker(ctx,s.reader,r,p,true)};if p.State=="hidden"||p.State=="withdrawn"{return nil}}
- if e:=CheckConsent(ctx,s.reader,[]records.SourceRef{{Revision:id}});e!=nil{return e}
- rows,e:=s.reader.QueryContext(ctx,`WITH RECURSIVE ancestry(revision) AS (SELECT ? UNION SELECT d.parent_revision FROM deps d JOIN ancestry a ON d.child_revision=a.revision) SELECT r.body FROM ancestry a JOIN revisions r ON r.revision=a.revision LIMIT 100001`,id);if e!=nil{return ErrStorage}
- var page []Revision;for rows.Next(){var raw []byte;var r Revision;if rows.Scan(&raw)!=nil||json.Unmarshal(raw,&r)!=nil{rows.Close();return ErrStorage};page=append(page,r)};e=rows.Err();rows.Close();if e!=nil{return ErrStorage};if len(page)>100000{return ErrStaleOverflow}
- s.configMu.RLock();check:=s.publicationCheck;s.configMu.RUnlock()
- for _,r:=range page{if r.Operation=="delete"{continue};var ref records.ScopedRef
-  switch r.Kind{case records.KindKnowledge:var k records.Knowledge;if json.Unmarshal(r.Body,&k)!=nil{return ErrInvalid};ref=k.Source
-  case records.KindProjection:var p records.Projection;if json.Unmarshal(r.Body,&p)!=nil{return ErrInvalid};if p.Role!="target"||p.State=="hidden"||p.State=="withdrawn"{continue};ref=p.Source
-  default:continue}
-  if check==nil{return ErrConsentUnavailable};if e=check(ctx,ref);e!=nil{return e}
- };return nil
+func (s *Service) SetPublicationCheck(fn func(context.Context, records.Projection) error) {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	s.publicationCheck = fn
+}
+
+// SetProjectionPublicationCheck installs the projection consumer's pure local
+// lifecycle/grant check. It must use q only, with no network or nested updates.
+func (s *Service) SetProjectionPublicationCheck(fn func(context.Context, Queryer, Revision) (records.Projection, error)) {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	s.projectionPublicationCheck = fn
+}
+
+func (s *Service) checkPublication(ctx context.Context, id string) error {
+	s.configMu.RLock()
+	remote := s.publicationCheck
+	local := s.projectionPublicationCheck
+	s.configMu.RUnlock()
+	var contexts []records.Projection
+	var revisions []string
+	err := s.Read(ctx, func(q Queryer) error {
+		r, err := s.Revision(ctx, q, id)
+		if err != nil {
+			return err
+		}
+		for _, parent := range r.Parents {
+			var pending int
+			if err = q.QueryRowContext(ctx, "SELECT count(*) FROM outbox WHERE revision=? AND receipt IS NULL", parent).Scan(&pending); err != nil {
+				return ErrStorage
+			}
+			if pending != 0 {
+				return ErrUnpublishedParent
+			}
+		}
+		// Cleanup never releases private same-record parents. Independent markers
+		// use their authenticated opaque binding and carry no assertion text.
+		if r.Operation == "delete" {
+			return nil
+		}
+		if r.Kind == records.KindProjection {
+			var projection records.Projection
+			if json.Unmarshal(r.Body, &projection) != nil {
+				return ErrInvalid
+			}
+			if projection.WithdrawalMarker {
+				return s.VerifyProjectionMarker(ctx, q, r, projection, true)
+			}
+			if projection.State == "hidden" || projection.State == "withdrawn" {
+				return nil
+			}
+		}
+		if err = CheckConsent(ctx, q, []records.SourceRef{{Revision: id}}); err != nil {
+			return err
+		}
+		rows, err := q.QueryContext(ctx, `WITH RECURSIVE ancestry(revision) AS (
+			SELECT ? UNION SELECT d.parent_revision FROM deps d JOIN ancestry a ON d.child_revision=a.revision
+		) SELECT r.revision FROM ancestry a JOIN revisions r ON r.revision=a.revision LIMIT 100001`, id)
+		if err != nil {
+			return ErrStorage
+		}
+		var ids []string
+		for rows.Next() {
+			var revision string
+			if rows.Scan(&revision) != nil {
+				rows.Close()
+				return ErrStorage
+			}
+			ids = append(ids, revision)
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return ErrStorage
+		}
+		if len(ids) > 100000 {
+			return ErrStaleOverflow
+		}
+		for _, revision := range ids {
+			r, err := s.Revision(ctx, q, revision)
+			if err != nil {
+				return err
+			}
+			if r.Operation == "delete" {
+				continue
+			}
+			if r.Kind == records.KindProjection {
+				var projection records.Projection
+				if json.Unmarshal(r.Body, &projection) != nil {
+					return ErrInvalid
+				}
+				if projection.Role != "target" || projection.State == "hidden" || projection.State == "withdrawn" {
+					continue
+				}
+			} else if r.Kind != records.KindKnowledge {
+				continue
+			}
+			if local == nil || remote == nil {
+				return ErrConsentUnavailable
+			}
+			projection, err := local(ctx, q, r)
+			if err != nil {
+				return err
+			}
+			contexts = append(contexts, projection)
+			revisions = append(revisions, r.ID)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	// The source router may refresh remote control. It never runs inside a
+	// target snapshot or under a write lock. Retry bytes remain unchanged.
+	for _, projection := range contexts {
+		if err = remote(ctx, projection); err != nil {
+			return err
+		}
+	}
+	if len(contexts) == 0 {
+		return nil
+	}
+	return s.Read(ctx, func(q Queryer) error {
+		if err := CheckConsent(ctx, q, []records.SourceRef{{Revision: id}}); err != nil {
+			return err
+		}
+		for i, revision := range revisions {
+			r, err := s.Revision(ctx, q, revision)
+			if err != nil {
+				return err
+			}
+			current, err := local(ctx, q, r)
+			if err != nil {
+				return err
+			}
+			actual, err := json.Marshal(current)
+			if err != nil {
+				return ErrInvalid
+			}
+			expected, err := json.Marshal(contexts[i])
+			if err != nil || !equalBytes(actual, expected) {
+				return ErrHeadsChanged
+			}
+		}
+		return nil
+	})
 }
 
 // Durable roots refer to exact captured revisions, so enabling a source again

@@ -12,6 +12,7 @@ import (
 
 type applier struct {svc *memory.Service;kind string}
 func Install(svc *memory.Service){
+ svc.SetProjectionPublicationCheck(func(ctx context.Context,q memory.Queryer,r memory.Revision)(records.Projection,error){return publicationProjection(ctx,q,svc,r)})
  svc.OnRevision(func(ctx context.Context,tx *sql.Tx,r memory.Revision)error{
   if r.Kind!=records.KindInsight{return nil}
   rows,e:=tx.QueryContext(ctx,"SELECT link_id,source_scope FROM projections WHERE source_record=? AND source_scope=? AND owner_withdrawn=0 LIMIT 100001",r.Record,r.Scope);if e!=nil{return e};type item struct{link,scope string};var items []item;for rows.Next(){var i item;if rows.Scan(&i.link,&i.scope)!=nil{rows.Close();return memory.ErrStorage};items=append(items,i)};e=rows.Err();rows.Close();if e!=nil{return e};if len(items)>100000{return memory.ErrStaleOverflow}

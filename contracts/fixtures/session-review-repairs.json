@@ -146,6 +146,51 @@
         "compare with already-published or replayed ancestry"
       ],
       "expected": "valid retained local assertion reports waiting_ancestry; proof severs evidence/consent dependencies but preserves the DAG; published ancestry permits normal publication; no implicit clone/delete/new ID, grant widening, ancestry skip or held-parent upload; no fresh-root CLI is implied"
+    },
+    {
+      "case": "source_change_before_target_commit",
+      "order": [
+        "prepare target using a live accepted source",
+        "withdraw consent, revoke an input-scope grant, or change the source head before acquiring the target commit guard",
+        "attempt target commit and retry with a replacement lease"
+      ],
+      "expected": "source validation snapshot closes before target transaction while both canonical-home-ordered write mutexes remain held under exclusive profile ownership; changed source authority, consent, exact insight or lease rejects target state/outbox; same-profile uses one transaction; deadline is checked after insertion and grant validation; shared-mode cross-profile handles are rejected"
+    },
+    {
+      "case": "budget_attempt_replacement",
+      "order": [
+        "old attempt exhausts its budget",
+        "cancel or reassign the old attempt and lease replacement work",
+        "old worker attempts to park the job until midnight"
+      ],
+      "expected": "one token-checked leased-to-blocked transition rejects the old token; replacement state and lease survive; failure to persist retry state is returned"
+    },
+    {
+      "case": "freshness_policy_during_replay",
+      "order": [
+        "begin cross-vault live proof while promotion is enabled",
+        "disable cross-vault promotion during replay",
+        "finish proof before asynchronous target cleanup"
+      ],
+      "expected": "final source snapshot rechecks policy and exact link generation; strict output is hidden and historical output cannot claim current"
+    },
+    {
+      "case": "candidate_limit_starvation",
+      "order": [
+        "index matching candidate/rejected insights and lifecycle-hidden knowledge ahead of eligible matching rows across scopes and kinds",
+        "search with a small result limit while some source proofs fail",
+        "withdraw or replace a result during proof I/O and repeat the search"
+      ],
+      "expected": "independent rank/revision keyset pages continue after lifecycle/proof rejection until eligible results or exhaustion; bounded streams and changing snapshots report incomplete coverage; final snapshot/guards reject changed rows; missing proofs retain lifecycle-valid historical text as current:false"
+    },
+    {
+      "case": "projection_publication_context",
+      "order": [
+        "commit target knowledge/lifecycle but crash before completing the source receipt/lifecycle",
+        "attempt publication, then complete the exact source lifecycle",
+        "widen same-vault target readers, revoke bridge grant, or manually withdraw link before retry"
+      ],
+      "expected": "pending, absent, ambiguous or mismatched source/target context retains exact encrypted bytes; publication requires one authenticated exact target lifecycle and completed matching source lifecycle/generation; local target reader/grant/lifecycle checks run again after remote source checks; cleanup markers retain their opaque authority and private parents remain waiting_ancestry"
     }
   ]
 }
