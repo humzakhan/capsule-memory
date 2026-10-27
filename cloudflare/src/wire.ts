@@ -3,7 +3,7 @@
 export const MAX_BODY = 2 * 1024 * 1024;
 export const MAX_CONTROL = 128 * 1024;
 const enc = new TextEncoder();
-const dec = new TextDecoder("utf-8", { fatal: true });
+const dec = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false });
 export class Fault extends Error {
   constructor(public status: number, public code: string) { super(code); }
 }
