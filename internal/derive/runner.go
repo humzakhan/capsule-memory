@@ -31,10 +31,41 @@ func (r *Runner) RunOnce(ctx context.Context)(bool,error){
 	if err=r.svc.Update(ctx,func(tx *sql.Tx)error{if _,e:=tx.ExecContext(ctx,"UPDATE jobs SET state='pending',error_code=NULL WHERE state='blocked' AND error_code='budget' AND not_before<=?",time.Now().UnixMilli());e!=nil{return e};return r.checkPersonalReady(ctx,tx,policy)});err!=nil{return false,err}
 	job,err:=r.svc.LeaseJob(ctx,[]string{"session_digest","project_rollup","personal_rollup"},10*time.Minute);if err!=nil||job==nil{return false,err}
 	if job.Spec.Kind!="session_digest"&&policy.RollupDevice!=""&&policy.RollupDevice!=r.cfg.Device{err=errors.New("rollup_device_mismatch")}else{err=r.run(ctx,job,policy)}
-	if err!=nil{code:="derive_failed";permanent:=job.Attempts>=3;if errors.Is(err,ErrOutput){code="invalid_output"};if errors.Is(err,inference.ErrBudget){code="budget";permanent=false};if errors.Is(err,projection.ErrReadersExceedSources){code="destination_readers_exceed_sources";permanent=true};if errors.Is(err,memory.ErrHeadsChanged){code="inputs_changed";permanent=false};if errors.Is(err,memory.ErrStorage)||errors.Is(err,memory.ErrMissingRevision){code="inputs_unavailable";permanent=false};if errors.Is(err,memory.ErrInvalid)||errors.Is(err,memory.ErrConsentWithdrawn){code="authorization_or_consent";permanent=true};_ = r.svc.FailJob(ctx,job.Key,job.Token,code,time.Now().Add(time.Minute),permanent)
-		if code=="budget"{_ = r.svc.Update(ctx,func(tx *sql.Tx)error{now:=time.Now().UTC();next:=time.Date(now.Year(),now.Month(),now.Day()+1,0,0,0,0,time.UTC);_,e:=tx.ExecContext(ctx,"UPDATE jobs SET state='blocked',error_code='budget',not_before=? WHERE job_key=? AND state='pending'",next.UnixMilli(),job.Key);return e})}
-	};return true,err
+	if err == nil {
+		return true, nil
+	}
+	code := "derive_failed"
+	permanent := job.Attempts >= 3
+	switch {
+	case errors.Is(err, ErrOutput):
+		code = "invalid_output"
+	case errors.Is(err, inference.ErrBudget):
+		// Transition directly from this leased token. The former two-step
+		// pending-to-blocked update could park another worker's retry.
+		now := time.Now().UTC()
+		next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.UTC)
+		blockErr := r.svc.BlockJob(ctx, job.Key, job.Token, "budget", next)
+		return true, errors.Join(err, blockErr)
+	case errors.Is(err, projection.ErrReadersExceedSources):
+		code = "destination_readers_exceed_sources"
+		permanent = true
+	case errors.Is(err, memory.ErrHeadsChanged):
+		code = "inputs_changed"
+		permanent = false
+	case errors.Is(err, memory.ErrStorage), errors.Is(err, memory.ErrMissingRevision):
+		code = "inputs_unavailable"
+		permanent = false
+	case errors.Is(err, memory.ErrConsentWithdrawn):
+		code = "consent_withdrawn"
+		permanent = true
+	case errors.Is(err, memory.ErrInvalid):
+		code = "authorization_failed"
+		permanent = true
+	}
+	failErr := r.svc.FailJob(ctx, job.Key, job.Token, code, time.Now().Add(time.Minute), permanent)
+	return true, errors.Join(err, failErr)
 }
+
 type preparedInput struct{lines []inputLine;known map[string]citation;primary []records.SourceRef;heads []records.SourceRef;gaps []records.Gap;project string;omissions []records.Omission;period time.Time}
 func (r *Runner) inputs(ctx context.Context,q memory.Queryer,job *memory.Job)(preparedInput,error){
 	out:=preparedInput{known:map[string]citation{},primary:[]records.SourceRef{},heads:[]records.SourceRef{},gaps:[]records.Gap{},omissions:[]records.Omission{},project:job.Spec.Destination}
