@@ -94,3 +94,13 @@ Target: once connectivity, credentials, storage availability, and service execut
 Sleeping devices, suspended processes, quota exhaustion, outages, missing hooks, and rejected credentials delay synchronization. Show pending count, last successful reconciliation, coverage, and blocked reasons. Correctness relies on durable replay and idempotent application, not notification delivery.
 
 The relay may deny service or omit history. Signed envelopes protect origin/integrity; remembered checkpoints can reveal rollback below known state. A fresh recovery device cannot independently prove it has the newest history from a malicious sole provider. Stronger fork/freshness detection requires an independent witness or device comparison and is deferred.
+
+## Optional schema-v2 session extension
+
+The [session protocol](session-protocol.md) specifies the optional authored
+extension: strict schema-2 bodies, mandatory independent DEFLATE compression
+before encryption, 4 KiB frame padding, durable exact retry bytes, derived source
+invalidation, owner grants and projection lifecycle. Outer v1 envelopes and all
+legacy signing/AAD domains remain unchanged. Memory and skill schema-1 records
+remain unframed. Compilation, runtime and cryptographic interoperability for the
+extension are **NOT RUN**; schema examples alone do not establish acceptance.

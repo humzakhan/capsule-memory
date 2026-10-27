@@ -1,0 +1,250 @@
+{
+  "notice": "Authored synthetic examples, NOT executed or validated. SHA-256 content checksums are authored with Python stdlib, not interoperable cryptographic evidence. Signature strings are explicit placeholders and are rejected by signature verification. Input fingerprint is an explicit uncomputed shape placeholder, not a computed digest.",
+  "revisions": [
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "summary_0001",
+      "kind": "summary",
+      "revision_id": "revision_summary_0001",
+      "parents": [],
+      "operation_id": "operation_summary_0001",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "derived",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "level": "session",
+        "subject": "session_0001",
+        "findings": [
+          {
+            "kind": "decision",
+            "text": "Use local storage.",
+            "evidence": [
+              {
+                "record": "chunk_0000",
+                "revision": "revision_chunk_0000",
+                "kind": "session_chunk",
+                "event_from": "event_0000",
+                "event_to": "event_0000"
+              }
+            ]
+          },
+          {
+            "kind": "claimed_outcome",
+            "text": "Assistant claimed completion; execution unverified.",
+            "evidence": [
+              {
+                "record": "chunk_0001",
+                "revision": "revision_chunk_0001",
+                "kind": "session_chunk",
+                "event_from": "event_0001",
+                "event_to": "event_0001"
+              }
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          },
+          {
+            "record": "chunk_0001",
+            "revision": "revision_chunk_0001",
+            "kind": "session_chunk",
+            "event_from": "event_0001",
+            "event_to": "event_0001"
+          }
+        ],
+        "primary": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          },
+          {
+            "record": "chunk_0001",
+            "revision": "revision_chunk_0001",
+            "kind": "session_chunk",
+            "event_from": "event_0001",
+            "event_to": "event_0001"
+          }
+        ],
+        "source_heads": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk"
+          },
+          {
+            "record": "chunk_0001",
+            "revision": "revision_chunk_0001",
+            "kind": "session_chunk"
+          }
+        ],
+        "complete": true,
+        "generator": {
+          "model": "synthetic-local-model",
+          "prompt_version": "digest/v1",
+          "policy_version": "1",
+          "device": "device_0001",
+          "job_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "influence": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          },
+          {
+            "record": "chunk_0001",
+            "revision": "revision_chunk_0001",
+            "kind": "session_chunk",
+            "event_from": "event_0001",
+            "event_to": "event_0001"
+          }
+        ],
+        "input_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    },
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "insight_0001",
+      "kind": "insight",
+      "revision_id": "revision_insight_0001",
+      "parents": [],
+      "operation_id": "operation_insight_0001",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "derived",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "type": "decision",
+        "category": "choice",
+        "assertion": "Use local storage.",
+        "project_id": "project_0001",
+        "evidence": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          }
+        ],
+        "basis": "explicit",
+        "decision_state": "proposed",
+        "verification": "claimed",
+        "review": "candidate",
+        "candidate_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "generator": {
+          "model": "synthetic-local-model",
+          "prompt_version": "digest/v1",
+          "policy_version": "1",
+          "device": "device_0001",
+          "job_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "influence": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          },
+          {
+            "record": "chunk_0001",
+            "revision": "revision_chunk_0001",
+            "kind": "session_chunk",
+            "event_from": "event_0001",
+            "event_to": "event_0001"
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "insight_0001",
+      "kind": "insight",
+      "revision_id": "revision_insight_0002",
+      "parents": [
+        "revision_insight_0001"
+      ],
+      "operation_id": "operation_insight_0002",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "manual",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "type": "decision",
+        "category": "choice",
+        "assertion": "Use local storage.",
+        "project_id": "project_0001",
+        "evidence": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          }
+        ],
+        "basis": "explicit",
+        "decision_state": "accepted",
+        "verification": "claimed",
+        "review": "accepted",
+        "candidate_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "generator": {
+          "model": "synthetic-local-model",
+          "prompt_version": "digest/v1",
+          "policy_version": "1",
+          "device": "device_0001",
+          "job_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "reviewer": "device_0001",
+        "influence": [
+          {
+            "record": "chunk_0000",
+            "revision": "revision_chunk_0000",
+            "kind": "session_chunk",
+            "event_from": "event_0000",
+            "event_to": "event_0000"
+          },
+          {
+            "record": "chunk_0001",
+            "revision": "revision_chunk_0001",
+            "kind": "session_chunk",
+            "event_from": "event_0001",
+            "event_to": "event_0001"
+          }
+        ]
+      }
+    }
+  ],
+  "expectation": "Candidate stays staged. Human accepted insight is eligible for explicit projection. Summary has primary evidence and exact source heads. Candidate and accepted revision share one record and explicit ancestry. Influence covers both consumed events even when the candidate cites one. Fingerprint execution NOT RUN."
+}

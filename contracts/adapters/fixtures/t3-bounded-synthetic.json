@@ -1,0 +1,66 @@
+{
+  "snapshotSequence": 3,
+  "historyCursor": "",
+  "hasMoreHistory": false,
+  "payloadBudgetExceeded": false,
+  "projection": {
+    "thread": {
+      "id": "synthetic_thread",
+      "title": "Synthetic T3",
+      "branch": "synthetic",
+      "worktreePath": null,
+      "deletedAt": null,
+      "lineage": {
+        "parentThreadId": null,
+        "relationshipToParent": null
+      },
+      "projectId": "synthetic_project"
+    },
+    "providerThreads": [
+      {
+        "nativeThreadRef": {
+          "driver": "codex",
+          "nativeId": "synthetic-codex-session",
+          "strength": "strong"
+        }
+      }
+    ],
+    "runs": [],
+    "visibleTurnItems": [
+      {
+        "sourceThreadId": "synthetic_thread",
+        "sourceItemId": "synthetic_item_1",
+        "visibility": "local",
+        "item": {
+          "id": "synthetic_item_1",
+          "type": "user_message",
+          "text": "Synthetic T3 text.",
+          "status": "completed",
+          "attachments": [],
+          "completedAt": "2026-01-01T00:00:00Z"
+        }
+      },
+      {
+        "sourceThreadId": "synthetic_parent",
+        "sourceItemId": "synthetic_item_2",
+        "visibility": "inherited",
+        "item": {
+          "id": "synthetic_item_2",
+          "type": "assistant_message",
+          "text": "Synthetic inherited text.",
+          "status": "completed",
+          "streaming": false,
+          "completedAt": "2026-01-01T00:00:00Z"
+        }
+      }
+    ]
+  },
+  "shell": {
+    "projects": [
+      {
+        "id": "synthetic_project",
+        "workspaceRoot": "/synthetic/project"
+      }
+    ]
+  }
+}

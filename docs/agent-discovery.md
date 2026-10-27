@@ -56,3 +56,9 @@ No registry submission or package release has been performed. The Cloudflare Typ
 - [Official MCP registry quickstart](https://modelcontextprotocol.io/registry/quickstart): registry metadata is separate from package artifacts and requires its publication workflow.
 
 External capability references were checked on 2026-10-26. Project decisions are the layered entry points and role-specific prompts above. Actual crawl ingestion, agent-driven installation, harness sessions, build/E2E results and production behavior remain unverified.
+
+## Optional session workflow
+
+[Prompt 11](../prompts/11-session-history.md) selects the optional session task. [Session status](session-status.md) records authored source separately from pending integration and runtime acceptance; [Run sessions](run-session.md) prepares a synthetic owner evaluation. Existing v1-only statements above describe the legacy workflow. The session source adds Linux/macOS daemon/IPC and capability-scoped stdio MCP, without a remote MCP endpoint or installed hooks/services.
+
+Capture, publication, local derivation, raw-session access, auto acceptance and cross-vault promotion need separate explicit controls. Generated summaries and knowledge are untrusted. A client's inference provider may receive whatever it recalls. Strict projected knowledge requires live source replay during the request; historical answers carry verification coverage. No supported harness version is established until an authorized runtime check succeeds.

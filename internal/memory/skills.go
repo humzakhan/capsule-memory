@@ -27,10 +27,10 @@ type SkillState struct {
 
 // This release selects reviewed local text only. No installer or executor is used.
 func (s *Service) textRelease(r Revision) Release {
-	return Release{1,s.config.Vault,r.Scope,r.Record,r.ID,digest([]byte(r.Payload.Text)),"text/markdown",[]string{"read-as-text"}}
+	return Release{1,s.configuration().Vault,r.Scope,r.Record,r.ID,digest([]byte(r.Payload.Text)),"text/markdown",[]string{"read-as-text"}}
 }
 func (s *Service) validRelease(release Release,r Revision) bool {
-	if r.Payload==nil||r.Kind!="skill"||r.Vault!=s.config.Vault{return false}
+	if r.Payload==nil||r.Kind!="skill"||r.Vault!=s.configuration().Vault{return false}
 	for _,id:=range []string{release.Vault,release.Scope,release.Record,release.Revision}{if !idPattern.MatchString(id){return false}}
 	expected:=s.textRelease(r)
 	return release.Version==expected.Version&&release.Vault==expected.Vault&&release.Scope==expected.Scope&&release.Record==expected.Record&&release.Revision==expected.Revision&&release.Digest==expected.Digest&&release.Runtime==expected.Runtime&&len(release.Capabilities)==1&&release.Capabilities[0]=="read-as-text"
@@ -46,14 +46,14 @@ func (s *Service) skillState(ctx context.Context,q queryer,heads []Revision,dele
 	if err==sql.ErrNoRows{return result,nil};if err!=nil{return result,ErrStorage}
 	var signed Signed;var release Release
 	if decode(raw,&signed)!=nil{return result,nil}
-	pub,err:=unbase(s.config.OwnerPublic,ed25519.PublicKeySize);if err!=nil{return result,nil}
+	pub,err:=unbase(s.configuration().OwnerPublic,ed25519.PublicKeySize);if err!=nil{return result,nil}
 	// Legacy v1 protocol domain is fixed for compatibility; see docs/renaming.md.
 	if verify("agent-memory/skill-approval/v1",signed,ed25519.PublicKey(pub),&release)!=nil||!s.validRelease(release,r){return result,nil}
 	result.Approved=true;result.Active=active==1;result.Staged=!result.Active;return result,nil
 }
 func (s *Service) recordView(ctx context.Context,q queryer,scope,record string,history bool) (RecordView,error) {
-	revs,err:=recordRevisions(ctx,q,scope,record);if err!=nil{return RecordView{},err};if len(revs)==0{return RecordView{},errors.New("record not found")}
-	for _,r:=range revs{if r.Vault!=s.config.Vault||r.Scope!=scope||r.Record!=record{return RecordView{},ErrInvalid}}
+	revs,err:=recordRevisions(ctx,q,scope,record);if err!=nil{return RecordView{},err};if len(revs)==0{return RecordView{},errors.New("record not found")};if revs[0].Kind!="memory"&&revs[0].Kind!="skill"{return RecordView{},ErrInvalid}
+	for _,r:=range revs{if r.Vault!=s.configuration().Vault||r.Scope!=scope||r.Record!=record{return RecordView{},ErrInvalid}}
 	heads,deleted:=state(revs);v:=RecordView{Record:record,Heads:heads,Deleted:deleted,Conflict:len(heads)>1}
 	if revs[0].Kind=="skill"{status,err:=s.skillState(ctx,q,heads,deleted);if err!=nil{return RecordView{},err};v.SkillState=&status}
 	if history{v.History=revs}else if deleted{for i:=range v.Heads{v.Heads[i].Payload=nil}}
@@ -68,7 +68,7 @@ func skillResult(r Revision,status SkillState) map[string]any {
 	return map[string]any{"record_id":r.Record,"revision_id":r.ID,"approved":status.Approved,"active":status.Active,"staged":status.Staged,"runtime":"text/markdown","capabilities":[]string{"read-as-text"}}
 }
 func (s *Service) ApproveSkill(ctx context.Context,scope,record,revision string) (map[string]any,error) {
-	s.mu.Lock();defer s.mu.Unlock()
+	s.wmu.Lock();defer s.wmu.Unlock()
 	if err:=s.scope(scope);err!=nil{return nil,err};owner,err:=s.ownerKey();if err!=nil{return nil,err}
 	tx,err:=s.db.BeginTx(ctx,nil);if err!=nil{return nil,ErrStorage};defer tx.Rollback()
 	r,err:=currentSkill(ctx,tx,scope,record,revision);if err!=nil{return nil,err}
@@ -79,7 +79,7 @@ func (s *Service) ApproveSkill(ctx context.Context,scope,record,revision string)
 	result:=skillResult(r,SkillState{Approved:true,Staged:true});result["sha256"]=release.Digest;return result,nil
 }
 func (s *Service) ActivateSkill(ctx context.Context,scope,record,revision string) (map[string]any,error) {
-	s.mu.Lock();defer s.mu.Unlock()
+	s.wmu.Lock();defer s.wmu.Unlock()
 	if err:=s.scope(scope);err!=nil{return nil,err}
 	tx,err:=s.db.BeginTx(ctx,nil);if err!=nil{return nil,ErrStorage};defer tx.Rollback()
 	r,err:=currentSkill(ctx,tx,scope,record,revision);if err!=nil{return nil,err}
@@ -94,7 +94,7 @@ func (s *Service) FetchSkill(ctx context.Context,scope,record string,history boo
 }
 func (s *Service) ListSkills(ctx context.Context,scope string) ([]RecordView,error) {
 	if err:=s.scope(scope);err!=nil{return nil,err}
-	tx,err:=s.db.BeginTx(ctx,nil);if err!=nil{return nil,ErrStorage};defer tx.Rollback()
+	tx,err:=s.reader.BeginTx(ctx,&sql.TxOptions{ReadOnly:true});if err!=nil{return nil,ErrStorage};defer tx.Rollback()
 	rows,err:=tx.QueryContext(ctx,"SELECT DISTINCT record FROM revisions WHERE scope=? AND kind='skill' ORDER BY record LIMIT 100",scope);if err!=nil{return nil,ErrStorage}
 	ids:=[]string{};for rows.Next(){var id string;if rows.Scan(&id)!=nil{rows.Close();return nil,ErrStorage};ids=append(ids,id)};err=rows.Err();rows.Close();if err!=nil{return nil,ErrStorage}
 	out:=[]RecordView{};for _,id:=range ids{v,err:=s.recordView(ctx,tx,scope,id,false);if err!=nil{return nil,err};if !v.Deleted{out=append(out,v)}}

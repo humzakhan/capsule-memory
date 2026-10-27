@@ -51,3 +51,43 @@ Authenticate ciphertext, signatures, and vault/scope/epoch context; reject cross
 A malicious sole provider can withhold or replay old valid state. Devices can compare remembered heads and exchange known checkpoints to detect some inconsistencies, but a fresh device lacks an independent freshness witness. Availability, global fork prevention, traffic secrecy, and protection from a compromised enrolled endpoint are outside version one's guarantees.
 
 Keep local offline work durable and maintain a separately authorized encrypted backup strategy. An archive in one account is not an independent backup against account loss. This repository does not authorize backup services or storage spending.
+
+## Optional session-history extension (source only)
+
+Session frames redact before compression and encryption, use a fresh DEFLATE
+writer without dictionaries for each revision, and pad to 4 KiB. A frame never
+mixes scopes or sessions. Compressed length still leaks a residual ratio signal
+when attacker-influenced text shares a chunk with sensitive text. Padding does
+not eliminate this signal. Default tool metadata filtering and redaction reduce
+exposure; plaintext bodies, FTS and migration snapshots remain private local
+assets. None of these controls has runtime or side-channel acceptance evidence.
+
+The optional T3 adapter's owner-configured token is broad: upstream
+`orchestration:read` can also read server-visible files. Capsule's history endpoint
+allowlist does not narrow the token itself. The owner supplies a future token file;
+the implementation must never mint or discover credentials, copy harness tokens,
+or expose token contents through status. Claude/Codex disk formats are version
+pinned and untrusted; unknown shapes fail closed.
+
+Projected assertions are v2 knowledge with lifecycle/grant data in the same target
+scope. Legacy memory readers cannot expose them. Historical visibility does not
+prove current source state; strict visibility needs a live bounded source replay
+and exact dependency-head check for that request. Cross-vault deletion is not
+atomic, and previously disclosed text cannot be recalled. Consent withdrawal
+holds unsent outbox revisions durably; a relay request already in flight may
+already have published before withdrawal.
+
+The G5 independent assertion requires an owner signature over its exact revision,
+operation, ordered ancestry, author and proof-free body digest. Reviewer equals
+the envelope author; ordinary review remains writer-attested and provides no
+cryptographic human-review authority. Invalid signed records block replay/rebuild;
+revocation does not remove poison already journaled. Owner-key rotation remains
+out of scope. Cross-vault publication cannot verify source consent without an
+open source profile and retains those bytes locally. Already-submitted bytes can
+race withdrawal, and previously published data requires explicit deletion.
+
+Derived content is untrusted. A retained independent owner insight explicitly
+severs deleted evidence instead of claiming an inaccessible source. Local model
+inputs use escaped JSON data under fixed prompts, with no tools; endpoints enforce
+loopback dialing, no proxies and no redirects. Review these inference and IPC
+boundaries independently before operational use.

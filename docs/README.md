@@ -6,13 +6,14 @@ Start with [Run v1](run-v1.md) for a synthetic local evaluation. The source is e
 
 ## Set up with an agent
 
-Use [the prompt index](../prompts/README.md) for ten distinct evaluation, setup and operation tasks. [Agent discovery](agent-discovery.md) maps roles, reading paths and public-release prerequisites. The root [llms.txt](../llms.txt) and [project capability manifest](../agent-manifest.json) are concise entry points, not automatic installation or access grants.
+Use [the prompt index](../prompts/README.md) for evaluation, setup and operation tasks, including [optional session setup](../prompts/11-session-history.md). [Agent discovery](agent-discovery.md) maps roles, reading paths and public-release prerequisites. The root [llms.txt](../llms.txt) and [project capability manifest](../agent-manifest.json) are concise entry points, not automatic installation or access grants.
 
 ## Use and evaluate
 
 | Guide | Purpose |
 | --- | --- |
 | [Run v1](run-v1.md) | Dependency resolution, build, local E2E, private demo, recovery, cleanup |
+| [Run sessions](run-session.md) · [Session status](session-status.md) | Optional session source, owner setup and pending acceptance |
 | [Rename compatibility](renaming.md) | Retained protocol bytes and explicit reuse of pre-rename profiles |
 | [Go client](go-client.md) | CLI flags/results, fixed-scope MCP, local skill approval and text activation |
 | [Relay setup](relay-setup.md) | Authentication, archive publication, limits, provider assumptions |
@@ -24,6 +25,7 @@ Use [the prompt index](../prompts/README.md) for ten distinct evaluation, setup 
 | Guide | Purpose |
 | --- | --- |
 | [Architecture](architecture.md) | Full system target; explicitly includes deferred components |
+| [Session history](session-history.md) | Preserved proposal plus accepted implementation amendments; runtime NOT RUN |
 | [V1 contract](v1-contract.md) | Implemented slice's specialized wire and behavior contract |
 | [Protocol](protocol.md) · [Draft contracts](../contracts/README.md) | Broader protocol design and synthetic schemas/examples |
 | [Threat model](threat-model.md) · [Security](../SECURITY.md) | Trust boundaries, known limits, private reporting |

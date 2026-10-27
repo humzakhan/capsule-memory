@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/subtle"
+ "database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -75,6 +76,7 @@ func Init(ctx context.Context, home, relay string, loopback bool) (map[string]an
 	b,err:=json.Marshal(signed);if err!=nil{return nil,err}
 	if _,err=s.db.ExecContext(ctx,"INSERT INTO controls(generation,signed) VALUES(?,?)",control.Generation,b);err!=nil{return nil,ErrStorage}
 	if err=s.putMeta(ctx,"current_control",signed);err!=nil{return nil,err}
+ if _,err=s.db.ExecContext(ctx,"INSERT INTO scope_labels VALUES(?,?,?)",scope,"","default");err!=nil{return nil,ErrStorage}
 	return map[string]any{"vault_id":vault,"scope_id":scope,"device_id":device,"VAULT_ID":vault,"OWNER_PUBLIC_KEY_B64":c.OwnerPublic,"control_pending":true},nil
 }
 func (s *Service) ownerKey() (ed25519.PrivateKey,error) {
@@ -82,27 +84,29 @@ func (s *Service) ownerKey() (ed25519.PrivateKey,error) {
 	var v struct{Private string `json:"private_key_b64"`};b,err:=os.ReadFile(p);if err!=nil{return nil,err};if err=decode(b,&v);err!=nil{return nil,err}
 	key,err:=unbase(v.Private,64);if err!=nil{return nil,err}
 	if subtle.ConstantTimeCompare(key,ed25519.NewKeyFromSeed(key[:32]))!=1{return nil,ErrInvalid}
-	if base64.StdEncoding.EncodeToString(ed25519.PrivateKey(key).Public().(ed25519.PublicKey))!=s.config.OwnerPublic{return nil,ErrInvalid};return ed25519.PrivateKey(key),nil
+	if base64.StdEncoding.EncodeToString(ed25519.PrivateKey(key).Public().(ed25519.PublicKey))!=s.configuration().OwnerPublic{return nil,ErrInvalid};return ed25519.PrivateKey(key),nil
 }
-func (s *Service) CreateDevice(ctx context.Context,out string) (map[string]any,error) {
-	s.mu.Lock();defer s.mu.Unlock()
-	owner,err:=s.ownerKey();if err!=nil{return nil,err}
+func (s *Service) CreateDevice(ctx context.Context,out string) (map[string]any,error) {return s.CreateDeviceScoped(ctx,out,nil)}
+func (s *Service) CreateDeviceScoped(ctx context.Context,out string,selected []string) (map[string]any,error) {
+	s.wmu.Lock();defer s.wmu.Unlock()
+	if s.schemaVersion==2{if err:=s.recoverPendingScope(ctx);err!=nil{return nil,err}};owner,err:=s.ownerKey();if err!=nil{return nil,err}
 	c,_,err:=s.current(ctx);if err!=nil{return nil,err}
 	rows,err:=s.db.QueryContext(ctx,"SELECT signed FROM controls ORDER BY length(generation),generation");if err!=nil{return nil,ErrStorage}
 	history:=[]Signed{};for rows.Next(){var b []byte;var signed Signed;if rows.Scan(&b)!=nil||decode(b,&signed)!=nil{rows.Close();return nil,ErrStorage};history=append(history,signed)};err=rows.Err();rows.Close();if err!=nil{return nil,ErrStorage}
 	if len(history)>0 {latest,err:=s.control(history[len(history)-1]);if err!=nil{return nil,err};cmp,err:=compare(latest.Generation,c.Generation);if err!=nil||cmp<0{return nil,errors.New("owner control history incomplete")};c=latest}
 	if len(history)==0||len(history)>=256||len(c.Devices)>=256{return nil,errors.New("device or control-history limit reached; no new profile created")}
 	pub,priv,err:=ed25519.GenerateKey(rand.Reader);if err!=nil{return nil,err};id,err:=newID();if err!=nil{return nil,err}
-	scopes:=[]string{};for _,sc:=range c.Scopes {k,ok:=s.config.Keys[sc.ID];if !ok||k.Epoch!=sc.Epoch{return nil,errors.New("current scope key unavailable; manual rotation required")};scopes=append(scopes,sc.ID)}
-	c.Generation=next(c.Generation);c.Devices=append(c.Devices,Device{id,base64.StdEncoding.EncodeToString(pub),scopes,false})
-	if err=validateControl(c,s.config.Vault);err!=nil{return nil,err}
+	scopes:=[]string{};for _,sc:=range c.Scopes {k,ok:=s.configuration().Keys[sc.ID];if !ok||k.Epoch!=sc.Epoch{return nil,errors.New("current scope key unavailable; manual rotation required")};if selected==nil||contains(selected,sc.ID){scopes=append(scopes,sc.ID)}}
+	if len(scopes)==0{return nil,ErrInvalid};c.Generation=next(c.Generation);c.Devices=append(c.Devices,Device{id,base64.StdEncoding.EncodeToString(pub),scopes,false})
+	if selected!=nil{for _,v:=range selected{if !contains(scopes,v){return nil,ErrInvalid}}};if err=validateControl(c,s.configuration().Vault);err!=nil{return nil,err};if err=s.checkGrants(ctx,c);err!=nil{return nil,err}
 	signed,err:=sign("agent-memory/control/v1",c,owner);if err!=nil{return nil,err}
-	child:=s.config;child.Device=id;child.DevicePrivate=base64.StdEncoding.EncodeToString(priv);child.Bootstrap=append(history,signed)
+	child:=s.configuration();child.Keys=map[string]ScopeKey{};for _,scope:=range scopes{child.Keys[scope]=s.configuration().Keys[scope]};child.Device=id;child.DevicePrivate=base64.StdEncoding.EncodeToString(priv);child.Bootstrap=append(history,signed)
 	profile,err:=json.Marshal(child);if err!=nil{return nil,err};if len(profile)>MaxEnvelope{return nil,errors.New("public bootstrap history exceeds v1 profile size limit")}
 	if err=privateDir(out,true);err!=nil{return nil,err}
 	if _,err=os.Lstat(filepath.Join(out,"owner.json"));!os.IsNotExist(err){return nil,errors.New("new device destination contains owner material or is inaccessible")}
 	if _,err=os.Lstat(filepath.Join(out,"device.json"));!os.IsNotExist(err){return nil,errors.New("new device profile already exists or is inaccessible")}
-	b,err:=json.Marshal(signed);if err!=nil{return nil,err};if _,err=s.db.ExecContext(ctx,"INSERT INTO controls(generation,signed) VALUES(?,?)",c.Generation,b);err!=nil{return nil,ErrStorage}
+	if err=s.updateLocked(ctx,func(tx *sql.Tx)error{return s.saveControl(ctx,tx,c,signed)});err!=nil{return nil,err}
 	if err=writeNew(filepath.Join(out,"device.json"),child);err!=nil{return nil,errors.New("owner control retained, but new profile write failed; create another profile in a new directory")}
+ childService,e:=Open(ctx,out);if e!=nil{return nil,e};if childService.schemaVersion!=2{childService.Close();return nil,ErrNeedsMigration};if e=childService.Update(ctx,func(tx *sql.Tx)error{for _,scope:=range scopes{label:="";role:="default";if s.schemaVersion==2{e:=s.reader.QueryRowContext(ctx,"SELECT label,role FROM scope_labels WHERE scope=?",scope).Scan(&label,&role);if e!=nil&&e!=sql.ErrNoRows{return e}};if _,e:=tx.ExecContext(ctx,"INSERT OR REPLACE INTO scope_labels VALUES(?,?,?)",scope,label,role);e!=nil{return e}};return nil});e!=nil{childService.Close();return nil,e};childService.Close()
 	return map[string]any{"device_id":id,"public_key_b64":base64.StdEncoding.EncodeToString(pub),"control_pending":true,"profile_created":true},nil
 }

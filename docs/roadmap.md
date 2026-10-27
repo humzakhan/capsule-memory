@@ -45,3 +45,9 @@ Exit evidence: traceable summaries, complete versus partial index coverage, safe
 - Destructive compaction, selective cryptographic erasure, and automatic skill merging.
 
 Each implementation task needs a bounded slice, an authorized execution route, and meaningful evidence. The next acceptance step is the [owner-machine build and focused E2E](run-v1.md). Background synchronization, notifications, key distribution, maintenance, and wider harness support remain separate implementation work; do not deploy the whole diagram as an incidental check.
+
+## Optional session module — source delivery, acceptance pending
+
+The accepted optional extension now has source for capture/daemon/IPC, mandatory compression before encrypted upload, local summary/candidate derivation, signed aggregation and lifecycle-checked v2 knowledge. See [session status](session-status.md) for the parallel-source integration boundary; no build, formatter, test, inference, adapter or runtime acceptance has run. Earlier roadmap entries describing these as future work are superseded for source availability only.
+
+Next gates are integrated source review, permitted owner compilation/formatting, synthetic durability/privacy journeys and version-specific adapter/model acceptance. Keep every control off until explicitly configured. Cross-vault stays off or explicitly `enabled_unaccepted`. Cache eviction is deferred and visible as not implemented. Native keystores, automatic rotation, embeddings, executable skills, Git automation, WebSockets and destructive retention remain future work.

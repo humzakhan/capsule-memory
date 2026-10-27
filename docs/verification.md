@@ -46,3 +46,32 @@ Test rate-limited and free-quota-exhausted operation: the device keeps local pen
 Repository setup may use manual file/diff inspection, relative-path inspection, `git diff --check`, and GitHub repository/commit reads. These checks can establish what was authored and published. They do not establish harness discovery, schema validity, protocol interoperability, crash safety, E2EE, or platform cost.
 
 Do not add a passing badge, fabricated CI result, or pre-completed acceptance checklist. Add a dated result linked to the exact source only after a real authorized job runs.
+
+## Optional session module acceptance (NOT RUN)
+
+The following are authored synthetic scenarios, not test results. The session task intentionally adds no automated test files. Run only through an owner-authorized execution route; record the exact integrated commit and all tool/model/adapter versions. See [session status](session-status.md) and [owner runbook](run-session.md).
+
+| Scenario | Required observable result |
+| --- | --- |
+| Every schema-v2 kind, incompressible input, escaped control characters, retry after ambiguous upload | DEFLATE before encryption; full revision ≤896 KiB; exact persisted retry bytes; legacy v1 unchanged |
+| Identity-reader fixture, nonzero padding, trailing DEFLATE data, short EOF, over-expansion | Only conforming bounded frames accepted; failing replay never advances its cursor |
+| Partial line, rewritten/truncated log, unknown version, duplicate Codex prompt, strong T3 binding | Bounded re-read, visible quarantine/gaps, stable event identity and one evidence count |
+| Private migration snapshot and scope/key-package crash points | Exclusive-lock refusal or private recoverable completion; no partial grants/key widening |
+| Concurrent daemon/direct clients and stale socket | One daemon; profile_busy retry; legacy commands route or give explicit MCP migration error |
+| Capture disabled, future baseline, bounded backfill, unresolved pause and withdrawn source | No unauthorized read/backfill/publication; checkpoint/outbox/hold transactions survive restart |
+| Source delete, correction, superseded exact revision, out-of-order replay and rebuild | Transitive visibility hides stale descendants, overflow aborts fully, no arrival-order replay block |
+| Local inference endpoint points off loopback, DNS resolves off loopback, proxy/redirect/tool response | Refused; no tool execution; bounded request/output/response and no prompt/output logging |
+| Transcript includes `</transcript>` and role/tool instructions | Escaped JSON remains data; fixed system prompt unaffected |
+| Model emits unknown citation, accepted decision without user evidence or evidenced outcome without tool result | Invalid IDs rejected; unsupported acceptance/verification downgraded with visible notes |
+| Windowed job crashes, lease expires, policy changes while inference runs | Persisted windows reused; lease/policy mismatch rolls back late final or window commit; budget reservation survives |
+| Candidate reviewed then regenerated or assigned remotely | Explicit edit/reject/accept persists; no implicit acceptance; unauthorized remote jobs ignored and counted |
+| Weekly aggregation followed by reader grant widening/revocation | Owner signature required; reader subset checked at grant change, run and commit |
+| Promotion crash after target commit, same-vault scopes, target-only replica | Idempotent exact v2 knowledge/lifecycle; strict target-only hidden; legacy APIs reject every v2 kind |
+| Live strict read during publish contention, source outage, incomplete catch-up or dependency edit | Ten-second request bound and fail closed; historical labels never imply currentness |
+| Source delete/keep-insight/reimport across two capture devices | Every matching manifest suppressed; retained independent assertion has no generator/evidence and a fresh exact-revision owner proof; no stale resurrection |
+| Missing, copied, non-owner or mutated owner proof; mismatched Reviewer/Author; rebuild without prior decrypt | Fail closed on shape/signature/context/content; no skipped replay or rebuild acceptance |
+| Independent owner edit/accept/reject and future restore | Fresh proof for edit/accept/restore; non-owner keep/restore fails; reject directs separately authorized explicit delete |
+| Target commit/source-receipt crash, late consent withdrawal, router missing/error and source-loss cleanup | Automatic exports retained/held by exact source ancestry; cleanup publishable; no silent hold release |
+| Private/ambiguous parent versus replayed/acknowledged parent; marker before knowledge; target-only replay and rebuild | No child POST before durable parent; opaque authenticated root marker needs no private assertion; invalid/unrelated marker rejected or cannot hide another binding |
+
+A manual walkthrough should inspect both primary and intermediate evidence, contradictions, completeness and untrusted labels without granting `session.read` implicitly. Search and returned snippets must respect scopes. Cross-vault withdrawal is asynchronous, and already disclosed plaintext is not recoverable. Cache eviction, binary attachments, cloud inference, embeddings, destructive retention and universal resumption remain outside acceptance.

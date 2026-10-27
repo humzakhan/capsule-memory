@@ -1,0 +1,14 @@
+# Template only. Owner must review paths and install explicitly.
+[Unit]
+Description=Capsule Memory optional local daemon
+
+[Service]
+ExecStart=%h/.local/bin/capsule-memory daemon run
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

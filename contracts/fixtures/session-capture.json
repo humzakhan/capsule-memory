@@ -1,0 +1,157 @@
+{
+  "notice": "Authored synthetic examples, NOT executed or validated. SHA-256 content checksums are authored with Python stdlib, not interoperable cryptographic evidence. Signature strings are explicit placeholders and are rejected by signature verification.",
+  "revisions": [
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "session_0001",
+      "kind": "session_manifest",
+      "revision_id": "revision_session_0001",
+      "parents": [],
+      "operation_id": "operation_session_0001",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "capture",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "session_key": "1e8b45b17406e574411462a32d28a9e361879ce24b410db43a1a90323569fd68",
+        "project_id": "project_0001",
+        "origin": {
+          "source_store": "synthetic-store",
+          "harness": "import",
+          "native_session_id": "synthetic-session"
+        },
+        "adapter": "import/v1",
+        "policy": {
+          "version": 1,
+          "redaction": "redact/v1",
+          "tool_detail": "metadata",
+          "attachments": false
+        },
+        "state": "closed",
+        "chunk_high": {
+          "main": 1
+        }
+      }
+    },
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "chunk_0000",
+      "kind": "session_chunk",
+      "revision_id": "revision_chunk_0000",
+      "parents": [],
+      "operation_id": "operation_chunk_0000",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "capture",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "session": "session_0001",
+        "branch": "main",
+        "seq": 0,
+        "generation": "synthetic-generation",
+        "events": [
+          {
+            "id": "event_0000",
+            "role": "user",
+            "type": "message",
+            "text": "Synthetic owner decision: use local storage."
+          }
+        ],
+        "digest": "38275d4a21abedf8d81838150131a84169f8f9b5edc28de838b6ab448661a969"
+      }
+    },
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "chunk_0001",
+      "kind": "session_chunk",
+      "revision_id": "revision_chunk_0001",
+      "parents": [],
+      "operation_id": "operation_chunk_0001",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "capture",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "session": "session_0001",
+        "branch": "main",
+        "seq": 1,
+        "generation": "synthetic-generation",
+        "events": [
+          {
+            "id": "event_0001",
+            "role": "assistant",
+            "type": "message",
+            "text": "Synthetic assistant claimed completion; no runtime evidence."
+          }
+        ],
+        "digest": "5764ddf3fdde20515ec5d2cd120c61edea50dcf8c2a239f71f400a24157125e3",
+        "prev": "chunk_0000"
+      }
+    },
+    {
+      "schema_version": 2,
+      "vault_id": "vault_0001",
+      "scope_id": "scope_0001",
+      "record_id": "session_fork",
+      "kind": "session_manifest",
+      "revision_id": "revision_session_fork",
+      "parents": [],
+      "operation_id": "operation_session_fork",
+      "operation": "put",
+      "author_device_id": "device_0001",
+      "created_at": "2026-01-01T00:00:00Z",
+      "provenance": {
+        "source_kind": "capture",
+        "source_ref": "synthetic"
+      },
+      "tags": [],
+      "body": {
+        "session_key": "cae070f2e50ec256026c4ae5dd065852560a285347dcbbf976ebb19550de34bd",
+        "project_id": "project_0001",
+        "origin": {
+          "source_store": "synthetic-store",
+          "harness": "import",
+          "native_session_id": "synthetic-fork"
+        },
+        "adapter": "import/v1",
+        "policy": {
+          "version": 1,
+          "redaction": "redact/v1",
+          "tool_detail": "metadata",
+          "attachments": false
+        },
+        "state": "closed",
+        "chunk_high": {
+          "main": -1
+        },
+        "parent": {
+          "session": "session_0001",
+          "origin": {
+            "source_store": "synthetic-store",
+            "harness": "import",
+            "native_session_id": "synthetic-session"
+          },
+          "relation": "fork"
+        }
+      }
+    }
+  ]
+}

@@ -1,127 +1,470 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "record-revision.schema.json",
-  "title": "Draft decrypted Capsule Memory record revision",
-  "description": "Planning schema only. Does not define signing bytes, encryption, or transport.",
+  "title": "Decrypted revision (authored, not validated)",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "vault_id", "scope_id", "record_id", "kind",
-    "revision_id", "parents", "operation_id", "operation",
-    "author_device_id", "created_at", "provenance", "tags"
+    "vault_id",
+    "scope_id",
+    "record_id",
+    "revision_id",
+    "operation_id",
+    "author_device_id",
+    "schema_version",
+    "kind",
+    "parents",
+    "operation",
+    "created_at",
+    "tags",
+    "provenance"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "vault_id": { "$ref": "#/$defs/id" },
-    "scope_id": { "$ref": "#/$defs/id" },
-    "record_id": { "$ref": "#/$defs/id" },
-    "kind": { "enum": ["memory", "skill", "summary"] },
-    "revision_id": { "$ref": "#/$defs/id" },
+    "vault_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "scope_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "revision_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "operation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "author_device_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "schema_version": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "kind": {
+      "type": "string"
+    },
     "parents": {
       "type": "array",
-      "items": { "$ref": "#/$defs/id" },
+      "maxItems": 128,
       "uniqueItems": true,
-      "maxItems": 128
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{8,128}$"
+      }
     },
-    "operation_id": { "$ref": "#/$defs/id" },
-    "operation": { "enum": ["put", "delete", "restore", "resolve"] },
+    "operation": {
+      "enum": [
+        "put",
+        "delete",
+        "restore",
+        "resolve"
+      ]
+    },
     "restores": {
       "type": "array",
-      "items": { "$ref": "#/$defs/id" },
       "minItems": 1,
       "maxItems": 128,
-      "uniqueItems": true
-    },
-    "author_device_id": { "$ref": "#/$defs/id" },
-    "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
-    "provenance": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["source_kind", "source_ref"],
-      "properties": {
-        "source_kind": { "enum": ["manual", "harness", "git", "summary", "import"] },
-        "source_ref": { "type": "string", "minLength": 1, "maxLength": 1024 },
-        "harness": { "type": "string", "maxLength": 128 }
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{8,128}$"
       }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
     },
     "tags": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+      "maxItems": 64,
       "uniqueItems": true,
-      "maxItems": 64
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "source_ref"
+      ],
+      "properties": {
+        "source_kind": {
+          "type": "string"
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "harness": {
+          "type": "string",
+          "maxLength": 128
+        }
+      }
     },
     "payload": {
       "type": "object",
-      "description": "Kind-specific encrypted content; non-summary payload shape remains provisional.",
-      "required": ["text"],
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ],
       "properties": {
-        "text": { "type": "string", "maxLength": 1048576 },
-        "source_revisions": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/sourceRevision" },
-          "minItems": 1,
-          "maxItems": 1024,
-          "uniqueItems": true
+        "text": {
+          "type": "string",
+          "maxLength": 1048576
+        }
+      }
+    },
+    "body": {
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "schema_version": {
+          "const": 1
         },
-        "coverage": { "type": "string", "minLength": 1, "maxLength": 4096 },
-        "generator": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["tool", "version", "model"],
+        "kind": {
+          "enum": [
+            "memory",
+            "skill"
+          ]
+        },
+        "provenance": {
           "properties": {
-            "tool": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "version": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "model": { "type": "string", "minLength": 1, "maxLength": 128 }
+            "source_kind": {
+              "enum": [
+                "manual",
+                "harness",
+                "git",
+                "import"
+              ]
+            }
           }
         }
       },
-      "additionalProperties": true
+      "not": {
+        "required": [
+          "body"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "schema_version": {
+          "const": 2
+        },
+        "kind": {
+          "enum": [
+            "project",
+            "session_manifest",
+            "session_chunk",
+            "summary",
+            "insight",
+            "knowledge",
+            "projection",
+            "bridge_grant",
+            "aggregation_grant",
+            "job",
+            "suppression"
+          ]
+        },
+        "provenance": {
+          "properties": {
+            "source_kind": {
+              "enum": [
+                "capture",
+                "derived",
+                "projection",
+                "manual",
+                "import"
+              ]
+            }
+          }
+        }
+      },
+      "not": {
+        "required": [
+          "payload"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "project"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Project"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "session_manifest"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/SessionManifest"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "session_chunk"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/SessionChunk"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "summary"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Summary"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "insight"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Insight"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "knowledge"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Knowledge"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "projection"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Projection"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "bridge_grant"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/BridgeGrant"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "aggregation_grant"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/AggregationGrant"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "job"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Job"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "suppression"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "session-records.schema.json#/$defs/Suppression"
+              }
+            }
+          }
+        }
+      ]
     }
-  },
+  ],
   "allOf": [
     {
-      "if": { "properties": { "operation": { "const": "delete" } } },
-      "then": { "not": { "required": ["payload"] } },
-      "else": { "required": ["payload"] }
-    },
-    {
-      "if": { "properties": { "operation": { "const": "restore" } } },
-      "then": { "required": ["restores"], "properties": { "parents": { "minItems": 1 } } },
-      "else": { "not": { "required": ["restores"] } }
-    },
-    {
-      "if": { "properties": { "operation": { "const": "resolve" } } },
-      "then": { "properties": { "parents": { "minItems": 2 } } }
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "delete"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "payload"
+              ]
+            },
+            {
+              "required": [
+                "body"
+              ]
+            }
+          ]
+        }
+      },
+      "else": {
+        "oneOf": [
+          {
+            "required": [
+              "payload"
+            ]
+          },
+          {
+            "required": [
+              "body"
+            ]
+          }
+        ]
+      }
     },
     {
       "if": {
         "properties": {
-          "kind": { "const": "summary" },
-          "operation": { "enum": ["put", "restore", "resolve"] }
+          "operation": {
+            "const": "restore"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "restores"
+        ],
+        "properties": {
+          "parents": {
+            "minItems": 1
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "restores"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "resolve"
+          }
         }
       },
       "then": {
         "properties": {
-          "payload": { "required": ["source_revisions", "coverage", "generator"] }
+          "parents": {
+            "minItems": 2
+          }
         }
       }
     }
-  ],
-  "$defs": {
-    "id": {
-      "type": "string",
-      "minLength": 8,
-      "maxLength": 128,
-      "pattern": "^[A-Za-z0-9_-]+$"
-    },
-    "sourceRevision": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["record_id", "revision_id"],
-      "properties": {
-        "record_id": { "$ref": "#/$defs/id" },
-        "revision_id": { "$ref": "#/$defs/id" }
-      }
-    }
-  }
+  ]
 }

@@ -1,0 +1,42 @@
+{
+  "notice": "Authored synthetic examples, NOT executed or validated. SHA-256 content checksums are authored with Python stdlib, not interoperable cryptographic evidence. Signature strings are explicit placeholders and are rejected by signature verification.",
+  "revision": {
+    "schema_version": 2,
+    "vault_id": "vault_0001",
+    "scope_id": "scope_0001",
+    "record_id": "job_0001",
+    "kind": "job",
+    "revision_id": "revision_job_0001",
+    "parents": [],
+    "operation_id": "operation_job_0001",
+    "operation": "put",
+    "author_device_id": "device_0001",
+    "created_at": "2026-01-01T00:00:00Z",
+    "provenance": {
+      "source_kind": "derived",
+      "source_ref": "synthetic"
+    },
+    "tags": [],
+    "body": {
+      "job_key": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "kind": "session_digest",
+      "subject": "session_0001",
+      "inputs": [
+        {
+          "record": "chunk_0000",
+          "revision": "revision_chunk_0000",
+          "kind": "session_chunk"
+        },
+        {
+          "record": "chunk_0001",
+          "revision": "revision_chunk_0001",
+          "kind": "session_chunk"
+        }
+      ],
+      "assigned_device": "device_0001",
+      "destination": "scope_0001",
+      "state": "requested"
+    }
+  },
+  "expectation": "Replay only enqueues when author holds all inputs and destination, job scope equals all input scopes/destination and assigned_device matches. Lease cancellation rejects late completion."
+}

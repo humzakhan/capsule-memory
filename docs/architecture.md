@@ -1,10 +1,12 @@
 # Architecture
 
-Capsule Memory is a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search remain device-local. Agents and harnesses choose what to remember and use. The future components below support storage and synchronization; they do not manage autonomous memory behavior.
+Capsule Memory securely stores and synchronizes agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search remain device-local. Manual workflows leave selection to agents and harnesses. The optional session module adds explicit local capture and deduction controls; generated text remains untrusted and reviewable.
 
 **Decision:** build a local Go service on each trusted machine, with device-only SQLite search and an encrypted archive coordinated by a small Cloudflare relay. **Status:** this is the full architectural target; [v1 delivery status](v1-status.md) describes the source implemented so far. All runtime guarantees remain unverified.
 
-V1 uses explicit CLI sync and fixed-scope MCP processes sharing SQLite. The daemon/IPC, wake hints, automated key distribution, maintenance, and Git bridge shown below are future work. Read the [v1 contract](v1-contract.md) and [runbook](run-v1.md) for current behavior.
+Legacy v1 uses explicit CLI sync and fixed-scope MCP processes sharing SQLite. The optional session source adds a Linux/macOS daemon, authenticated local IPC, selective grants and bounded polling. Native key distribution, WebSockets, destructive maintenance and Git automation remain future work. Read the [v1 contract](v1-contract.md) for legacy behavior and [session status](session-status.md) for new-source evidence.
+
+The [session design and amendments](session-history.md) and [decision 0004](decisions/0004-session-history.md) describe the accepted optional extension. Every schema-v2 revision is compressed before encryption/upload; its isolated DEFLATE frame has 4 KiB padding, a 1 MiB decoder bound and an 896 KiB full-revision writer bound. Legacy wire domains remain unchanged. V2 knowledge shares a scope with its grant and lifecycle; strict retrieval requires live per-request reconciliation of exact source dependency heads. Historical results carry explicit freshness labels. [Source modules](../internal/derive/) are authored; compilation and runtime acceptance are NOT RUN.
 
 ## System shape
 
