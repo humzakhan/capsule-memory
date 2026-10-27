@@ -18,7 +18,15 @@ import (
  "github.com/humzakhan/capsule-memory/internal/frame"
 )
 
+// ErrSyncAuthorization identifies a rejected relay or current device grant.
+// Retrying still refreshes and verifies authorization before replay or publication.
+var ErrSyncAuthorization = errors.New("device revoked or scope not granted")
+
 type relayError struct { Status int }
+
+func (e relayError) Is(target error) bool {
+	return target == ErrSyncAuthorization && (e.Status == http.StatusUnauthorized || e.Status == http.StatusForbidden)
+}
 func (e relayError) Error() string {return "relay rejected request (HTTP "+strconv.Itoa(e.Status)+")"}
 func (s *Service) request(ctx context.Context,method,path,scope string,body []byte,out any) error {
 	req,err:=http.NewRequestWithContext(ctx,method,s.configuration().Relay+path,bytes.NewReader(body));if err!=nil{return errors.New("construct relay request failed")}
@@ -116,7 +124,7 @@ func (s *Service) SyncScope(ctx context.Context,scope string,opt SyncOptions) (o
 	if !opt.ReplayOnly {if err:=s.publishControl(ctx);err!=nil{return out,err}}
 	var signed Signed;if err:=s.request(ctx,"GET",s.basePath()+"/manifest","",nil,&signed);err!=nil{return out,err}
 	if err:=s.rememberControl(ctx,signed);err!=nil{return out,err};c,err:=s.control(signed);if err!=nil{return out,err}
-	d,epoch,err:=c.grant(s.configuration().Device,scope);if err!=nil{return out,errors.New("device revoked or scope not granted")};key,err:=unbase(s.configuration().DevicePrivate,64);if err!=nil{return out,err}
+	d,epoch,err:=c.grant(s.configuration().Device,scope);if err!=nil{return out,ErrSyncAuthorization};key,err:=unbase(s.configuration().DevicePrivate,64);if err!=nil{return out,err}
 	if base64.StdEncoding.EncodeToString(ed25519.PrivateKey(key).Public().(ed25519.PublicKey))!=d.Public||s.configuration().Keys[scope].Epoch!=epoch{return out,errors.New("identity or epoch unavailable; manual owner key distribution required")}
 	caught,err:=s.replayLimited(ctx,scope,c,signed,opt.MaxPages);if err!=nil{return out,err}
 	var publicationErr error;out.CaughtUp=caught;if caught&&!opt.ReplayOnly {
