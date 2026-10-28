@@ -186,6 +186,10 @@ func operationError(err error) *WireError {
 		code = "unknown_method"
 	case errors.Is(err, memory.ErrInvalid):
 		code = "invalid"
+	case errors.Is(err, memory.ErrUnpublishedParent):
+		code = "waiting_ancestry"
+	case errors.Is(err, memory.ErrHeadsChanged):
+		code = "heads_changed"
 	case errors.Is(err, memory.ErrProfileBusy), errors.Is(err, memory.ErrSyncBusy):
 		code = "busy"
 	case errors.Is(err, ErrUnavailable):

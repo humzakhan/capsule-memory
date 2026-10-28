@@ -114,6 +114,12 @@ Clients accept that operation payload while strictly validating the response
 envelope and rejecting duplicate keys. An invalid or interrupted reply remains
 an ambiguous outcome; it must not trigger an automatic mutation retry.
 
+The `waiting_ancestry` error preserves a retained revision's unpublished-parent
+condition across IPC. `heads_changed` reports a review of an obsolete revision.
+The CLI returns these domain errors without describing the daemon as unavailable;
+neither error authorizes releasing held parents or retrying a review against a
+different revision.
+
 The Unix socket is `<daemon-home>/run/daemon.sock`, mode 0600 inside a 0700 directory.
 Paths must fit the platform Unix socket limit. Requests are versioned JSONL,
 limited to 1 MiB; replies are limited to 8 MiB. The listener has at most 32 clients,

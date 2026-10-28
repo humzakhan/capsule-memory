@@ -174,6 +174,10 @@ func responseError(code string) error {
 		return memory.ErrInvalid
 	case "unknown_method":
 		return ops.ErrUnknownMethod
+	case "waiting_ancestry":
+		return memory.ErrUnpublishedParent
+	case "heads_changed":
+		return memory.ErrHeadsChanged
 	default:
 		return ErrUnavailable
 	}
