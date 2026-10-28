@@ -9,7 +9,7 @@ import (
 	"github.com/humzakhan/capsule-memory/internal/records"
 )
 
-type Source struct { ID, Harness, Adapter, StoreIdentity string; Config json.RawMessage }
+type Source struct { ID, Harness, Adapter, StoreIdentity string; Consent string; Config json.RawMessage }
 type Stream struct { Key, Generation string; Size int64; Modified time.Time }
 type Checkpoint struct { Stream, Generation, Position, PrefixDigest, TailDigest, FileIdentity, AdapterState, ObservedModified string; ObservedSize int64; Reconciling,Discarding,CaughtUp bool }
 type Limits struct { MaxBytes int64; StopAt int64; EndBounded bool; MaxEvents, MaxPages int; Stability time.Duration }
@@ -22,7 +22,7 @@ type Observation struct {
 	State string
 }
 type Event struct { Origin records.Origin; CWD string; CorrectionScope string; Event records.Event; ToolBody, PositionKey string }
-type Changes struct { Observations []Observation; Events []Event; Omissions []records.Omission; Next Checkpoint; CaughtUp bool; Quarantine string; ObservedConsent string; ScannedBytes int64; Reconcile bool }
+type Changes struct { Observations []Observation; Events []Event; Omissions []records.Omission; Next Checkpoint; CaughtUp bool; Quarantine string; ObservedConsent string; ObservedPolicyVersion int; ScannedBytes int64; Reconcile bool }
 type Preview struct { Locations, Versions []string; Streams int; Bytes int64; Unsupported []string }
 type Adapter interface {
 	Name() string
