@@ -16,7 +16,26 @@ import (
 )
 type GrantCheck func(context.Context,Queryer,Control)error
 func (s *Service) OnGrantCheck(h GrantCheck){s.grantHooks=append(s.grantHooks,h)}
-func (s *Service) checkGrants(ctx context.Context,c Control)error{if s.schemaVersion==2{if e:=s.checkAggregationReaders(ctx,c);e!=nil{return e}};for _,h:=range s.grantHooks{if e:=h(ctx,s.reader,c);e!=nil{return e}};return nil}
+func (s *Service) checkGrants(ctx context.Context, proposed Control) error {
+	return s.checkGrantsQuery(ctx, s.reader, proposed)
+}
+
+func (s *Service) checkGrantsQuery(ctx context.Context, q Queryer, proposed Control) error {
+	if s.schemaVersion == 2 {
+		if err := s.checkAggregationReaders(ctx, q, proposed); err != nil {
+			return err
+		}
+		if err := s.checkProjectionReaders(ctx, q, proposed); err != nil {
+			return err
+		}
+	}
+	for _, hook := range s.grantHooks {
+		if err := hook(ctx, q, proposed); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func contains(a []string,v string)bool{for _,s:=range a{if s==v{return true}};return false}
 func syncDir(path string)error{d,e:=os.Open(path);if e!=nil{return e};defer d.Close();return d.Sync()}
 func replaceConfig(home string,c Config)error{p:=filepath.Join(home,"device.json.tmp");if e:=writeNew(p,c);e!=nil{return e};if e:=os.Rename(p,filepath.Join(home,"device.json"));e!=nil{return e};return syncDir(home)}
@@ -26,14 +45,37 @@ func (s *Service) saveControl(ctx context.Context,tx *sql.Tx,c Control,signed Si
 type packageKey struct{Epoch string `json:"epoch" cm:"required"`;Key string `json:"key_b64" cm:"required"`;Label string `json:"label" cm:"required"`;Role string `json:"role" cm:"required"`}
 type keyPackage struct{Version int `json:"version" cm:"required"`;Vault string `json:"vault_id" cm:"required"`;Device string `json:"device_id" cm:"required"`;Keys map[string]packageKey `json:"scope_keys" cm:"required"`}
 func (s *Service) GrantDevice(ctx context.Context,device string,scopes []string,out string)(map[string]any,error){
- s.wmu.Lock();defer s.wmu.Unlock();if e:=s.RequireV2();e!=nil{return nil,e};if e:=s.recoverPendingScope(ctx);e!=nil{return nil,e};owner,e:=s.ownerKey();if e!=nil{return nil,e};c,_,e:=s.current(ctx);if e!=nil{return nil,e}
+ s.wmu.Lock();defer s.wmu.Unlock();if e:=s.RequireV2();e!=nil{return nil,e};if e:=s.recoverPendingScope(ctx);e!=nil{return nil,e};owner,e:=s.ownerKey();if e!=nil{return nil,e};c,_,e:=s.current(ctx);if e!=nil{return nil,e};generation:=c.Generation
  idx:=-1;for i,d:=range c.Devices{if d.ID==device&&!d.Revoked{idx=i}};if idx<0||len(scopes)==0{return nil,ErrInvalid}
  p:=keyPackage{Version:1,Vault:c.Vault,Device:device,Keys:map[string]packageKey{}};changed:=false
  for _,scope:=range scopes{k,ok:=s.configuration().Keys[scope];if !ok{return nil,ErrInvalid};found:=false;for _,sc:=range c.Scopes{if sc.ID==scope&&sc.Epoch==k.Epoch{found=true}};if !found{return nil,ErrInvalid};if !contains(c.Devices[idx].Scopes,scope){c.Devices[idx].Scopes=append(c.Devices[idx].Scopes,scope);changed=true}
   v:=packageKey{Epoch:k.Epoch,Key:k.Key,Role:"default"};e=s.reader.QueryRowContext(ctx,"SELECT label,role FROM scope_labels WHERE scope=?",scope).Scan(&v.Label,&v.Role);if e!=nil&&e!=sql.ErrNoRows{return nil,ErrStorage};p.Keys[scope]=v
- };if changed{c.Generation=next(c.Generation)};if e=validateControl(c,c.Vault);e!=nil{return nil,e};if e=s.checkGrants(ctx,c);e!=nil{return nil,e}
- var signed Signed;if changed{signed,e=sign("agent-memory/control/v1",c,owner);if e!=nil{return nil,e}}
- if e=writeNew(out,p);e!=nil{return nil,e};if changed{e=s.updateLocked(ctx,func(tx *sql.Tx)error{return s.saveControl(ctx,tx,c,signed)});if e!=nil{return nil,errors.New("key package written; control not committed; retry with a new output path")}}
+ };if changed{c.Generation=next(c.Generation)};if e=validateControl(c,c.Vault);e!=nil{return nil,e}
+	outputAttempted := false
+	e = s.withGrantAuthority(ctx, generation, c, func(tx *sql.Tx) error {
+		var signed Signed
+		if changed {
+			var err error
+			signed, err = sign("agent-memory/control/v1", c, owner)
+			if err != nil {
+				return err
+			}
+		}
+		outputAttempted = true
+		if err := writeNew(out, p); err != nil {
+			return err
+		}
+		if changed {
+			return s.saveControl(ctx, tx, c, signed)
+		}
+		return nil
+	})
+	if e != nil {
+		if outputAttempted {
+			return nil, errors.Join(e, errors.New("key-package operation not confirmed; preserve any output before retrying"))
+		}
+		return nil, e
+	}
  return map[string]any{"device_id":device,"control_pending":changed,"key_package_written":true},nil
 }
 func (s *Service) RevokeScopeGrant(ctx context.Context,device string,scopes []string)(map[string]any,error){
@@ -55,9 +97,9 @@ func (s *Service) AddScope(ctx context.Context,label,role string)(ScopeInfo,erro
 
 // The core fallback also runs during pending-file recovery, before application
 // hooks can be installed. It verifies owner signatures and every current head.
-func(s *Service) checkAggregationReaders(ctx context.Context,c Control)error{
- rows,e:=s.reader.QueryContext(ctx,"SELECT DISTINCT record,scope FROM revisions WHERE kind='aggregation_grant' LIMIT 10001");if e!=nil{return ErrStorage};type ref struct{id,scope string};var refs []ref;for rows.Next(){var r ref;if rows.Scan(&r.id,&r.scope)!=nil{rows.Close();return ErrStorage};refs=append(refs,r)};e=rows.Err();rows.Close();if e!=nil{return ErrStorage};if len(refs)>10000{return ErrInvalid}
+func(s *Service) checkAggregationReaders(ctx context.Context,q Queryer,c Control)error{
+ rows,e:=q.QueryContext(ctx,"SELECT DISTINCT record,scope FROM revisions WHERE kind='aggregation_grant' LIMIT 10001");if e!=nil{return ErrStorage};type ref struct{id,scope string};var refs []ref;for rows.Next(){var r ref;if rows.Scan(&r.id,&r.scope)!=nil{rows.Close();return ErrStorage};refs=append(refs,r)};e=rows.Err();rows.Close();if e!=nil{return ErrStorage};if len(refs)>10000{return ErrInvalid}
  has:=func(device,scope string)bool{for _,d:=range c.Devices{if d.ID==device&&!d.Revoked{for _,s:=range d.Scopes{if s==scope{return true}}}};return false}
- for _,r:=range refs{hh,del,e:=s.Heads(ctx,s.reader,r.scope,r.id);if e!=nil{return e};if del{continue};for _,h:=range hh{var signed records.AggregationGrant;var body records.AggregationGrantBody;if json.Unmarshal(h.Body,&signed)!=nil{return ErrInvalid};if e=s.VerifyOwner("capsule-memory/aggregation-grant/v1",Signed{Payload:signed.Payload,Signature:signed.Signature},&body);e!=nil{return e};if body.Validate()!=nil||body.Vault!=c.Vault||body.Destination!=r.scope{return ErrInvalid};if body.Revoked{continue};for _,d:=range c.Devices{if has(d.ID,body.Destination){for _,scope:=range body.Sources{if !has(d.ID,scope){return errors.New("destination_readers_exceed_sources")}}}}}}
+ for _,r:=range refs{hh,del,e:=s.Heads(ctx,q,r.scope,r.id);if e!=nil{return e};if del{continue};for _,h:=range hh{var signed records.AggregationGrant;var body records.AggregationGrantBody;if json.Unmarshal(h.Body,&signed)!=nil{return ErrInvalid};if e=s.VerifyOwner("capsule-memory/aggregation-grant/v1",Signed{Payload:signed.Payload,Signature:signed.Signature},&body);e!=nil{return e};if body.Validate()!=nil||body.Vault!=c.Vault||body.Destination!=r.scope{return ErrInvalid};if body.Revoked{continue};for _,d:=range c.Devices{if has(d.ID,body.Destination){for _,scope:=range body.Sources{if !has(d.ID,scope){return errors.New("destination_readers_exceed_sources")}}}}}}
  return nil
 }

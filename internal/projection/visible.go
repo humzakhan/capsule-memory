@@ -31,7 +31,7 @@ func TargetVisible(ctx context.Context,q memory.Queryer,target *memory.Service,r
 		if !HasScope(c,r.Author,scope){v.Reason="grant_invalid";return v,nil};if e:=targetGeneration(ctx,q,p);e!=nil{v.Reason="pending";return v,nil};if p.State!="projected"{v.Reason=p.State;return v,nil}
 		if p.Target.Record!=record||p.Target.Revision!=knowledge.ID||p.Target.Scope!=scope||p.Target.Vault!=knowledge.Vault||p.Source!=k.Source||p.TextSHA256!=k.TextSHA256||hashText(k.Text)!=k.TextSHA256{return v,nil}
 		if p.Source.Vault==knowledge.Vault {
-			if !HasScope(c,r.Author,p.Source.Scope){v.Reason="grant_invalid";return v,nil}
+			if !HasScope(c,r.Author,p.Source.Scope)||CheckReaders(c,[]string{p.Source.Scope},scope)!=nil{v.Reason="grant_invalid";return v,nil}
 		} else if bridgeGrant(ctx,q,target,p.Grant,scope,r.Author,p.Source.Vault,knowledge.Vault)!=nil{v.Reason="grant_invalid";return v,nil}
 		if p.Attestation==nil||p.Attestation.Bridge!=r.Author||p.Attestation.Coverage!="complete"||len(p.Attestation.VerifiedHeads)==0{return v,nil}
 		if v.LastVerifiedAt==""||p.Attestation.VerifiedAt<v.LastVerifiedAt{v.LastVerifiedAt=p.Attestation.VerifiedAt;v.LastVerifiedHeads=p.Attestation.VerifiedHeads}

@@ -60,3 +60,34 @@ state. Generic exporter harness labels are bounded namespaces; adapter selection
 remains allowlisted. Export pages carry an immutable snapshot token. These are
 source decisions awaiting independent review; all execution acceptance is NOT RUN.
 Only published-body cache eviction remains the accepted feature deferral.
+
+## Local authority repair amendment — 2026-10-27
+
+Source inspection identified capture configuration races, recoverability and
+finalization defects, and gaps between source checks and target publication.
+The repair binds capture to exact configuration/consent/policy snapshots and
+binds publication to the exact target lifecycle and completed source link.
+Unavailable or ambiguous source copies fail closed. Scope reader subsets and
+current accepted source authority are checked again before submission.
+
+For distinct local profiles, source validation and target commit share an ordered
+write-exclusion window under exclusive profile ownership. Source read snapshots
+finish before target write transactions; callbacks perform no network or nested
+updates. This preserves the existing no nested cross-profile transaction rule
+and does not claim distributed atomicity. Same-profile work uses one transaction.
+See the [local authority contracts](../session-protocol.md#local-authority-fences--2026-10-27-repair).
+
+Legacy v1 bytes and schema-v2 framing remain unchanged. No new feature deferral,
+deployment, service installation or execution authority is introduced. Formatting,
+compilation, tests and runtime acceptance of these repairs remain NOT RUN.
+
+Independent source review identified a further grant-boundary gap: a target-only
+reader could receive the existing key for already archived same-vault knowledge.
+Reader subsets therefore constrain key issuance using retained immutable
+knowledge history in the core service, independently of installed projection
+hooks and current lifecycle visibility. Grant/enrollment reserve the local SQLite
+writer and recheck the control generation before signing or writing keys. Deleted
+or withdrawn assertions remain relevant because their ciphertext is retained.
+Cross-vault reviewed exports keep their explicit bridge authority. Private file
+output and database commit remain separate durability boundaries; partial output
+is reported, never described as a confirmed control commit.

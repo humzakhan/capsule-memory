@@ -49,7 +49,7 @@ Do not add a passing badge, fabricated CI result, or pre-completed acceptance ch
 
 ## Optional session module acceptance (NOT RUN)
 
-The following are authored synthetic scenarios, not test results. The session task intentionally adds no automated test files. Run only through an owner-authorized execution route; record the exact integrated commit and all tool/model/adapter versions. See [session status](session-status.md) and [owner runbook](run-session.md).
+The following are authored synthetic scenarios, not test results. The original session delivery added no automated test files. Any focused regressions authored during later repairs remain unexecuted until an owner-authorized check runs; test source and recipes do not satisfy this acceptance gate. Run only through an owner-authorized execution route; record the exact integrated commit and all tool/model/adapter versions. See [session status](session-status.md) and [owner runbook](run-session.md).
 
 | Scenario | Required observable result |
 | --- | --- |

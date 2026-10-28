@@ -97,5 +97,12 @@ func read(ctx context.Context,c Config,st capture.Stream,cp capture.Checkpoint,l
  }
  done:
  b.CaughtUp=off==stop&&!b.Next.Discarding&&len(state.partial)==0;b.Next.Position=strconv.FormatInt(off,10);b.ScannedBytes=readBytes
- prefixLen=off;if prefixLen>64<<10{prefixLen=64<<10};prefix=make([]byte,prefixLen);if _,e=f.ReadAt(prefix,0);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(prefix);b.Next.PrefixDigest=hex.EncodeToString(sum[:]);tail:=make([]byte,prefixLen);if _,e=f.ReadAt(tail,off-prefixLen);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(tail);b.Next.TailDigest=hex.EncodeToString(sum[:]);return b,nil
+ prefixLen=off;if prefixLen>64<<10{prefixLen=64<<10};prefix=make([]byte,prefixLen);if _,e=f.ReadAt(prefix,0);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(prefix);b.Next.PrefixDigest=hex.EncodeToString(sum[:]);tail:=make([]byte,prefixLen);if _,e=f.ReadAt(tail,off-prefixLen);e!=nil&&e!=io.EOF{return b,capture.ErrUnavailable};sum=sha256.Sum256(tail);b.Next.TailDigest=hex.EncodeToString(sum[:])
+ // A concurrent rewrite/append must be retried from the last acknowledged
+ // checkpoint; parsed lines and fingerprints must describe one file snapshot.
+ current, err := f.Stat()
+ if err != nil || Identity(current) != identity || current.Size() != fi.Size() || !current.ModTime().Equal(fi.ModTime()) {
+  return Batch{}, capture.ErrUnavailable
+ }
+ return b,nil
 }

@@ -26,15 +26,46 @@ func(m *Module) EnableSource(ctx context.Context,id string,bf *Backfill)error{
   if wanted[stream.Key]{if stream.Size>=0{if stream.Size>remaining{return errors.New("backfill size exceeds explicit bound")};remaining-=stream.Size};ends[stream.Key]=stream.Size;delete(wanted,stream.Key)}else if stream.Size>=0{cp.Position=strconv.FormatInt(stream.Size,10)}else if baseline,ok:=adapter.(interface{Baseline(context.Context,capture.Source,capture.Stream)(capture.Checkpoint,error)});ok{cp,e=baseline.Baseline(ctx,source,stream);if e!=nil{return e}}else{return capture.ErrUnavailable}
   if _,selected:=ends[cp.Stream];!selected{cp.CaughtUp=true};checkpoints=append(checkpoints,cp)
  };if next==""{break};if next==page||pages==1562{return errors.New("source discovery bound exceeded")};page=next};if len(wanted)>0{return errors.New("backfill stream not found")}
- for _,cp:=range checkpoints{delete(m.buffers,id+":"+cp.Stream)}
- return m.svc.Update(ctx,func(tx *sql.Tx)error{
+ e = m.svc.Update(ctx,func(tx *sql.Tx)error{
   if _,e:=tx.ExecContext(ctx,"DELETE FROM backfill_streams WHERE source_id=?",id);e!=nil{return e};if _,e:=tx.ExecContext(ctx,"DELETE FROM backfills WHERE source_id=?",id);e!=nil{return e};if bf!=nil{if _,e:=tx.ExecContext(ctx,"INSERT INTO backfills VALUES(?,?,?)",id,bf.Since.UTC().Format(time.RFC3339Nano),bf.MaxBytes);e!=nil{return e}}
   for _,cp:=range checkpoints{if end,selected:=ends[cp.Stream];selected{if _,e:=tx.ExecContext(ctx,"INSERT INTO backfill_streams VALUES(?,?,?,1)",id,cp.Stream,end);e!=nil{return e}}else{if e:=auditGap(ctx,tx,id,cp.Stream,cp.Position,"future_baseline_excluded",1);e!=nil{return e}};if e:=checkpoint(ctx,tx,id,cp);e!=nil{return e};if _,e:=tx.ExecContext(ctx,"UPDATE checkpoints SET state='ok',reason=NULL WHERE source_id=? AND stream=?",id,cp.Stream);e!=nil{return e}}
   _,e:=tx.ExecContext(ctx,"UPDATE sources SET enabled=1,consent_at=?,state='enabled',reason=NULL WHERE source_id=?",time.Now().UTC().Format(time.RFC3339Nano),id);return e
  })
+ if e == nil {
+  for key := range m.buffers {
+   if strings.HasPrefix(key, id+":") {
+    delete(m.buffers, key)
+   }
+  }
+ }
+ return e
 }
 
 func(m *Module) DisableSource(ctx context.Context,id string)error{return m.DisableSourceWithConsent(ctx,id,true)}
-func(m *Module) DisableSourceWithConsent(ctx context.Context,id string,withdraw bool)error{m.mu.Lock();defer m.mu.Unlock();for key:=range m.buffers{if strings.HasPrefix(key,id+":"){delete(m.buffers,key)}};return m.svc.Update(ctx,func(tx *sql.Tx)error{state:="disabled";if withdraw{state="withdrawn"};if _,e:=tx.ExecContext(ctx,"UPDATE sources SET enabled=0,state=?,reason=NULL WHERE source_id=?",state,id);e!=nil{return e};if withdraw{return m.svc.HoldSource(ctx,tx,id)};return nil})}
+func (m *Module) DisableSourceWithConsent(ctx context.Context, id string, withdraw bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	err := m.svc.Update(ctx, func(tx *sql.Tx) error {
+		state := "disabled"
+		if withdraw {
+			state = "withdrawn"
+		}
+		if _, err := tx.ExecContext(ctx, "UPDATE sources SET enabled=0,state=?,reason=NULL WHERE source_id=?", state, id); err != nil {
+			return err
+		}
+		if withdraw {
+			return m.svc.HoldSource(ctx, tx, id)
+		}
+		return nil
+	})
+	if err == nil {
+		for key := range m.buffers {
+			if strings.HasPrefix(key, id+":") {
+				delete(m.buffers, key)
+			}
+		}
+	}
+	return err
+}
 func(m *Module) Pause(ctx context.Context,id string)error{m.mu.Lock();defer m.mu.Unlock();return m.svc.Update(ctx,func(tx *sql.Tx)error{_,e:=tx.ExecContext(ctx,"INSERT INTO pauses(source_id,started) VALUES(?,?)",id,time.Now().UTC().Format(time.RFC3339Nano));if e!=nil{return e};_,e=tx.ExecContext(ctx,"UPDATE sources SET state='paused',reason='pause_unresolved' WHERE source_id=?",id);return e})}
 func(m *Module) Resume(ctx context.Context,id,resolution string)error{if resolution!="skip"&&resolution!="include"{return memory.ErrInvalid};if resolution=="skip"{if e:=m.EnableSource(ctx,id,nil);e!=nil{return e}};m.mu.Lock();defer m.mu.Unlock();return m.svc.Update(ctx,func(tx *sql.Tx)error{if _,e:=tx.ExecContext(ctx,"UPDATE pauses SET ended=?,resolution=? WHERE source_id=? AND resolution IS NULL",time.Now().UTC().Format(time.RFC3339Nano),resolution,id);e!=nil{return e};reason:="";if resolution=="skip"{reason="paused_skipped";if e:=m.pausedGap(ctx,tx,id);e!=nil{return e}};_,e:=tx.ExecContext(ctx,"UPDATE sources SET state='enabled',reason=? WHERE source_id=?",reason,id);return e})}

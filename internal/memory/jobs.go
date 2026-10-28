@@ -36,7 +36,36 @@ func (s *Service) LeaseJob(ctx context.Context,kinds []string,lease time.Duratio
  });return out,e
 }
 func (s *Service) CompleteJob(ctx context.Context,tx *sql.Tx,key,token,result string)error{r,e:=tx.ExecContext(ctx,"UPDATE jobs SET state='done',result_record=?,attempt_token=NULL,lease_until=NULL,error_code=NULL WHERE job_key=? AND state='leased' AND attempt_token=? AND lease_until>?",result,key,token,time.Now().UnixMilli());if e!=nil{return ErrStorage};n,e:=r.RowsAffected();if e!=nil{return ErrStorage};if n!=1{return ErrLeaseLost};return nil}
-func (s *Service) FailJob(ctx context.Context,key,token,code string,retry time.Time,permanent bool)error{return s.Update(ctx,func(tx *sql.Tx)error{state:="pending";if permanent{state="failed"};r,e:=tx.ExecContext(ctx,"UPDATE jobs SET state=?,not_before=?,error_code=?,attempt_token=NULL,lease_until=NULL WHERE job_key=? AND state='leased' AND attempt_token=? AND lease_until>?",state,retry.UnixMilli(),code,key,token,time.Now().UnixMilli());if e!=nil{return ErrStorage};n,e:=r.RowsAffected();if e!=nil{return ErrStorage};if n!=1{return ErrLeaseLost};return nil})}
+func (s *Service) FailJob(ctx context.Context, key, token, code string, retry time.Time, permanent bool) error {
+	state := "pending"
+	if permanent {
+		state = "failed"
+	}
+	return s.finishAttempt(ctx, key, token, code, retry, state)
+}
+
+// BlockJob parks only the currently owned attempt. A stale worker cannot block
+// a replacement attempt or work requeued by an explicit owner action.
+func (s *Service) BlockJob(ctx context.Context, key, token, code string, retry time.Time) error {
+	return s.finishAttempt(ctx, key, token, code, retry, "blocked")
+}
+
+func (s *Service) finishAttempt(ctx context.Context, key, token, code string, retry time.Time, state string) error {
+	return s.Update(ctx, func(tx *sql.Tx) error {
+		result, err := tx.ExecContext(ctx, "UPDATE jobs SET state=?,not_before=?,error_code=?,attempt_token=NULL,lease_until=NULL WHERE job_key=? AND state='leased' AND attempt_token=? AND lease_until>?", state, retry.UnixMilli(), code, key, token, time.Now().UnixMilli())
+		if err != nil {
+			return ErrStorage
+		}
+		count, err := result.RowsAffected()
+		if err != nil {
+			return ErrStorage
+		}
+		if count != 1 {
+			return ErrLeaseLost
+		}
+		return nil
+	})
+}
 func (s *Service) CancelJobs(ctx context.Context,tx *sql.Tx,kinds []string,scope string)(int,error){
  if len(kinds)==0{return 0,nil};marks:=[]string{};args:=[]any{};filter:="";if scope!=""{if s.scope(scope)!=nil{return 0,ErrInvalid};filter="scope=? AND ";args=append(args,scope)};for _,k:=range kinds{marks=append(marks,"?");args=append(args,k)}
  r,e:=tx.ExecContext(ctx,"UPDATE jobs SET state='cancelled',attempt_token=NULL,lease_until=NULL WHERE "+filter+"state IN('pending','leased','blocked') AND kind IN("+strings.Join(marks,",")+")",args...);if e!=nil{return 0,ErrStorage};n,e:=r.RowsAffected();if e!=nil{return 0,ErrStorage};return int(n),nil

@@ -1,6 +1,42 @@
 # Session module source status
 
-**Integrated source authored and source review findings addressed; runtime acceptance pending.** This record describes work on `feat/session-history` from base `a08ffd8fb7a2fcd3d0f4b848fb919295d6dbf758`, 2026-10-26. It does not establish a compiled binary or working harness/model integration. The initial proposal is preserved in [session history](session-history.md).
+**Source repairs reviewed; runtime acceptance pending.** The original
+`feat/session-history` delivery used base
+`a08ffd8fb7a2fcd3d0f4b848fb919295d6dbf758`, 2026-10-26. The follow-up
+`fix/session-history-source-repair` starts from current-main base
+`e27cd2ee12bae4fce683a0af74f959cf5710d0f5`, after PR #1 merged. Neither
+source review establishes a compiled binary or working harness/model integration.
+The initial proposal is preserved in [session history](session-history.md).
+
+## Follow-up source evidence — 2026-10-27
+
+The combined source review examined `578421bc468fba98a55eabebd72d94f6c29bfaba`:
+capture/consent snapshots and durable buffering, adapter attribution and rewind,
+revision-filtered retrieval, exact bridge publication/freshness context, ordered
+local commit exclusion, lease-bound budget blocking, ranked refill, daemon/IPC
+ownership and CLI export finalization. It found one high-severity gap: target-only
+key issuance could disclose already archived same-vault assertions. The core now
+checks retained immutable source/target reader bindings before grant/enrollment
+output, independently of projection hooks or lifecycle deletion. Focused review
+at `cf221adba7b2f555252f1bf8d05cfa286dfebb22` closed that finding by source
+inspection and established no additional concrete consequential finding.
+
+Permitted `git diff --check` checks passed for the combined and correction ranges.
+Nine regression files contain focused synthetic cases for concrete uncovered
+behavior; all are **NOT RUN**, as are the authored ordering recipes. Source review
+covered the combined diff and relevant surrounding operations, not exhaustive
+analysis or runtime/security acceptance. Formatting, compilation/type correctness,
+SQL/FTS/driver behavior, races/crash recovery, platform/harness compatibility,
+cryptographic interoperability and provider durability remain unverified.
+
+Ranked knowledge scanning is capped at 4096 candidates per scope/kind stream;
+exhausting that bound reports incomplete coverage. Repeating the same query does
+not advance a continuation cursor. Grant checks protect locally retained history,
+not undiscovered remote history or previously disclosed keys. Writer exclusion is
+local; private files and SQLite commits are separate durability boundaries.
+Shutdown joins owned work, but mutex/driver/filesystem delays have no proven
+latency bound. Published-body cache eviction remains explicitly unimplemented.
+
 
 | Area | Source location | Execution evidence |
 | --- | --- | --- |
@@ -11,7 +47,7 @@
 | Owner-signed aggregation grants, v2 knowledge promotion, lifecycle and live freshness checks | `internal/projection` | Authored; NOT RUN |
 | Hand-authored protocol/adapter examples | `contracts/` | Authored data; not validated or executed evidence |
 
-All installation, dependency resolution, formatting (`gofmt`), compilation, vet, tests, validators, runtime, daemon, inference, real-format capture, synchronization and production provider checks are **NOT RUN**. No new automated tests were authored for this task. Source review and `git diff --check` are the only permitted checks; the implementation handoff records their actual result.
+All installation, dependency resolution, formatting (`gofmt`), compilation, vet, tests, validators, runtime, daemon, inference, real-format capture, synchronization and production provider checks for this source delivery are **NOT RUN**. The original task authored no automated tests. Later repairs may add only focused regression source for concrete uncovered defects; that source remains unexecuted. Source review and `git diff --check` are the only permitted checks in the repair task; its handoff records their actual result. Historical setup checks in [verification](verification.md#setup-gate-baseline-2026-10-27) retain their original source identity and do not verify these repairs.
 
 ## Defaults and practical limits
 
@@ -75,7 +111,8 @@ shell.projects[].workspaceRoot. The pinned primary schema is upstream t3code
 Generic import origins preserve bounded arbitrary harness labels. Capture uses
 stable per-device/source/stream branches, bounded buffers, durable gap audits and
 snapshot-pinned export. Codex turn deduplication survives poll boundaries using
-only hashes and event references in checkpoint state.
+hashes and event references plus bounded directory metadata in checkpoint state;
+no prompt plaintext is retained there.
 
 Live projected retrieval binds the proof to the exact target knowledge revision,
 source revision/vault/scope and link. A concurrent target replacement is hidden

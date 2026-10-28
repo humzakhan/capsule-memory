@@ -349,11 +349,12 @@ local source_gaps retains detailed audit. An unmigrated profile reports
 needs_migration while healthy profiles continue; migration remains explicit.
 
 Authored frame vectors use hand-computable stored DEFLATE blocks. They are not
-executed evidence. There are no new generated AES-GCM/Ed25519 vectors, test files,
-relay changes or protocol interop claims. The owner must run formatting, compiler,
-SQLite migration/recovery, cancellation/concurrency, adversarial frame cases,
-synthetic adapter journeys and cross-language acceptance in an authorized isolated
-job before treating this source as operational.
+executed evidence. The original delivery added no test files; focused regression
+source in later repairs is also unexecuted. There are no new generated
+AES-GCM/Ed25519 vectors, relay changes or protocol interop claims. The owner must
+run formatting, compiler, SQLite migration/recovery, cancellation/concurrency,
+adversarial frame cases, synthetic adapter journeys and cross-language acceptance
+in an authorized isolated job before treating this source as operational.
 
 ### Integrated correction and retrieval semantics
 
@@ -401,3 +402,65 @@ T3 rollback uses stable archived run IDs and preserves original project scopes
 when a thread has moved projects. Session-generated empty-text correction copies
 still pass normal scope grant checks. Large correction reference sets split
 without dropping targets; raw export retains their part provenance.
+
+## Local authority fences — 2026-10-27 repair
+
+These local implementation contracts do not change revision schemas, frame
+bytes, signatures, AAD or relay requests. They are source contracts; independent
+source review and separately authorized execution are distinct evidence gates.
+
+Capture reads bind the exact configured source, consent generation and policy
+version. Buffer reuse, status changes, quarantine and the atomic ingest commit
+recheck that authority. A stale read cannot move the durable checkpoint under
+renewed consent. Replacement workers cancel the old owner and wait for it to
+exit. Buffered cursors remain unacknowledged until revisions, outbox bytes,
+identities, budgets, checkpoints and scheduled work commit together.
+
+Codex checkpoint state retains bounded optional directory metadata independently
+of its hashed prompt identities. Existing state without that field remains
+readable; missing current-turn attribution produces a gap rather than using an
+unproven header project. Prompt plaintext is never checkpoint metadata. Import
+rewinds retain prefix/tail rewrite protection at the rewound byte position.
+
+Cross-profile target commits require exclusive profile ownership and acquire
+both local write mutexes in canonical home order. Source validation completes
+and closes its read snapshot before the target transaction begins; both mutexes
+remain held through target commit. Same-service validation uses that target
+transaction. Callbacks use only their supplied queries, with no nested updates,
+network or model calls. Target checks include the captured lease deadline after
+insertion and grant checks. This is local write exclusion, not a distributed
+transaction or an atomic receipt across vaults.
+
+Before posting queued knowledge or target lifecycle records, publication resolves
+their exact authenticated target lifecycle, including source, target revision,
+link, generation and reviewed text digest. A pure target check validates current
+visibility and reader subsets. The target snapshot closes before a source router
+checks the completed source lifecycle and exact current accepted insight,
+transitive scope access, consent and applicable cross-vault policy. A final local
+snapshot rechecks the target context before submission. Missing, unavailable or
+ambiguous source copies retain the queued bytes. A missing source router never
+authorizes disclosure. Cleanup markers keep their existing separate authority
+and private-parent ancestry rules; these checks do not recall prior disclosure.
+
+Strict freshness also rejects ambiguous configured source copies. Source checks
+and target reads remain separate snapshots, with exact-revision proof matching
+and request-local guards. Ranked knowledge retrieval refills independently for
+each granted scope and record kind after lifecycle and proof filtering. Scan
+bounds or concurrent changes report incomplete coverage; they never bypass
+visibility or imply a complete archive answer.
+
+Same-vault key issuance also checks retained immutable knowledge bindings in the
+core grant path, including profiles opened without projection hooks. Every
+proposed target reader must remain a source reader before control signing or
+key-package/device-profile writes. Tombstones, withdrawal and index rebuilds do
+not erase archived ciphertext or remove this constraint. The check includes
+unpublished retained assertions conservatively; explicit cross-vault reviewed
+exports retain their separate bridge authority.
+
+Grant and enrollment hold a local SQLite writer reservation while checking the
+current control generation, retained bindings and application grant hooks, then
+writing private output and committing control. Other local writers cannot add
+protected history between that check and key disclosure. No network runs in this
+transaction. Filesystem output and SQLite commit are not atomic: an output
+written before a failed commit is reported as unconfirmed and must be preserved
+for inspection. The guard cannot recall keys or plaintext previously disclosed.

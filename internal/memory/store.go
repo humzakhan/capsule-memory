@@ -16,7 +16,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-type Service struct { db *sql.DB; reader *sql.DB; config Config; configMu sync.RWMutex; home string; wmu sync.Mutex; syncGuard sync.Mutex; syncMu map[string]chan struct{}; appliers map[string]Applier; staleHooks []StaleHook; revisionHooks []RevisionHook; grantHooks []GrantCheck; publicationCheck func(context.Context,records.ScopedRef)error; schemaVersion int; profileLock *os.File }
+type Service struct { db *sql.DB; reader *sql.DB; config Config; configMu sync.RWMutex; home string; wmu sync.Mutex; syncGuard sync.Mutex; syncMu map[string]chan struct{}; appliers map[string]Applier; staleHooks []StaleHook; revisionHooks []RevisionHook; grantHooks []GrantCheck; publicationCheck func(context.Context,records.Projection)error; projectionPublicationCheck func(context.Context,Queryer,Revision)(records.Projection,error); schemaVersion int; lockMode LockMode; profileLock *os.File }
 const schema = `
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY,value BLOB NOT NULL);
 CREATE TABLE IF NOT EXISTS controls(generation TEXT PRIMARY KEY,signed BLOB NOT NULL,receipt TEXT);
@@ -33,6 +33,10 @@ PRAGMA user_version=1;
 func Open(ctx context.Context,home string) (*Service,error) {return OpenWith(ctx,home,LockShared)}
 func OpenWith(ctx context.Context,home string,mode LockMode) (*Service,error) {
 	c,err:=Load(home);if err!=nil{return nil,err}
+ // Stable physical home identity gives every cross-profile operation the same
+ // lock order, including profiles configured through parent-directory aliases.
+ canonicalHome,err:=filepath.EvalSymlinks(home);if err!=nil{return nil,err}
+ home,err=filepath.Abs(canonicalHome);if err!=nil{return nil,err}
  lock,err:=lockProfile(home,mode);if err!=nil{return nil,err};ok:=false;defer func(){if !ok{unlockProfile(lock)}}()
 	path:=filepath.Join(home,"memory.db")
 	f,err:=os.OpenFile(path,os.O_CREATE|os.O_RDWR,0600);if err!=nil{return nil,err};f.Close();if err=safeFile(path);err!=nil{return nil,err}
@@ -42,7 +46,7 @@ func OpenWith(ctx context.Context,home string,mode LockMode) (*Service,error) {
 	pragmas:=url.Values{"_pragma":[]string{"journal_mode(WAL)","synchronous(FULL)","foreign_keys(1)","busy_timeout(5000)"}};dsn.RawQuery=pragmas.Encode()
 	db,err:=sql.Open("sqlite",dsn.String());if err!=nil{return nil,ErrStorage}
 	db.SetMaxOpenConns(1);db.SetMaxIdleConns(1)
-	s:=&Service{db:db,config:c,home:home,profileLock:lock,syncMu:map[string]chan struct{}{},appliers:map[string]Applier{}}
+	s:=&Service{db:db,config:c,home:home,profileLock:lock,lockMode:mode,syncMu:map[string]chan struct{}{},appliers:map[string]Applier{}}
 	var version int
 	if err=db.QueryRowContext(ctx,"PRAGMA user_version").Scan(&version);err!=nil{db.Close();return nil,ErrStorage}
 	if version>2 {db.Close();return nil,errors.New("unsupported local schema version")}
@@ -57,7 +61,19 @@ func OpenWith(ctx context.Context,home string,mode LockMode) (*Service,error) {
 	pragmas.Add("_pragma","query_only(1)");dsn.RawQuery=pragmas.Encode();reader,err:=sql.Open("sqlite",dsn.String());if err!=nil{db.Close();return nil,ErrStorage};reader.SetMaxOpenConns(4);reader.SetMaxIdleConns(4);s.reader=reader
  if version==2 {if err=s.recoverPendingScope(ctx);err!=nil{s.Close();return nil,err}};ok=true;return s,nil
 }
-func (s *Service) Close() error {if s.reader!=nil{s.reader.Close()};e:=s.db.Close();l:=unlockProfile(s.profileLock);s.profileLock=nil;if e!=nil{return e};return l}
+func (s *Service) Close() error {
+	s.wmu.Lock()
+	defer s.wmu.Unlock()
+	var readerErr error
+	if s.reader != nil {
+		readerErr = s.reader.Close()
+	}
+	dbErr := s.db.Close()
+	lockErr := unlockProfile(s.profileLock)
+	s.profileLock = nil
+	return errors.Join(readerErr, dbErr, lockErr)
+}
+
 func (s *Service) putMeta(ctx context.Context,key string,v any) error {
 	b,err:=json.Marshal(v);if err!=nil{return err};_,err=s.db.ExecContext(ctx,"INSERT INTO meta VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",key,b);if err!=nil{return ErrStorage};return nil
 }
