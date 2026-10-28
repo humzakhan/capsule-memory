@@ -31,13 +31,13 @@ The normal reading path is README → prompt index → selected task/runbook. An
 | Incoming skill review and local activation | [Skill review](../prompts/09-review-skill.md) | Exact owner approval; read-as-text only, no installer |
 | Lost device, revocation, key/backup planning | [Security operations](../prompts/10-security-operations.md) | Some relay checks exist; turnkey management commands do not |
 
-The current device enrollment CLI grants all scopes for which the owner holds current keys. It does not implement a narrow-scope or read-only enrollment UI. MCP fixes a chosen granted scope, but does not offer a read-only tool profile. Document this before connecting a client.
+Legacy `device create` grants all available owner scopes. Optional v2 administration supports selected scope grants and capability-scoped daemon clients; see [session setup](../prompts/11-session-history.md). The legacy fixed-scope MCP exposes write/delete tools. Review the exact interface and capabilities before connecting a client.
 
 ## What discovery does not create
 
-There is no daemon, background publication service, systemd unit, launch agent, scheduler, hosted/remote MCP endpoint, public agent-to-agent service, or automatic capture hook in this version. A daemon request uses the existing-node prompt to explain manual sync and scope future work.
+The source includes an optional Linux/macOS daemon, background capture/publication/derivation and systemd/launchd templates. None is installed or enabled by cloning or downloading a release. Legacy mode uses explicit sync. No hosted/remote MCP endpoint, public agent-to-agent service or automatic capture hook is provided.
 
-There are no independent push and pull CLI commands; sync performs both publication and replay. Cold data becomes searchable by authorized local replay/indexing, not a central plaintext search endpoint. Automatic summarization, embeddings, key distribution, executable skill installation, other storage adapters, and Git import/export remain deferred.
+There are no independent push and pull CLI commands; sync performs both publication and replay. Cold data becomes searchable by authorized local replay/indexing, not a central plaintext search endpoint. Optional local summarization is authored and separately opt-in; embeddings, automated key distribution, executable skill installation, other storage adapters and Git automation remain deferred.
 
 ## Public discoverability checklist
 
@@ -47,7 +47,7 @@ There are no independent push and pull CLI commands; sync performs both publicat
 4. If a docs site is separately authorized, publish readable Markdown and an llms.txt index at that site's actual path. Add discovery links using that site's facilities. No website, DNS, headers, crawler enrollment or hosting was provisioned here.
 5. Consider MCP registry submission only after verified packaging/distribution exists, with exact version, transport and private-path configuration reviewed. Do not publish fabricated package names, releases, URLs or server.json records.
 
-No registry submission or package release has been performed. The Cloudflare TypeScript package is the relay tooling, not a distributable MCP server package. The actual MCP server is the Go executable on the user's device; publishing metadata does not host it or prove its security.
+The [initial beta](releases.md) is a GitHub source prerelease. No package-registry submission or tested binary distribution has been performed. The Cloudflare TypeScript package is the relay tooling, not a distributable MCP server package. The actual MCP server is the Go executable on the user's device; publishing metadata does not host it or prove its security.
 
 ## Sources and evidence
 
@@ -59,6 +59,6 @@ External capability references were checked on 2026-10-26. Project decisions are
 
 ## Optional session workflow
 
-[Prompt 11](../prompts/11-session-history.md) selects the optional session task. [Session status](session-status.md) records authored source separately from pending integration and runtime acceptance; [Run sessions](run-session.md) prepares a synthetic owner evaluation. Existing v1-only statements above describe the legacy workflow. The session source adds Linux/macOS daemon/IPC and capability-scoped stdio MCP, without a remote MCP endpoint or installed hooks/services.
+[Prompt 11](../prompts/11-session-history.md) selects the optional session task. [Session status](session-status.md) records integrated, reviewed source separately from pending runtime acceptance; [Run sessions](run-session.md) prepares a synthetic owner evaluation. Existing v1-only statements above describe the legacy workflow. The session source adds Linux/macOS daemon/IPC and capability-scoped stdio MCP, without a remote MCP endpoint or installed hooks/services.
 
 Capture, publication, local derivation, raw-session access, auto acceptance and cross-vault promotion need separate explicit controls. Generated summaries and knowledge are untrusted. A client's inference provider may receive whatever it recalls. Strict projected knowledge requires live source replay during the request; historical answers carry verification coverage. No supported harness version is established until an authorized runtime check succeeds.

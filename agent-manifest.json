@@ -54,7 +54,7 @@
     {"id": "session-history", "prompt": "prompts/11-session-history.md"}
   ],
   "session_module": {
-    "status": "source-authored-integration-pending-runtime-NOT-RUN",
+    "status": "source-integrated-reviewed-runtime-NOT-RUN",
     "default_enabled": false,
     "platforms": ["linux", "macos"],
     "capture": ["version-pinned Claude JSONL", "version-pinned Codex rollout", "pinned T3 HTTP", "owner-declared transcript import"],
