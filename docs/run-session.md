@@ -74,6 +74,11 @@ output, matching this [LM Studio report](https://github.com/lmstudio-ai/lmstudio
 
 Transcript events are escaped JSON lines inside a fixed transcript wrapper; the system prompt is versioned and separate. Validate unknown fields, missing fields, enums, size bounds and exact citations. A model claiming user acceptance without user evidence is downgraded; evidenced verification needs a tool-result citation. All output stays untrusted. Budget reservations count the configured maximum per call, including failed/crashed calls. Completed windows checkpoint separately and are reused after a new lease; daily budget blocks resume after UTC midnight.
 
+Current generation uses `digest/v2` and `rollup/v2`. Both prompts explicitly
+require an empty `decision_state` for memory candidates; only decision candidates
+carry a decision state. Older generated records and the historical synthetic
+fixtures retain their original prompt-version metadata.
+
 ## 5. Verify review, grants and lifecycle with synthetic evidence
 
 Use [verification scenarios](verification.md#optional-session-module-acceptance-not-run). Exercise candidate accept/edit/reject using --revision from the displayed row,

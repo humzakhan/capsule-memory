@@ -77,7 +77,7 @@ func OpenProfile(ctx context.Context, name, home string, mode memory.LockMode, i
 	}
 	runner := derive.NewRunner(svc, sess, inf, derive.Config{
 		Device: info.Device, Idle: idle, WindowBytes: cfg.Derive.WindowBytes,
-		PromptVersion: "digest/v1", PolicyVersion: "session/v1",
+		PromptVersion: derive.PromptVersion, PolicyVersion: "session/v1",
 	})
 	return &Profile{Name: name, Svc: svc, Session: sess, Derive: runner}, nil
 }
