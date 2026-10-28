@@ -39,5 +39,6 @@ Use [the prompt index](../prompts/README.md) for evaluation, setup and operation
 | [Contributing](../CONTRIBUTING.md) · [Development](development.md) | Contributor flow, dependencies, execution boundaries |
 | [V1 status](v1-status.md) · [Source inspection](v1-inspection.md) | Authored inventory, historical findings, missing runtime evidence |
 | [Verification](verification.md) | Durability, privacy, protocol, and failure scenarios |
+| [Failure-case inventory](failure-cases.md) · [Queryable JSONL](failure-cases.jsonl) | Stable case IDs, triggers, consequences, priorities and recorded coverage |
 | [Roadmap](roadmap.md) | Remaining implementation and acceptance work |
 | [Agent guidance](../AGENTS.md) | Repository rules for coding agents |

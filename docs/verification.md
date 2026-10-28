@@ -1,5 +1,11 @@
 # Verification and acceptance
 
+For a queryable map of failure conditions and current coverage, use the
+[failure-case inventory](failure-cases.md) and its [JSONL data](failure-cases.jsonl).
+The dated [Mac QA report](mac-qa.md) records later bounded execution evidence;
+the original acceptance targets and historical NOT RUN statements below do not
+override that report or establish coverage for untested variants.
+
 **All runtime scenarios below are UNVERIFIED.** The repository now includes [one executable black-box E2E journey](../e2e/README.md) alongside synthetic contract examples; it has not been run. Source inspection or an authored test cannot establish these outcomes. The broader scenarios below remain acceptance targets beyond the limited v1 journey where noted in its runbook.
 
 Use these scenarios to design the first meaningful suite. Execute under current task authorization and the actual installed host policy: the shared OVH host requires an authorized isolated route; this Mac permits authorized local validation. Record commit identity, tool versions, exact command/job, exit status, observations, and missing coverage. A disconnected, blocked, skipped, or timed-out job is not a pass.
