@@ -24,6 +24,7 @@ type Config struct {
 	Enabled           bool          `json:"enabled"`
 	Endpoint          string        `json:"endpoint"`
 	Model             string        `json:"model"`
+	ResponseFormat    string        `json:"response_format,omitempty"`
 	MaxInputTokens    int           `json:"max_input_tokens"`
 	MaxOutputTokens   int           `json:"max_output_tokens"`
 	DailyInputBudget  int           `json:"daily_input_budget"`
@@ -59,6 +60,9 @@ type httpClient struct {
 // EstimateTokens is a byte/4 estimate, not a tokenizer or a context guarantee.
 func EstimateTokens(s string) int { return (len(s) + 3) / 4 }
 func Defaults(cfg Config) Config {
+	if cfg.ResponseFormat == "" {
+		cfg.ResponseFormat = "json_schema"
+	}
 	if cfg.MaxInputTokens <= 0 {
 		cfg.MaxInputTokens = 8192
 	}
@@ -89,6 +93,9 @@ func NewHTTP(cfg Config) (Client, error) {
 	cfg = Defaults(cfg)
 	if !cfg.Enabled {
 		return nil, ErrDisabled
+	}
+	if cfg.ResponseFormat != "json_schema" && cfg.ResponseFormat != "prompt_json" {
+		return nil, ErrResponse
 	}
 	u, err := url.Parse(cfg.Endpoint)
 	if err != nil || u.Scheme != "http" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Port() == "" || cfg.Model == "" || len(cfg.Model) > 256 {
@@ -127,8 +134,19 @@ func (h *httpClient) Complete(ctx context.Context, r Request) (Response, error) 
 	if r.System == "" || len(r.Messages) == 0 || len(r.Messages) > 64 || !json.Valid(r.Schema) || len(r.Schema) > 32768 || r.SchemaName == "" {
 		return Response{}, ErrResponse
 	}
-	messages := []Message{{Role: "system", Content: r.System}}
 	input := EstimateTokens(r.System) + EstimateTokens(string(r.Schema))
+	system := r.System
+	var format any
+	if h.cfg.ResponseFormat == "prompt_json" {
+		// Some local backends cannot constrain the answer channel correctly.
+		// The owner may explicitly request a schema in the system prompt instead;
+		// the derivation layer still validates every field and exact citation.
+		system += "\nRequired output JSON schema:\n" + string(r.Schema)
+		input = EstimateTokens(system)
+	} else {
+		format = map[string]any{"type": "json_schema", "json_schema": map[string]any{"name": r.SchemaName, "strict": true, "schema": r.Schema}}
+	}
+	messages := []Message{{Role: "system", Content: system}}
 	for _, m := range r.Messages {
 		if m.Role != "user" && m.Role != "assistant" {
 			return Response{}, ErrResponse
@@ -149,8 +167,8 @@ func (h *httpClient) Complete(ctx context.Context, r Request) (Response, error) 
 		MaxTokens   int       `json:"max_tokens"`
 		Temperature int       `json:"temperature"`
 		Stream      bool      `json:"stream"`
-		Format      any       `json:"response_format"`
-	}{h.cfg.Model, messages, out, 0, false, map[string]any{"type": "json_schema", "json_schema": map[string]any{"name": r.SchemaName, "strict": true, "schema": r.Schema}}}
+		Format      any       `json:"response_format,omitempty"`
+	}{h.cfg.Model, messages, out, 0, false, format}
 	b, err := json.Marshal(body)
 	if err != nil {
 		return Response{}, ErrResponse

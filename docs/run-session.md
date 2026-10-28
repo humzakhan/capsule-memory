@@ -31,6 +31,13 @@ Start with [synthetic adapter examples](../contracts/adapters/) and the document
 
 Enabling capture establishes a future-only baseline. Historical backfill is a separate bounded request with explicit streams, time and byte bounds. Capture, publication, derivation, auto acceptance and cross-vault promotion are independent opt-ins. Pause requires a later explicit include/skip resolution. Disabling with withdrawal holds unpublished automatic descendants durably; manual sync must honor those holds.
 
+File adapters wait until a file has been unchanged for one minute before reading
+appended records. This stability delay is separate from the daemon's capture
+flush interval. During that wait, import can report `buffering` with no committed
+events; allow the stability window and another capture tick before checking the
+checkpoint or search results. A buffering response does not acknowledge durable
+capture.
+
 T3 setup uses an **owner-configured future token file**, never an agent-discovered credential. The token is broad upstream: `orchestration:read` also reads server-readable files. The Capsule adapter uses only pinned allowlisted GET history routes with protocol 2, expected environment and owner version pins. Missing credentials report unavailable. Do not paste the token into prompts, fixtures, logs or source. Claude/Codex routes read version-pinned files; no SDK or Codex App Server is started.
 
 ## 4. Configure local inference explicitly
@@ -54,6 +61,16 @@ The owner supplies an already authorized local OpenAI-compatible server. Capsule
 ```
 
 `timeout` is a JSON duration in nanoseconds (the example is two minutes), not a string. CPU/RAM hints are labels, not enforcement. Configure the model server's own limits separately. Keep inference disabled until its explicit synthetic call is authorized. Endpoint host must be localhost or a literal loopback IP with a port; dial-time checks reject non-loopback resolved addresses. Proxies and redirects are disabled; no tools/functions are sent.
+
+Inference `response_format` defaults to `json_schema`, which requests constrained
+output from the local endpoint. An owner can explicitly set `"response_format":
+"prompt_json"` for a backend that cannot return constrained output correctly.
+This mode puts the same schema in the system prompt and omits the endpoint's
+`response_format` parameter. Capsule still validates the final answer's fields,
+bounds and exact citations before committing anything. It does not use reasoning
+text as an answer or automatically retry with weaker constraints. During Mac QA,
+the resident Qwen3.5 MLX backend returned empty final content with constrained
+output, matching this [LM Studio report](https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/1971).
 
 Transcript events are escaped JSON lines inside a fixed transcript wrapper; the system prompt is versioned and separate. Validate unknown fields, missing fields, enums, size bounds and exact citations. A model claiming user acceptance without user evidence is downgraded; evidenced verification needs a tool-result citation. All output stays untrusted. Budget reservations count the configured maximum per call, including failed/crashed calls. Completed windows checkpoint separately and are reused after a new lease; daily budget blocks resume after UTC midnight.
 
