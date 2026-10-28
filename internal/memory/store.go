@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/humzakhan/capsule-memory/internal/records"
@@ -34,6 +35,8 @@ type Service struct {
 	schemaVersion              int
 	lockMode                   LockMode
 	profileLock                *os.File
+	enrollmentPending          atomic.Bool
+	ownerSecretStore           ownerSecretStore
 }
 
 const schema = `
@@ -166,6 +169,12 @@ func OpenWith(ctx context.Context, home string, mode LockMode) (*Service, error)
 	reader.SetMaxOpenConns(4)
 	reader.SetMaxIdleConns(4)
 	s.reader = reader
+	var enrollmentPending int
+	if err = s.db.QueryRowContext(ctx, "SELECT count(*) FROM meta WHERE key='enrollment_intent'").Scan(&enrollmentPending); err != nil {
+		s.Close()
+		return nil, ErrStorage
+	}
+	s.enrollmentPending.Store(enrollmentPending != 0)
 	if version == 2 {
 		if err = s.recoverPendingScope(ctx); err != nil {
 			s.Close()
@@ -416,6 +425,9 @@ func (s *Service) Write(ctx context.Context, in WriteInput) (Revision, error) {
 	s.wmu.Lock()
 	defer s.wmu.Unlock()
 	var r Revision
+	if s.enrollmentPending.Load() {
+		return r, ErrEnrollmentPending
+	}
 	if err := s.scope(in.Scope); err != nil {
 		return r, err
 	}
@@ -677,6 +689,9 @@ func (s *Service) Status(ctx context.Context) (map[string]any, error) {
 func (s *Service) Rebuild(ctx context.Context) error {
 	s.wmu.Lock()
 	defer s.wmu.Unlock()
+	if s.enrollmentPending.Load() {
+		return ErrEnrollmentPending
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return ErrStorage

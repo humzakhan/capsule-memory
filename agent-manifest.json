@@ -16,7 +16,8 @@
     "runtime_evidence": "docs/releases.md",
     "runbook": "docs/run-v1.md",
     "session_status": "docs/session-status.md",
-    "session_runbook": "docs/run-session.md"
+    "session_runbook": "docs/run-session.md",
+    "device_enrollment": "docs/device-enrollment.md"
   },
   "cli": {
     "binary": "capsule-memory",

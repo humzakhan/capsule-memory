@@ -221,6 +221,9 @@ func (s *Service) replayPage(ctx context.Context, scope string, current Control,
 	}
 	s.wmu.Lock()
 	defer s.wmu.Unlock()
+	if s.enrollmentPending.Load() {
+		return false, ErrEnrollmentPending
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return false, ErrStorage

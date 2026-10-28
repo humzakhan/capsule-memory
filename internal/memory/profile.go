@@ -209,6 +209,19 @@ func Init(ctx context.Context, home, relay string, loopback bool) (map[string]an
 	return map[string]any{"vault_id": vault, "scope_id": scope, "device_id": device, "VAULT_ID": vault, "OWNER_PUBLIC_KEY_B64": c.OwnerPublic, "control_pending": true}, nil
 }
 func (s *Service) ownerKey() (ed25519.PrivateKey, error) {
+	if s.enrollmentPending.Load() {
+		return nil, ErrEnrollmentPending
+	}
+	return s.loadOwnerKey()
+}
+func (s *Service) loadOwnerKey() (ed25519.PrivateKey, error) {
+	key, native, err := s.nativeOwnerKey()
+	if native {
+		if err != nil {
+			return nil, err
+		}
+		return s.validateOwnerKey(key)
+	}
 	p := filepath.Join(s.home, "owner.json")
 	if err := safeFile(p); err != nil {
 		return nil, errors.New("owner authority required on this device")
@@ -223,9 +236,15 @@ func (s *Service) ownerKey() (ed25519.PrivateKey, error) {
 	if err = decode(b, &v); err != nil {
 		return nil, err
 	}
-	key, err := unbase(v.Private, 64)
+	key, err = unbase(v.Private, 64)
 	if err != nil {
 		return nil, err
+	}
+	return s.validateOwnerKey(key)
+}
+func (s *Service) validateOwnerKey(key []byte) (ed25519.PrivateKey, error) {
+	if len(key) != ed25519.PrivateKeySize {
+		return nil, ErrInvalid
 	}
 	if subtle.ConstantTimeCompare(key, ed25519.NewKeyFromSeed(key[:32])) != 1 {
 		return nil, ErrInvalid

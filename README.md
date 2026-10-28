@@ -74,7 +74,7 @@ Choose the guide for your next step:
 | --- | --- |
 | Try it with sample data | [First-run guide](prompts/01-first-run.md) |
 | Set up my encrypted archive | [Owner setup](prompts/02-owner-setup.md) and [Cloudflare setup](prompts/03-relay-setup.md) |
-| Add another computer | [Device enrollment](prompts/04-enroll-device.md) |
+| Add or approve another computer | [Device approval CLI (unreleased)](docs/device-enrollment.md) · [Agent enrollment guide](prompts/04-enroll-device.md) |
 | Connect an AI assistant | [MCP connection guide](prompts/05-connect-mcp.md) |
 | Enable background sync or conversation capture | [Daemon setup](docs/daemon.md) and [session guide](prompts/11-session-history.md) |
 

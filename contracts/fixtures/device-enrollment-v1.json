@@ -1,0 +1,14 @@
+{
+  "ciphertext_b64": "y91Vr1W5aCa0Nj0OLbLkcIb8WhHMc+tipcY4wFr3a1tmbd0IX933a+xXZcuHzAj7ujQd0T9S3NQpF6Puttw/6IDBzy2g7CdIKGQIPPUDhD7CLp7tFLvaWxpMx+yXVjefNIfUgFHQM7QTlWCOFaRq/HmjrGH5dQ==",
+  "fingerprint": "8D7F-C72C-4DA3-BB2E-A882-8540-A2E4-81EE",
+  "invitation": {
+    "payload": "eyJ2ZXJzaW9uIjoxLCJ2YXVsdF9pZCI6InN5bnRoZXRpY192YXVsdF8wMSIsImludml0ZV9pZCI6InN5bnRoZXRpY19pbnZpdGVfMDEiLCJyZWxheSI6Imh0dHBzOi8vZXhhbXBsZS5pbnZhbGlkIiwib3duZXJfcHVibGljX2tleV9iNjQiOiJPMm9udk02MnBDMWlvNmpRS204TmMyVXlGWGNkNGtPbU9zQklvWXRaMmlrPSIsInNjb3BlX2lkcyI6WyJzeW50aGV0aWNfc2NvcGVfMDEiXSwiaXNzdWVkX2F0IjoiMTAwMCIsImV4cGlyZXNfYXQiOiIxNjAwIiwiYWxsb3dfbG9vcGJhY2tfaHR0cCI6ZmFsc2V9",
+    "signature": "r/6f4fD5y2Ai9EXal5xIXZiV9MIwx9azG3vCMp2Lhw5CgLjgnlqjpMpbtQFlDyEOoxnozTZEg3WKujFyJ0g1BA=="
+  },
+  "notice": "SYNTHETIC PUBLIC VECTOR. Owner seed is 32 zero bytes; device seed is 32 bytes of 1; recipient private key is 32 bytes of 2. Never use these identities.",
+  "plaintext": "synthetic enrollment interoperability vector; no real keys or memories",
+  "request": {
+    "payload": "eyJ2ZXJzaW9uIjoxLCJ2YXVsdF9pZCI6InN5bnRoZXRpY192YXVsdF8wMSIsImludml0ZV9pZCI6InN5bnRoZXRpY19pbnZpdGVfMDEiLCJpbnZpdGF0aW9uX3NoYTI1NiI6ImYzODgxMGIxNjQxNDZjOTU1OTU2ZmY5YmQyZjU0ODkyM2EyZDI3NDkyOWNiMWQxYWI2ZGUxMGIyNDdlN2U3NzQiLCJkZXZpY2VfaWQiOiJzeW50aGV0aWNfZGV2aWNlXzAxIiwicHVibGljX2tleV9iNjQiOiJpb2pqM1hRSjhaWDlVdHN0UExwZGNzcG5DYjhkbEJJYjgzU0lBYlFQYjF3PSIsImVuY3J5cHRpb25fa2V5X2I2NCI6InpvMDYwY3kyTSt4N2NNRjRGS1hIYnMwQ2xvVUZEVFJIUmJvRmh3NVlmVms9In0=",
+    "signature": "AZBn1zZYGoZ/ncLQdbDvEg59TH6Zj/NAR4/5np8iQh7hGs4J4OFJpjctcWlmE9U7ZgEZkAJ2lN2d6zMejlPXAQ=="
+  }
+}

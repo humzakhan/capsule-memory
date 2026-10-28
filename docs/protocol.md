@@ -1,6 +1,6 @@
 # Synchronization protocol
 
-**Status: full protocol target.** The record schema illustrates the inner logical model; [the v1 contract](v1-contract.md) specializes exact implemented framing and the narrower manual-sync/text-skill scope. V1 received focused source inspection, but execution and full cryptographic/security acceptance remain unverified. Key wrapping and automated distribution are deferred.
+**Status: full protocol target.** The record schema illustrates the inner logical model; [the v1 contract](v1-contract.md) specializes exact implemented framing and the narrower manual-sync/text-skill scope. The unreleased [enrollment contract](device-enrollment-protocol.md) adds owner-reviewed initial device key delivery without changing that framing. Automated epoch rotation/distribution and full security acceptance remain separate work; use the current release evidence rather than historical source-only notes for executed checks.
 
 ## Identity and records
 

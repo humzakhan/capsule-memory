@@ -322,6 +322,11 @@ inspection, and Git publication.
 
 ## Optional session commands and daemon clients
 
+The unreleased [device approval CLI](device-enrollment.md) adds `devices` and
+invitation/join/request/approve/deny/resume/revoke commands over owner-reviewed
+enrollment. It also offers explicit macOS `owner protect`. These require matching
+client/relay source; the legacy manual child-profile transfer remains available.
+
 The optional module adds authored source for `profile migrate`, `scope add`, scoped
 `device create|grant|revoke-scope|import-keys`, `daemon init|run|client add`,
 `source add|configure|list|enable|disable|pause|resume|backfill`,

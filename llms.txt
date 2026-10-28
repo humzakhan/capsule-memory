@@ -16,6 +16,8 @@ This public repository provides a curated documentation index following the llms
 
 ## Use and configure
 
+- [Device approval](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/device-enrollment.md): Unreleased owner CLI, invitation-based pairing, scoped key delivery and recovery.
+
 - [Runbook](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/run-v1.md): Owner-machine build, synthetic E2E, demo and cleanup.
 - [Go CLI and MCP](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/go-client.md): Real commands, fixed-scope stdio tools, local skill approval.
 - [Relay setup](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/relay-setup.md): Worker/DO/R2 bootstrap and archive boundaries.
