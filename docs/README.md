@@ -2,7 +2,7 @@
 
 Capsule Memory is a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search remain device-local. Agents and harnesses decide what to remember and use.
 
-Read the [initial beta and release gates](releases.md), then start with [Run v1](run-v1.md) for a synthetic local evaluation. The source is experimental: installs, builds, formatting, typechecks, tests, and E2E are **NOT RUN**. [Delivery status](v1-status.md) is the evidence record; architectural targets are not promises of implemented behavior.
+Start with the [plain-language overview](../README.md) and [current release evidence](releases.md), then use [Run v1](run-v1.md) for a sample-data evaluation. Bounded Mac/Cloudflare QA and beta.2 fresh-checkout validation have executed; broader security, platform and compatibility acceptance remain incomplete. Dated [delivery status](v1-status.md) preserves the original source-only evidence; it is not the current release verdict.
 
 ## Set up with an agent
 

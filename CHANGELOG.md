@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.0-beta.3 — everyday workflows and visual guides
+
+Documentation-only source update; product code and dependencies are unchanged.
+
+- Rewrite the README for non-technical readers: everyday benefits, guided setup,
+  encrypted background sync, optional conversation capture and privacy controls.
+- Add accessible SVG diagrams explaining how devices sync, why skill approval
+  stays local and how conversations can become reviewable memories.
+- Link the companion Agent Workspace with an explicit access-required note;
+  clarify that saved content sync does not install skills or import every app.
+- Keep public-beta wording, build-from-source availability, prior validation and
+  known limits. No binaries, services or infrastructure are introduced.
+
 ## v0.1.0-beta.2 — validated experimental source update
 
 Source archives only; synthetic evaluation recommended. No prebuilt executables

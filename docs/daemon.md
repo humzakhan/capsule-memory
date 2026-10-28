@@ -1,5 +1,9 @@
 # Optional local daemon
 
+For current scoped execution evidence, see [release readiness](releases.md).
+The original source-only statements below describe the authored runbook, not
+the later Mac validation. Background operation remains explicitly opt-in.
+
 The session daemon, capture adapters and IPC client are authored source. Compilation,
 formatting, adapter compatibility, peer authentication, crash recovery and runtime
 acceptance are **NOT RUN**. Do not collect real histories before owner acceptance.

@@ -1,6 +1,27 @@
 # Releases and readiness
 
 
+## v0.1.0-beta.3 — clearer guides and diagrams
+
+A documentation-only source prerelease: a plain-language README, accessible SVG
+explainers for encrypted sync, memory/skill handling and optional session capture,
+and a companion Agent Workspace link explicitly marked as private/access-required.
+No repository visibility changes are made. Public setup guides remain available
+without access to that companion repository.
+
+The guide explains conditional background sync on Linux/macOS, local-only skill
+approval, manual operation and the difference between saved records and importing
+all app histories. It preserves sample-data guidance, default-off controls,
+privacy/deletion limits and the earlier QA boundaries.
+
+Product code, dependency locks and schema/protocol behavior are identical to
+beta.2. Validation for beta.3 consists of source/claim review, local link/anchor and
+SVG structure checks, rendered visual inspection, commit-subject and whitespace
+checks. The beta.2 functional suite and vulnerability scans below are reused with
+their exact original source identity; they were not rerun for this documentation
+change. This release still distributes source archives, not executable assets.
+
+
 ## v0.1.0-beta.2 — experimental source beta
 
 This candidate includes the Mac/Cloudflare QA repairs, dependency-security

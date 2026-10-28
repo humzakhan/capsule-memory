@@ -1,151 +1,112 @@
 # Capsule Memory
 
-**Securely store and sync existing agent memories and skills across machines and harnesses.**
+**Less repeating yourself. More continuity with your AI assistants.**
 
+[![Public beta](https://img.shields.io/badge/status-public_beta-orange.svg)](docs/releases.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Go 1.26.10](https://img.shields.io/badge/Go-1.26.10-00ADD8.svg)](go.mod)
-[![Status: source beta](https://img.shields.io/badge/status-source_beta-orange.svg)](docs/releases.md)
 
-Capsule Memory securely stores and synchronizes agent memories and skills across machines and harnesses. A shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Manual workflows leave selection to agents and harnesses. An optional session module adds explicitly enabled conversation capture, local summaries and reviewable memory/decision candidates.
+Capsule Memory helps you keep useful memories, reusable skill guides and optional conversation history available across your computers and AI tools. Your saved context can follow you from one project or device to the next, while readable content, encryption keys and search stay on your trusted devices.
 
-The experimental source includes a Go CLI, scoped MCP, local SQLite search and encrypted synchronization through Cloudflare. The optional session feature is integrated into `main`; [session status](docs/session-status.md) separates reviewed source from runtime evidence. The feature defaults off.
+**Public beta · Build from source.** Start with sample data. Mac and Cloudflare checks have passed within a documented scope; broader platform compatibility and independent security review remain incomplete. [Release notes and validation](docs/releases.md).
 
-> **Experimental source beta: [v0.1.0-beta.2](https://github.com/humzakhan/capsule-memory/releases/tag/v0.1.0-beta.2).** Source archives only; no prebuilt binaries or hosted service. Bounded Mac/Cloudflare QA has executed: 91 cases passed, 95 are partial and 7 blocked. The beta.2 dependency set receives its own quality, vulnerability and fresh-source checks. Use synthetic data; this is not a security audit or general platform acceptance. See [release evidence and limits](docs/releases.md).
+[Get started](#get-started) · [How sync works](#how-sync-works) · [Conversation history](#optional-conversation-history) · [Our agents](#use-it-with-our-agents) · [Documentation](docs/README.md)
 
-[Quickstart](#try-the-source-with-synthetic-data) · [Agent setup prompts](prompts/README.md) · [Agent discovery](docs/agent-discovery.md) · [Documentation](docs/README.md) · [Delivery status](docs/v1-status.md)
+![A trusted computer encrypts saved context, a Cloudflare archive stores encrypted copies, and another authorized device downloads them for local recall. Background sync must be enabled.](docs/assets/how-it-works.svg)
 
-## Why Capsule Memory?
+## How it helps your everyday work
 
-Existing agent context should remain available across sessions, machines, and harnesses without requiring a central plaintext search service. Capsule Memory separates local storage, durable encrypted publication, and retrieval so those boundaries stay visible.
+- **Explain yourself less.** Save preferences, project facts and decisions so a connected assistant can look them up next time.
+- **Switch computers with less friction.** Find previously synced context on another authorized device instead of copying notes by hand.
+- **Reuse your preferred way of working.** Keep written skill guides for tasks such as reviewing code, preparing a report or planning a project.
+- **Keep moving while offline.** Save locally, then synchronize when the connection returns and sync is permitted. A local save becomes a remote copy only after successful publication.
+- **Keep a trail of what changed.** Inspect earlier versions, preserve conflicting edits and see where saved information came from.
 
-- **Work offline:** local writes and their encrypted outbox entries share a SQLite transaction.
-- **Keep search on devices:** FTS5 searches local plaintext; the relay receives encrypted content and authorization metadata.
-- **Keep history explicit:** immutable revisions, concurrent heads, provenance, and tombstones preserve what changed.
-- **Choose the integration:** use the CLI directly or configure a compatible stdio MCP client with one fixed scope.
+For example: save a project's reporting preferences on your desktop, sync them, then ask a connected assistant on your laptop to recall them. The assistant needs an explicit connection to Capsule Memory; saving a note does not automatically insert it into every app or conversation.
 
-## What's in the source today?
+## How sync works
 
-| Authored capability | Boundary |
+A **memory** is a saved note: a preference, project fact or decision. A **skill** is a reusable written guide explaining how you want a task approached.
+
+Once you enable background sync, Capsule Memory's local background process—the **daemon**—periodically uploads and downloads saved records for the projects you select. This includes both memories and skill text. You choose which devices have access; nothing starts syncing just because you install the software.
+
+![Saved memories pass through encrypted sync and become available for recall. Saved skill text follows the same sync path but arrives for local review; approval does not synchronize.](docs/assets/memories-and-skills.svg)
+
+What to expect after setup:
+
+- **Automatic, within your choices.** The daemon must be running and connected on participating Linux/macOS devices. Only authorized project collections you enable for publication are uploaded. Windows retains manual operation.
+- **Skills sync as text.** Incoming guides wait for review. Approval and activation require the owner’s authority on that device; those approvals do not sync between devices. Capsule Memory does not install skills into your AI app or execute their instructions.
+- **Offline changes wait.** Unsent records remain on the originating device. After a successful upload, other authorized devices can download them when they reconnect. Concurrent edits remain visible for resolution.
+- **Manual sync is available.** You can explicitly sync a chosen collection without enabling background publication. See the [sync and recovery guide](docs/go-client.md#manual-synchronization-and-recovery).
+
+“All your memories” means the records you or a connected assistant save through Capsule Memory and choose to share. It does not automatically read every app, copy every file or import your entire conversation history.
+
+## Optional conversation history
+
+If you want more than individually saved notes, you can separately enable conversation capture and local summaries.
+
+![Optional stages: capture approved conversations, summarize with a configured local model, review suggestions, and reuse approved knowledge or deliberately grant sharing access.](docs/assets/conversation-to-context.svg)
+
+1. **Choose what to capture.** Version-specific adapters exist for Claude, Codex and T3, plus explicit transcript imports. Capture starts with future conversations; importing older history requires separate limits. App/version compatibility is partial.
+2. **Summarize on your device.** An explicitly configured local model can produce session summaries and project overviews. The model server requires separate setup; Capsule Memory does not send transcripts to a cloud model.
+3. **Review useful suggestions.** Keep, edit or reject proposed memories and decisions. Personal overviews and sharing into a different vault (encrypted archive) require additional authorization.
+
+Capture, background uploads, summaries, accepting suggestions automatically and sharing across vaults are separate controls, all off initially. Summaries can be wrong; evidence and freshness information help you judge them. Withdrawing capture consent holds unpublished automatic descendants, but cannot instantly recall content already sent or copied.
+
+[Session setup](prompts/11-session-history.md) · [Compatibility and limits](docs/session-status.md)
+
+## Get started
+
+This beta still needs a technical setup: a trusted computer, a source build and, for synchronization, your own Cloudflare account and relay. There is no hosted service or click-to-install app yet. You can try the local sample-data journey without a Cloudflare account.
+
+**The easiest starting point is to ask your assistant to walk through setup:**
+
+```text
+Help me evaluate Capsule Memory from https://github.com/humzakhan/capsule-memory.
+Read AGENTS.md and prompts/README.md. Start with the first-run guide and sample data.
+Explain where my data and keys will live, then help configure only the projects
+and devices I choose. Ask before importing real histories, deploying cloud
+resources, spending money or granting access. Do not put secrets into this chat.
+```
+
+Choose the guide for your next step:
+
+| I want to… | Start here |
 | --- | --- |
-| CLI capture, recall, history, delete/restore, and index rebuild | SQLite and FTS5 on trusted devices; bounded Mac QA recorded |
-| Official Go SDK MCP tools | Fixed launch scope; store/recall/get/delete, status, and skill list/fetch |
-| Signed encrypted manual sync | Explicit CLI `sync`; durable outbox, replay, and retained conflict/deletion history |
-| Cloudflare Worker, Durable Object, and R2 adapter | R2 is the first adapter; bounded QA passed, broader provider faults unverified |
-| Local skill approval and activation | Exact owner-approved Markdown revision, `read-as-text` only; approvals do not sync |
+| Try it with sample data | [First-run guide](prompts/01-first-run.md) |
+| Set up my encrypted archive | [Owner setup](prompts/02-owner-setup.md) and [Cloudflare setup](prompts/03-relay-setup.md) |
+| Add another computer | [Device enrollment](prompts/04-enroll-device.md) |
+| Connect an AI assistant | [MCP connection guide](prompts/05-connect-mcp.md) |
+| Enable background sync or conversation capture | [Daemon setup](docs/daemon.md) and [session guide](prompts/11-session-history.md) |
 
-**Optional session source:** Linux/macOS daemon and authenticated local IPC, version-pinned Claude/Codex/T3/import capture, compressed encrypted histories, loopback local inference, reviewable candidates and lifecycle-checked v2 knowledge. Bounded runtime evidence and untested variants are recorded in [QA results](docs/qa/2026-10-28-autonomous.md). See [session history](docs/session-history.md), [status](docs/session-status.md) and [runbook](docs/run-session.md).
+A compatible assistant connects through **MCP**, a standard way for AI tools to call local tools. You can also use the command line directly. Each connection has specific access; there is no public remote MCP service.
 
-**Deferred:** WebSockets, native keystores, automated key rotation, embeddings, published-body cache eviction, Git automation and executable skill installation. Harness/platform compatibility remains unverified. See the [roadmap](docs/roadmap.md).
+<details>
+<summary>Building it yourself</summary>
 
-## Set up with an agent
+Use Go **1.26.10**, Node **22+** and npm with the committed dependency locks. Follow the [build and sample-data runbook](docs/run-v1.md) for installation, validation and cleanup, or the [session runbook](docs/run-session.md) for optional background features. Those guides preserve dated historical evidence; [release readiness](docs/releases.md) identifies the current checks and remaining limits.
 
-Give your agent the [prompt index](prompts/README.md) and choose the job. First-time evaluation, a new owner vault, an additional device, and an MCP client have different trust and setup requirements.
+</details>
 
-| Job | Start here |
-| --- | --- |
-| Try the project for the first time | [First-run prompt](prompts/01-first-run.md) |
-| Create a vault and prepare the central relay | [Owner setup](prompts/02-owner-setup.md) · [Relay setup](prompts/03-relay-setup.md) |
-| Join another machine or publishing node | [Device enrollment](prompts/04-enroll-device.md) |
-| Connect an existing agent harness | [MCP client setup](prompts/05-connect-mcp.md) |
-| Capture/sync, resolve conflicts, recover, review skills or assess security | [Operating prompts](prompts/README.md#choose-a-task) |
+## Use it with our agents
 
-A minimal instruction to your agent:
+[Agent Workspace](https://github.com/humzakhan/agent-workspace) is our companion repository for agent packages, shared skills and working conventions. **It is currently private; repository access is required.** Capsule Memory can also be used independently with the command line or a compatible MCP client.
 
-~~~text
-Use the trusted https://github.com/humzakhan/capsule-memory checkout.
-Read AGENTS.md, prompts/README.md, and docs/v1-status.md.
-Choose the prompt for my requested setup or operating task.
-Follow my existing execution/data permissions; this instruction grants no
-cloud deployment, spending, secret transfer, or unrestricted memory access.
-If execution is unavailable, prepare exact commands and label checks NOT RUN.
-~~~
+The workspace helps define how an agent works; Capsule Memory stores and synchronizes the context you save. Linking an agent does not automatically import its files or authorize it to execute retrieved skills. For this project's setup and operating prompts, use the public [agent guide](prompts/README.md).
 
-For fetch-based agents, [llms.txt](llms.txt) provides a small Markdown reading map. [agent-manifest.json](agent-manifest.json) describes current roles, tools, limits and prompt paths in a project-specific format. Neither is an installer, an MCP registry entry, or a guarantee that agents will discover or ingest the repository.
+## Your data and your control
 
-Read [agent discovery](docs/agent-discovery.md) for the use-case matrix and public-discovery prerequisites. Legacy setup uses explicit CLI sync and local stdio MCP. [Session setup](prompts/11-session-history.md) describes optional daemon/IPC operation. These prompts install no service or hook and expose no hosted MCP endpoint.
+- **Encrypted remotely, readable locally.** The shared archive stores encrypted records. Your local database, search index, summaries and key files need protection; use disk encryption and private backups. The relay can still see routing identifiers, sizes and timing.
+- **Choose access carefully.** Devices and assistant connections receive specific permissions. Losing all keys and recovery copies can make data unrecoverable. Unsent work lost with a device cannot be recovered from the archive.
+- **Deletion retains history.** Deleted records disappear from normal recall, while history and earlier copies can remain. Deletion and revocation are not physical erasure. Old local copies are not automatically cleaned up.
+- **Treat recalled content as information.** A saved memory, skill or generated summary does not grant permission to run commands or take actions. Historical or incompletely synchronized results may be stale; a live freshness check can fail when a source is offline.
 
-## How it fits together
+[Privacy and threat model](docs/threat-model.md) · [Private security reporting](SECURITY.md) · [Known limits and QA](docs/releases.md)
 
-```mermaid
-flowchart LR
-    A[CLI or fixed-scope MCP] --> B[Go domain operations]
-    B --> C[(Local SQLite: revisions, FTS5, outbox)]
-    B <-->|Explicit sync: signed encrypted records| D[Worker + Durable Object]
-    D <--> E[(R2 encrypted archive)]
-```
+## Learn more
 
-Each device keeps plaintext, content keys, and its search index locally. The relay authenticates devices and orders publication; the archive-head update is the intended durable publication boundary. Optional session background work runs on an explicitly enabled trusted device; there is no cloud plaintext search.
+[Documentation](docs/README.md) · [CLI and MCP reference](docs/go-client.md) · [Architecture](docs/architecture.md) · [Support](SUPPORT.md) · [Contribute](CONTRIBUTING.md) · [Roadmap](docs/roadmap.md)
 
-The [architecture](docs/architecture.md) also describes future components. Use the [v1 contract](docs/v1-contract.md) and [delivery status](docs/v1-status.md) for the implemented scope.
-
-## Try the source with synthetic data
-
-Use your own trusted Linux/macOS development machine with Go 1.26.10, Node 22+, and npm. Platform compatibility is unverified. Allow roughly 15–30 minutes for initial dependency resolution/build and 2–5 minutes for the authored E2E journey if the source works.
-
-From a checkout of `main`:
-
-```sh
-umask 077
-mkdir -p "$HOME/.local/bin"
-go mod download
-npm ci --prefix cloudflare --ignore-scripts
-./scripts/check.sh --range e27cd2ee12bae4fce683a0af74f959cf5710d0f5..HEAD && \
-  go build -mod=readonly -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory && \
-  node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
-```
-
-**Beta.2 fresh-source checks are recorded in [release evidence](docs/releases.md).** `go.sum` and `cloudflare/package-lock.json` are committed. Use the pinned toolchain and locked dependencies; do not regenerate locks as an installation step. The check gate includes formatting, static/type checks, tests and builds; a failure is a blocker for a tested binary release. Historical setup evidence is recorded in [verification](docs/verification.md#setup-gate-baseline-2026-10-27).
-
-The E2E journey uses disposable synthetic device homes and local-only Worker/DO/R2 emulation. No Cloudflare token or deployment is required. Read the [complete runbook](docs/run-v1.md) for setup, retained failure artifacts, and cleanup, and the [E2E guide](e2e/README.md) for assertions and limits. Local emulator success would not establish production durability or security.
-
-### Capture and recall locally
-
-First follow [runbook steps 3–4](docs/run-v1.md#3-initialize-a-separate-manual-demo) to initialize a private demo home and obtain its opaque scope ID. Replace both placeholders below with those values:
-
-```sh
-"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home store \
-  --scope YOUR_OPAQUE_SCOPE_ID --text 'Synthetic demo: orchard meeting notes.'
-"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home recall \
-  --scope YOUR_OPAQUE_SCOPE_ID --query orchard
-"$HOME/.local/bin/capsule-memory" --home /absolute/private/device-home status
-```
-
-CLI `store` returns record, revision, and operation IDs plus `local_durable:true` and `published:false`. Recall returns visible revision hits with provenance, conflict state, and coverage. Remote publication requires explicit `sync --scope YOUR_OPAQUE_SCOPE_ID` against the configured relay; local acknowledgement is not a remote backup. There are no separate CLI `push` or `pull` commands.
-
-New profiles default to the OS user-config directory under `capsule-memory`. Existing users must pass `--home /previous/private/path` to reuse their pre-rename profile; nothing is moved or discovered automatically. See [rename compatibility](docs/renaming.md) for previous default paths and retained protocol labels.
-
-### Connect a scoped MCP client
-
-Configure a compatible client to launch this command and argument list. Replace every placeholder with an absolute path or the initialized scope ID; clients differ in their surrounding configuration format.
-
-```json
-{
-  "command": "/absolute/path/to/capsule-memory",
-  "args": ["--home", "/absolute/private/device-home", "mcp", "--scope", "YOUR_OPAQUE_SCOPE_ID"]
-}
-```
-
-The server exposes `memory_store`, `memory_recall`, `memory_get`, `memory_delete`, `sync_status`, `skill_list`, and `skill_fetch`. Its scope is fixed at launch and grants write/delete authority within that scope. No MCP sync, enrollment, approval, or activation tool is exposed. See [Go client and MCP usage](docs/go-client.md#mcp-and-staged-skills) for exact inputs and skill trust behavior. Scoped stdio MCP was tested on the Mac; native harness-version compatibility remains partial.
-
-## Privacy and trust limits
-
-- **Protect device homes.** SQLite, FTS5, and cached content are plaintext. Secrets use restricted local files, not native keychains. Keep homes and backups outside checkouts, shared directories, and cloud sync folders; use disk encryption.
-- **Encryption has boundaries.** The source uses AES-256-GCM and Ed25519, but cryptographic interoperability and runtime security remain unverified. The relay sees opaque identity/scope metadata and traffic patterns. A compromised trusted endpoint can read its content.
-- **Deletion preserves history.** Tombstones hide normal retrieval; explicit history can expose preserved plaintext. Physical erasure is not implemented. Losing all keys and recovery copies is unrecoverable; unsynced writes lost with a device cannot be recovered from R2.
-- **Treat retrieved text as untrusted.** Skill approval/activation selects local Markdown for reading only. Fetching content grants no authority to execute it or install scripts. Provider freshness, account loss, and independent backups need separate consideration.
-
-Read the [threat model](docs/threat-model.md) and [security policy](SECURITY.md) before evaluating sensitive use.
-
-## Find your next step
-
-| Need | Read |
-| --- | --- |
-| Build, synthetic demo, recovery, cleanup | [Run v1](docs/run-v1.md) |
-| CLI/MCP flags and results | [Go client](docs/go-client.md) |
-| Agent setup, discovery and operating prompts | [Prompt index](prompts/README.md) · [Discovery guide](docs/agent-discovery.md) |
-| Evidence and missing acceptance checks | [V1 status](docs/v1-status.md) · [Source inspection](docs/v1-inspection.md) |
-| Design, protocol, provider assumptions | [Documentation index](docs/README.md) |
-| Contribute, ask for help, report a vulnerability | [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) |
+For agents reading the repository: [AGENTS.md](AGENTS.md), [llms.txt](llms.txt) and [capability metadata](agent-manifest.json) describe the interfaces and boundaries. They are not installers or access grants.
 
 ## License
 
