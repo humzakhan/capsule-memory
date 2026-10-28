@@ -23,4 +23,10 @@ func TestCrossVaultPolicyRequiresAcknowledgementAfterDecoding(t *testing.T) {
 	if policy.CrossVault != "enabled_unaccepted" {
 		t.Fatal("acknowledged patch was not applied")
 	}
+	if err := applyPolicyPatch(&policy, json.RawMessage(`{"publish":null}`), true); err == nil {
+		t.Fatal("null patch field accepted while preserving internal nil slices")
+	}
+	if policy.CrossVault != "enabled_unaccepted" || policy.Publish {
+		t.Fatal("rejected null field changed policy")
+	}
 }

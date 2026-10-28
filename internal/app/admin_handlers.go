@@ -130,8 +130,14 @@ func (h *Host) dispatchAdmin(ctx context.Context, profile *Profile, name string,
 }
 
 func applyPolicyPatch(policy *session.Policy, raw json.RawMessage, acknowledgeUnaccepted bool) error {
+	// Validate untrusted patch fields, rather than rejecting nil optional slices
+	// marshaled from the existing policy as null during the internal round trip.
+	var validated session.Policy
+	if strictjson.Decode(raw, 1<<20, &validated) != nil {
+		return memory.ErrInvalid
+	}
 	var patch map[string]json.RawMessage
-	if strictjson.Unique(raw) != nil || json.Unmarshal(raw, &patch) != nil {
+	if json.Unmarshal(raw, &patch) != nil {
 		return memory.ErrInvalid
 	}
 	if rawValue, ok := patch["cross_vault"]; ok {
@@ -161,5 +167,10 @@ func applyPolicyPatch(policy *session.Policy, raw json.RawMessage, acknowledgeUn
 	if err != nil {
 		return err
 	}
-	return strictjson.Decode(encoded, 1<<20, policy)
+	var updated session.Policy
+	if json.Unmarshal(encoded, &updated) != nil {
+		return memory.ErrInvalid
+	}
+	*policy = updated
+	return nil
 }
