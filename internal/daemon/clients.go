@@ -158,6 +158,11 @@ func addClient(home, name string, grant ops.Grant) (string, error) {
 	encoded := base64.StdEncoding.EncodeToString(token)
 	sum := sha256.Sum256([]byte(encoded))
 	grant.Client = name
+	// Admin and status-only clients can legitimately have no scope grants.
+	// Encode an empty list so our strict reader accepts the generated config.
+	if grant.Scopes == nil {
+		grant.Scopes = []string{}
+	}
 	config := ClientConfig{
 		Version: 1, Name: name, TokenSHA256: hex.EncodeToString(sum[:]), Grant: grant,
 	}
