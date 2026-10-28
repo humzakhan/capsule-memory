@@ -3,13 +3,14 @@ package memory
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 )
 
 // Historical tombstones must not consume the public skill-list result limit.
 func TestListSkillsAfterDeletedHistory(t *testing.T) {
 	ctx := context.Background()
-	home := t.TempDir()
+	home := filepath.Join(t.TempDir(), "owner")
 	initialized, err := Init(ctx, home, "http://127.0.0.1:1", true)
 	if err != nil {
 		t.Fatal(err)
