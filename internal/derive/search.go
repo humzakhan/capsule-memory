@@ -3,9 +3,9 @@ package derive
 import (
 	"context"
 	"encoding/json"
-	"strings"
-	"sort"
 	"errors"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/humzakhan/capsule-memory/internal/memory"
@@ -15,24 +15,44 @@ import (
 	"github.com/humzakhan/capsule-memory/internal/session"
 )
 
-type KnowledgeVisibility struct {Guard func(context.Context)bool;Revision string;Visible,Current bool;LastVerifiedAt string;LastVerifiedHeads []records.ScopeHead;Reason string}
-type KnowledgeResolver func(context.Context,[]string,string)(map[string]KnowledgeVisibility,error)
-func (r *Runner) SetKnowledgeResolver(fn KnowledgeResolver){r.mu.Lock();defer r.mu.Unlock();r.resolver=fn}
-type KnowledgeResult struct {Results []KnowledgeHit `json:"results"`;Coverage session.Coverage `json:"coverage"`}
-type KnowledgeHit struct {
-	Kind,Record,Revision,Level,State string
-	Text string
-	Generated,Accepted,Stale,Conflict bool
-	Contradictions int
-	Evidence []EvidenceView
-	Current bool `json:"current"`
- Reason string `json:"reason,omitempty"`
-	LastVerifiedAt string `json:"last_verified_at"`
-	LastVerifiedHeads []records.ScopeHead `json:"last_verified_heads"`
-	Untrusted bool `json:"untrusted"`
+type KnowledgeVisibility struct {
+	Guard             func(context.Context) bool
+	Revision          string
+	Visible, Current  bool
+	LastVerifiedAt    string
+	LastVerifiedHeads []records.ScopeHead
+	Reason            string
+}
+type KnowledgeResolver func(context.Context, []string, string) (map[string]KnowledgeVisibility, error)
+
+func (r *Runner) SetKnowledgeResolver(fn KnowledgeResolver) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.resolver = fn
+}
+
+type KnowledgeResult struct {
+	Results  []KnowledgeHit   `json:"results"`
 	Coverage session.Coverage `json:"coverage"`
 }
-func (r *Runner) SearchKnowledge(ctx context.Context,g ops.Grant,query string,limit int)(KnowledgeResult,error){return r.SearchKnowledgeMode(ctx,g,query,limit,"historical")}
+type KnowledgeHit struct {
+	Kind, Record, Revision, Level, State string
+	Text                                 string
+	Generated, Accepted, Stale, Conflict bool
+	Contradictions                       int
+	Evidence                             []EvidenceView
+	Current                              bool                `json:"current"`
+	Reason                               string              `json:"reason,omitempty"`
+	LastVerifiedAt                       string              `json:"last_verified_at"`
+	LastVerifiedHeads                    []records.ScopeHead `json:"last_verified_heads"`
+	Untrusted                            bool                `json:"untrusted"`
+	Coverage                             session.Coverage    `json:"coverage"`
+}
+
+func (r *Runner) SearchKnowledge(ctx context.Context, g ops.Grant, query string, limit int) (KnowledgeResult, error) {
+	return r.SearchKnowledgeMode(ctx, g, query, limit, "historical")
+}
+
 // Each scope/kind has an independent ranked cursor. Filtered lifecycle rows do
 // not consume the requested result count or hide a different kind's candidates.
 func (r *Runner) SearchKnowledgeMode(ctx context.Context, g ops.Grant, query string, limit int, mode string) (KnowledgeResult, error) {
@@ -61,7 +81,7 @@ func (r *Runner) SearchKnowledgeMode(ctx context.Context, g ops.Grant, query str
 	r.mu.RLock()
 	resolver := r.resolver
 	r.mu.RUnlock()
-	var searchFence func(context.Context)bool
+	var searchFence func(context.Context) bool
 	if err := r.svc.Read(ctx, func(q memory.Queryer) error {
 		var err error
 		searchFence, err = r.svc.SnapshotFence(ctx, q)
@@ -70,7 +90,7 @@ func (r *Runner) SearchKnowledgeMode(ctx context.Context, g ops.Grant, query str
 		return result, err
 	}
 	ranks := map[string]float64{}
-	guards := map[string]func(context.Context)bool{}
+	guards := map[string]func(context.Context) bool{}
 	seenScopes := map[string]bool{}
 	for _, scope := range g.Scopes {
 		if seenScopes[scope] {
@@ -221,7 +241,7 @@ func (r *Runner) SearchKnowledgeMode(ctx context.Context, g ops.Grant, query str
 
 type searchCandidate struct {
 	scope, record, revision, kind string
-	rank float64
+	rank                          float64
 }
 
 func searchPage(ctx context.Context, q memory.Queryer, scope, kind, query string, after *searchCandidate) ([]searchCandidate, error) {
@@ -357,7 +377,7 @@ func (r *Runner) summaryGrant(ctx context.Context, q memory.Queryer, scope strin
 	return projection.CheckAggregation(ctx, q, r.svc, grants, summary.SourceHeads, scope, control)
 }
 
-func (r *Runner) resolvePage(ctx context.Context, page []searchCandidate, views map[string]KnowledgeHit, guards map[string]func(context.Context)bool, resolver KnowledgeResolver, mode string, coverage *session.Coverage) error {
+func (r *Runner) resolvePage(ctx context.Context, page []searchCandidate, views map[string]KnowledgeHit, guards map[string]func(context.Context) bool, resolver KnowledgeResolver, mode string, coverage *session.Coverage) error {
 	var ids []string
 	for _, candidate := range page {
 		if _, ok := views[candidate.revision]; ok {

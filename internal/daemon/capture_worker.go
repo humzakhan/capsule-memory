@@ -14,10 +14,10 @@ import (
 
 func captureSources(ctx context.Context, h *app.Host) {
 	type worker struct {
-		source capture.Source
+		source  capture.Source
 		profile *app.Profile
-		cancel context.CancelFunc
-		done chan struct{}
+		cancel  context.CancelFunc
+		done    chan struct{}
 	}
 	workers := map[string]worker{}
 	var wg sync.WaitGroup

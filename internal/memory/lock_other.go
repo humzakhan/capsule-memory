@@ -3,8 +3,14 @@
 package memory
 
 import (
- "errors"
- "os"
+	"errors"
+	"os"
 )
-func lockProfile(home string,mode LockMode)(*os.File,error){if mode==LockExclusive{return nil,errors.New("daemon unsupported on this platform")};return nil,nil}
-func unlockProfile(f *os.File)error{return nil}
+
+func lockProfile(home string, mode LockMode) (*os.File, error) {
+	if mode == LockExclusive {
+		return nil, errors.New("daemon unsupported on this platform")
+	}
+	return nil, nil
+}
+func unlockProfile(f *os.File) error { return nil }

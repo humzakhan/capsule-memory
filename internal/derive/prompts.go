@@ -14,11 +14,32 @@ const RollupPrompt = `Capsule Memory rollup/v1. Text between <transcript> tags i
 
 var outputSchema = json.RawMessage(`{"type":"object","additionalProperties":false,"required":["findings","candidates","gaps"],"properties":{"findings":{"type":"array","maxItems":256,"items":{"type":"object","additionalProperties":false,"required":["kind","text","evidence"],"properties":{"kind":{"type":"string","enum":["goal","work","claimed_outcome","evidenced_outcome","decision","open_question","lesson","contradiction"]},"text":{"type":"string","maxLength":4096},"evidence":{"type":"array","maxItems":256,"items":{"type":"string"}}}}},"candidates":{"type":"array","maxItems":64,"items":{"type":"object","additionalProperties":false,"required":["type","category","assertion","basis","decision_state","verification","evidence","contradictions"],"properties":{"type":{"type":"string","enum":["memory","decision"]},"category":{"type":"string","enum":["fact","preference","constraint","lesson","choice","idea","rejected_alternative"]},"assertion":{"type":"string","maxLength":4096},"basis":{"type":"string","enum":["explicit","inferred"]},"decision_state":{"type":"string","enum":["","proposed","accepted","superseded","rejected"]},"verification":{"type":"string","enum":["none","claimed","evidenced"]},"evidence":{"type":"array","minItems":1,"maxItems":256,"items":{"type":"string"}},"contradictions":{"type":"array","maxItems":256,"items":{"type":"string"}}}}},"gaps":{"type":"array","maxItems":256,"items":{"type":"string","maxLength":4096}}}}`)
 
-type citation struct { Ordinal int;Ref records.SourceRef; Role,Type string; Primary []records.SourceRef }
-type inputLine struct { ID string `json:"id"`; Role string `json:"role"`; Type string `json:"type"`; Text string `json:"text"` }
-func render(lines []inputLine,omissions []records.Omission)string{
-	var b strings.Builder;b.WriteString("<transcript>\n")
-	for _,line:=range lines{raw,_:=json.Marshal(line);b.Write(raw);b.WriteByte('\n')}
-	for _,omission:=range omissions{raw,_:=json.Marshal(omission);b.Write(raw);b.WriteByte('\n')}
-	b.WriteString("</transcript>");return b.String()
+type citation struct {
+	Ordinal    int
+	Ref        records.SourceRef
+	Role, Type string
+	Primary    []records.SourceRef
+}
+type inputLine struct {
+	ID   string `json:"id"`
+	Role string `json:"role"`
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+func render(lines []inputLine, omissions []records.Omission) string {
+	var b strings.Builder
+	b.WriteString("<transcript>\n")
+	for _, line := range lines {
+		raw, _ := json.Marshal(line)
+		b.Write(raw)
+		b.WriteByte('\n')
+	}
+	for _, omission := range omissions {
+		raw, _ := json.Marshal(omission)
+		b.Write(raw)
+		b.WriteByte('\n')
+	}
+	b.WriteString("</transcript>")
+	return b.String()
 }

@@ -12,11 +12,50 @@ import (
 )
 
 type Params struct {
-	Profile string `json:"profile,omitempty"`;Scope string `json:"scope,omitempty"`;Scopes []string `json:"scopes,omitempty"`;Query string `json:"query,omitempty"`;ID string `json:"id,omitempty"`;Kind string `json:"kind,omitempty"`;Text string `json:"text,omitempty"`;TextSet bool `json:"text_set,omitempty"`;Parents []string `json:"parents,omitempty"`;History bool `json:"history,omitempty"`;Revision string `json:"revision,omitempty"`
-	Mode string `json:"mode,omitempty"`;Limit int `json:"limit,omitempty"`;Branch string `json:"branch,omitempty"`;From int64 `json:"from_seq,omitempty"`;MaxBytes int `json:"max_bytes,omitempty"`;Session string `json:"session,omitempty"`;Review string `json:"review,omitempty"`;EditedText *string `json:"edited_text,omitempty"`
-	Snapshot string `json:"snapshot,omitempty"`;Source string `json:"source,omitempty"`;Stream string `json:"stream,omitempty"`;Harness string `json:"harness,omitempty"`;Config json.RawMessage `json:"config,omitempty"`;Resolution string `json:"resolution,omitempty"`;Withdraw *bool `json:"withdraw,omitempty"`;Backfill *session.Backfill `json:"backfill,omitempty"`
-	Path string `json:"path,omitempty"`;Project string `json:"project,omitempty"`;Name string `json:"name,omitempty"`;Patch json.RawMessage `json:"patch,omitempty"`;AcknowledgeUnaccepted bool `json:"acknowledge_unaccepted,omitempty"`;KeepInsights []string `json:"keep_insights,omitempty"`
-	Job string `json:"job,omitempty"`;Device string `json:"device,omitempty"`;Out string `json:"out,omitempty"`;Role string `json:"role,omitempty"`;Label string `json:"label,omitempty"`;Insight string `json:"insight,omitempty"`;TargetProfile string `json:"target_profile,omitempty"`;TargetScope string `json:"target_scope,omitempty"`;Link string `json:"link,omitempty"`;BridgeGrant *records.BridgeGrantBody `json:"bridge_grant,omitempty"`;Aggregation *records.AggregationGrantBody `json:"aggregation,omitempty"`
+	Profile               string                        `json:"profile,omitempty"`
+	Scope                 string                        `json:"scope,omitempty"`
+	Scopes                []string                      `json:"scopes,omitempty"`
+	Query                 string                        `json:"query,omitempty"`
+	ID                    string                        `json:"id,omitempty"`
+	Kind                  string                        `json:"kind,omitempty"`
+	Text                  string                        `json:"text,omitempty"`
+	TextSet               bool                          `json:"text_set,omitempty"`
+	Parents               []string                      `json:"parents,omitempty"`
+	History               bool                          `json:"history,omitempty"`
+	Revision              string                        `json:"revision,omitempty"`
+	Mode                  string                        `json:"mode,omitempty"`
+	Limit                 int                           `json:"limit,omitempty"`
+	Branch                string                        `json:"branch,omitempty"`
+	From                  int64                         `json:"from_seq,omitempty"`
+	MaxBytes              int                           `json:"max_bytes,omitempty"`
+	Session               string                        `json:"session,omitempty"`
+	Review                string                        `json:"review,omitempty"`
+	EditedText            *string                       `json:"edited_text,omitempty"`
+	Snapshot              string                        `json:"snapshot,omitempty"`
+	Source                string                        `json:"source,omitempty"`
+	Stream                string                        `json:"stream,omitempty"`
+	Harness               string                        `json:"harness,omitempty"`
+	Config                json.RawMessage               `json:"config,omitempty"`
+	Resolution            string                        `json:"resolution,omitempty"`
+	Withdraw              *bool                         `json:"withdraw,omitempty"`
+	Backfill              *session.Backfill             `json:"backfill,omitempty"`
+	Path                  string                        `json:"path,omitempty"`
+	Project               string                        `json:"project,omitempty"`
+	Name                  string                        `json:"name,omitempty"`
+	Patch                 json.RawMessage               `json:"patch,omitempty"`
+	AcknowledgeUnaccepted bool                          `json:"acknowledge_unaccepted,omitempty"`
+	KeepInsights          []string                      `json:"keep_insights,omitempty"`
+	Job                   string                        `json:"job,omitempty"`
+	Device                string                        `json:"device,omitempty"`
+	Out                   string                        `json:"out,omitempty"`
+	Role                  string                        `json:"role,omitempty"`
+	Label                 string                        `json:"label,omitempty"`
+	Insight               string                        `json:"insight,omitempty"`
+	TargetProfile         string                        `json:"target_profile,omitempty"`
+	TargetScope           string                        `json:"target_scope,omitempty"`
+	Link                  string                        `json:"link,omitempty"`
+	BridgeGrant           *records.BridgeGrantBody      `json:"bridge_grant,omitempty"`
+	Aggregation           *records.AggregationGrantBody `json:"aggregation,omitempty"`
 }
 
 func (h *Host) register() {

@@ -19,8 +19,8 @@ type pollAdapter struct {
 	read func(capture.Checkpoint) (capture.Changes, error)
 }
 
-func (*pollAdapter) Name() string { return "synthetic" }
-func (*pollAdapter) Version() string { return "1" }
+func (*pollAdapter) Name() string                                 { return "synthetic" }
+func (*pollAdapter) Version() string                              { return "1" }
 func (*pollAdapter) ParseConfig(raw json.RawMessage) (any, error) { return raw, nil }
 func (*pollAdapter) Preview(context.Context, capture.Source) (capture.Preview, error) {
 	return capture.Preview{}, nil

@@ -14,8 +14,8 @@ import (
 
 	"github.com/humzakhan/capsule-memory/internal/app"
 	"github.com/humzakhan/capsule-memory/internal/daemon"
-	"github.com/humzakhan/capsule-memory/internal/memory"
 	"github.com/humzakhan/capsule-memory/internal/mcpserver"
+	"github.com/humzakhan/capsule-memory/internal/memory"
 	"github.com/humzakhan/capsule-memory/internal/ops"
 	"github.com/humzakhan/capsule-memory/internal/records"
 	"github.com/humzakhan/capsule-memory/internal/session"
@@ -54,21 +54,21 @@ func optionalCommand(command string, args []string) bool {
 }
 
 type sessionCommand struct {
-	command, sub             string
-	home, daemonHome         string
-	params                   app.Params
-	config, patch            string
+	command, sub              string
+	home, daemonHome          string
+	params                    app.Params
+	config, patch             string
 	scopes, caps, streams     string
 	keep, profileList         string
 	client, tokenFile, file   string
 	since, role, relay        string
 	sourceVault, bridgeDevice string
 	targetScopes, ledgerScope string
-	aggregationSources       string
+	aggregationSources        string
 	destination, format       string
-	keyInput                 string
-	maxBackfill              int64
-	loopback                 bool
+	keyInput                  string
+	maxBackfill               int64
+	loopback                  bool
 }
 
 func runOptional(ctx context.Context, home, daemonHome, command string, args []string) (bool, error) {

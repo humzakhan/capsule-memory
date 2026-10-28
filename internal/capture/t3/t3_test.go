@@ -12,10 +12,10 @@ import (
 
 func TestDiscoveryFailureClassification(t *testing.T) {
 	for _, test := range []struct {
-		name string
-		status int
-		maxBytes int64
-		shortBody bool
+		name       string
+		status     int
+		maxBytes   int64
+		shortBody  bool
 		quarantine string
 	}{
 		{name: "confirmed protocol mismatch", status: http.StatusOK, quarantine: "protocol_or_version_mismatch"},

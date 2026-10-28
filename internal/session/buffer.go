@@ -1,25 +1,25 @@
 package session
 
 import (
- "context"
- "database/sql"
- "errors"
- "strconv"
- "encoding/json"
- "time"
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"strconv"
+	"time"
 
- "github.com/humzakhan/capsule-memory/internal/capture"
- "github.com/humzakhan/capsule-memory/internal/memory"
+	"github.com/humzakhan/capsule-memory/internal/capture"
+	"github.com/humzakhan/capsule-memory/internal/memory"
 )
 
-var ErrRewriteUnresolved=errors.New("rewrite_unresolved")
+var ErrRewriteUnresolved = errors.New("rewrite_unresolved")
 
 type streamBuffer struct {
-	source capture.Source
+	source  capture.Source
 	changes capture.Changes
 	started time.Time
-	bytes int
-	retry bool
+	bytes   int
+	retry   bool
 }
 
 // Unacknowledged buffers are memory-only. The checkpoint moves only when the
@@ -175,7 +175,52 @@ func (m *Module) FlushPending(ctx context.Context, src capture.Source, st captur
 
 // CaptureLimits is a durable historical budget. Missing or exhausted bounds
 // never turn a historical import into an unlimited read.
-func(m *Module) CaptureLimits(ctx context.Context,source,stream string)(capture.Limits,error){
- m.mu.Lock();defer m.mu.Unlock();limits:=capture.DefaultLimits(capture.Limits{})
- e:=m.svc.Read(ctx,func(q memory.Queryer)error{var active int;var remain,end int64;e:=q.QueryRowContext(ctx,"SELECT s.active,b.remaining,s.end_position FROM backfill_streams s JOIN backfills b ON b.source_id=s.source_id WHERE s.source_id=? AND s.stream=?",source,stream).Scan(&active,&remain,&end);if errors.Is(e,sql.ErrNoRows){return nil};if e!=nil{return e};if active!=0{if pending,ok:=m.buffers[source+":"+stream];ok{remain-=pending.changes.ScannedBytes};if remain<=0{return memory.ErrInvalid};if remain<limits.MaxBytes{limits.MaxBytes=remain};if end>=0{limits.StopAt=end;limits.EndBounded=true};if end>=0{var position string;if e=q.QueryRowContext(ctx,"SELECT position FROM checkpoints WHERE source_id=? AND stream=?",source,stream).Scan(&position);e!=nil{return e};pos:=int64(0);if position!=""{pos,e=strconv.ParseInt(position,10,64);if e!=nil{return memory.ErrInvalid}};if end-pos>0&&end-pos<limits.MaxBytes{limits.MaxBytes=end-pos}}};return nil});return limits,e
+func (m *Module) CaptureLimits(ctx context.Context, source, stream string) (capture.Limits, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	limits := capture.DefaultLimits(capture.Limits{})
+	e := m.svc.Read(ctx, func(q memory.Queryer) error {
+		var active int
+		var remain, end int64
+		e := q.QueryRowContext(ctx, "SELECT s.active,b.remaining,s.end_position FROM backfill_streams s JOIN backfills b ON b.source_id=s.source_id WHERE s.source_id=? AND s.stream=?", source, stream).Scan(&active, &remain, &end)
+		if errors.Is(e, sql.ErrNoRows) {
+			return nil
+		}
+		if e != nil {
+			return e
+		}
+		if active != 0 {
+			if pending, ok := m.buffers[source+":"+stream]; ok {
+				remain -= pending.changes.ScannedBytes
+			}
+			if remain <= 0 {
+				return memory.ErrInvalid
+			}
+			if remain < limits.MaxBytes {
+				limits.MaxBytes = remain
+			}
+			if end >= 0 {
+				limits.StopAt = end
+				limits.EndBounded = true
+			}
+			if end >= 0 {
+				var position string
+				if e = q.QueryRowContext(ctx, "SELECT position FROM checkpoints WHERE source_id=? AND stream=?", source, stream).Scan(&position); e != nil {
+					return e
+				}
+				pos := int64(0)
+				if position != "" {
+					pos, e = strconv.ParseInt(position, 10, 64)
+					if e != nil {
+						return memory.ErrInvalid
+					}
+				}
+				if end-pos > 0 && end-pos < limits.MaxBytes {
+					limits.MaxBytes = end - pos
+				}
+			}
+		}
+		return nil
+	})
+	return limits, e
 }

@@ -3,11 +3,12 @@ package session
 import (
 	"context"
 	"database/sql"
- "time"
- "strings"
- "github.com/humzakhan/capsule-memory/internal/capture"
+	"github.com/humzakhan/capsule-memory/internal/capture"
 	"github.com/humzakhan/capsule-memory/internal/memory"
+	"strings"
+	"time"
 )
+
 func (m *Module) MarkMissingStreams(ctx context.Context, source string, seen map[string]bool) error {
 	src, err := m.Source(ctx, source)
 	if err != nil {
@@ -81,8 +82,12 @@ func (m *Module) MarkCaptureMissingStreams(ctx context.Context, src capture.Sour
 	return flushErr
 }
 
-func auditGap(ctx context.Context,tx *sql.Tx,source,stream,position,reason string,count int)error{_,e:=tx.ExecContext(ctx,"INSERT INTO source_gaps VALUES(?,?,?,?,?) ON CONFLICT(source_id,stream,position,reason) DO UPDATE SET count=max(source_gaps.count,excluded.count)",source,stream,position,reason,count);return e}
+func auditGap(ctx context.Context, tx *sql.Tx, source, stream, position, reason string, count int) error {
+	_, e := tx.ExecContext(ctx, "INSERT INTO source_gaps VALUES(?,?,?,?,?) ON CONFLICT(source_id,stream,position,reason) DO UPDATE SET count=max(source_gaps.count,excluded.count)", source, stream, position, reason, count)
+	return e
+}
 
-func quarantineStream(ctx context.Context,tx *sql.Tx,source,stream,reason string)error{
- _,e:=tx.ExecContext(ctx,"INSERT INTO checkpoints(source_id,stream,generation,position,prefix_digest,updated,state,reason) VALUES(?,?, '', '', '',?,'quarantined',?) ON CONFLICT(source_id,stream) DO UPDATE SET state='quarantined',reason=excluded.reason",source,stream,time.Now().Unix(),reason);return e
+func quarantineStream(ctx context.Context, tx *sql.Tx, source, stream, reason string) error {
+	_, e := tx.ExecContext(ctx, "INSERT INTO checkpoints(source_id,stream,generation,position,prefix_digest,updated,state,reason) VALUES(?,?, '', '', '',?,'quarantined',?) ON CONFLICT(source_id,stream) DO UPDATE SET state='quarantined',reason=excluded.reason", source, stream, time.Now().Unix(), reason)
+	return e
 }

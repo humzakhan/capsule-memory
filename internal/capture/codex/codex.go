@@ -2,8 +2,8 @@ package codex
 
 import (
 	"context"
- "crypto/sha256"
- "encoding/hex"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"path/filepath"
 	"strconv"
@@ -14,28 +14,129 @@ import (
 	"github.com/humzakhan/capsule-memory/internal/records"
 	"github.com/humzakhan/capsule-memory/internal/strictjson"
 )
-type Adapter struct{Reader *filetail.Reader}
-type userRef struct{Hash string `json:"hash" cm:"required"`;ID string `json:"id" cm:"required"`;Kind string `json:"kind" cm:"required"`}
+
+type Adapter struct{ Reader *filetail.Reader }
+type userRef struct {
+	Hash string `json:"hash" cm:"required"`
+	ID   string `json:"id" cm:"required"`
+	Kind string `json:"kind" cm:"required"`
+}
 type checkpointState struct {
-	Version int `json:"version" cm:"required"`
-	Turn string `json:"turn" cm:"required"`
-	Users []userRef `json:"users" cm:"required"`
+	Version int       `json:"version" cm:"required"`
+	Turn    string    `json:"turn" cm:"required"`
+	Users   []userRef `json:"users" cm:"required"`
 	// Optional for compatibility with existing v1 checkpoint state. Nil means
 	// a pre-upgrade/future-only cursor has not observed the current turn's CWD.
 	CWD *string `json:"cwd,omitempty"`
 }
 
-type Config struct{Root string `json:"root"`;ArchivedRoot string `json:"archived_root"`;PinnedVersions []string `json:"pinned_versions"`;AllowUnknownVersion bool `json:"allow_unknown_version"`}
-func config(b json.RawMessage)(Config,error){var c Config;if strictjson.Decode(b,1<<20,&c)!=nil{return c,capture.ErrInvalid};if c.Root==""{c.Root=defaultRoot()};if !filepath.IsAbs(c.Root)||(c.ArchivedRoot!=""&&!filepath.IsAbs(c.ArchivedRoot)){return c,capture.ErrInvalid};for _,p:=range c.PinnedVersions{if p==""{return c,capture.ErrInvalid}};return c,nil}
-func tail(c Config)filetail.Config{return filetail.Config{Root:c.Root,PinnedVersions:c.PinnedVersions,AllowUnknownVersion:c.AllowUnknownVersion}}
-func (Adapter) Name()string{return "codex-rollout"};func (Adapter) Version()string{return "1"}
-func (Adapter) ParseConfig(b json.RawMessage)(any,error){return config(b)}
-func accept(k string)bool{return strings.HasPrefix(filepath.Base(k),"rollout-")&&strings.HasSuffix(k,".jsonl")}
-func (Adapter) Preview(ctx context.Context,s capture.Source)(capture.Preview,error){c,e:=config(s.Config);if e!=nil{return capture.Preview{},e};p,e:=filetail.Preview(ctx,tail(c),accept);if c.ArchivedRoot!=""{p.Locations=append(p.Locations,c.ArchivedRoot)};p.Versions=previewVersions(ctx,c);p.Unsupported=append(p.Unsupported,"app_server: not_used (no automatic spawn)");return p,e}
-func (Adapter) Discover(ctx context.Context,s capture.Source,page string,n int)([]capture.Stream,string,error){c,e:=config(s.Config);if e!=nil{return nil,"",e};archive:=strings.HasPrefix(page,"archive:");if archive{page=strings.TrimPrefix(page,"archive:");c.Root=c.ArchivedRoot};streams,next,e:=filetail.Discover(ctx,tail(c),page,n,accept);if archive{for i:=range streams{streams[i].Key="archive:"+streams[i].Key};if next!=""{next="archive:"+next}}else if next==""&&c.ArchivedRoot!=""{next="archive:"};return streams,next,e}
-type row struct{Type string `json:"type"`;Timestamp string `json:"timestamp"`;Payload json.RawMessage `json:"payload"`}
-type payload struct{ID string `json:"id"`;SessionID string `json:"session_id"`;CWD string `json:"cwd"`;Version string `json:"cli_version"`;Type string `json:"type"`;Role string `json:"role"`;Message string `json:"message"`;Name string `json:"name"`;CallID string `json:"call_id"`;Arguments string `json:"arguments"`;Output string `json:"output"`;TurnID string `json:"turn_id"`;ForkedFrom string `json:"forked_from_id"`;Content []struct{Type string `json:"type"`;Text string `json:"text"`} `json:"content"`;Metadata struct{Turn string `json:"turn_id"`} `json:"internal_chat_message_metadata_passthrough"`}
-func decode(b []byte)(row,payload,error){var r row;var p payload;if strictjson.Unique(b)!=nil||json.Unmarshal(b,&r)!=nil||r.Type==""||json.Unmarshal(r.Payload,&p)!=nil{return r,p,capture.ErrInvalid};return r,p,nil}
+type Config struct {
+	Root                string   `json:"root"`
+	ArchivedRoot        string   `json:"archived_root"`
+	PinnedVersions      []string `json:"pinned_versions"`
+	AllowUnknownVersion bool     `json:"allow_unknown_version"`
+}
+
+func config(b json.RawMessage) (Config, error) {
+	var c Config
+	if strictjson.Decode(b, 1<<20, &c) != nil {
+		return c, capture.ErrInvalid
+	}
+	if c.Root == "" {
+		c.Root = defaultRoot()
+	}
+	if !filepath.IsAbs(c.Root) || (c.ArchivedRoot != "" && !filepath.IsAbs(c.ArchivedRoot)) {
+		return c, capture.ErrInvalid
+	}
+	for _, p := range c.PinnedVersions {
+		if p == "" {
+			return c, capture.ErrInvalid
+		}
+	}
+	return c, nil
+}
+func tail(c Config) filetail.Config {
+	return filetail.Config{Root: c.Root, PinnedVersions: c.PinnedVersions, AllowUnknownVersion: c.AllowUnknownVersion}
+}
+func (Adapter) Name() string                               { return "codex-rollout" }
+func (Adapter) Version() string                            { return "1" }
+func (Adapter) ParseConfig(b json.RawMessage) (any, error) { return config(b) }
+func accept(k string) bool {
+	return strings.HasPrefix(filepath.Base(k), "rollout-") && strings.HasSuffix(k, ".jsonl")
+}
+func (Adapter) Preview(ctx context.Context, s capture.Source) (capture.Preview, error) {
+	c, e := config(s.Config)
+	if e != nil {
+		return capture.Preview{}, e
+	}
+	p, e := filetail.Preview(ctx, tail(c), accept)
+	if c.ArchivedRoot != "" {
+		p.Locations = append(p.Locations, c.ArchivedRoot)
+	}
+	p.Versions = previewVersions(ctx, c)
+	p.Unsupported = append(p.Unsupported, "app_server: not_used (no automatic spawn)")
+	return p, e
+}
+func (Adapter) Discover(ctx context.Context, s capture.Source, page string, n int) ([]capture.Stream, string, error) {
+	c, e := config(s.Config)
+	if e != nil {
+		return nil, "", e
+	}
+	archive := strings.HasPrefix(page, "archive:")
+	if archive {
+		page = strings.TrimPrefix(page, "archive:")
+		c.Root = c.ArchivedRoot
+	}
+	streams, next, e := filetail.Discover(ctx, tail(c), page, n, accept)
+	if archive {
+		for i := range streams {
+			streams[i].Key = "archive:" + streams[i].Key
+		}
+		if next != "" {
+			next = "archive:" + next
+		}
+	} else if next == "" && c.ArchivedRoot != "" {
+		next = "archive:"
+	}
+	return streams, next, e
+}
+
+type row struct {
+	Type      string          `json:"type"`
+	Timestamp string          `json:"timestamp"`
+	Payload   json.RawMessage `json:"payload"`
+}
+type payload struct {
+	ID         string `json:"id"`
+	SessionID  string `json:"session_id"`
+	CWD        string `json:"cwd"`
+	Version    string `json:"cli_version"`
+	Type       string `json:"type"`
+	Role       string `json:"role"`
+	Message    string `json:"message"`
+	Name       string `json:"name"`
+	CallID     string `json:"call_id"`
+	Arguments  string `json:"arguments"`
+	Output     string `json:"output"`
+	TurnID     string `json:"turn_id"`
+	ForkedFrom string `json:"forked_from_id"`
+	Content    []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	} `json:"content"`
+	Metadata struct {
+		Turn string `json:"turn_id"`
+	} `json:"internal_chat_message_metadata_passthrough"`
+}
+
+func decode(b []byte) (row, payload, error) {
+	var r row
+	var p payload
+	if strictjson.Unique(b) != nil || json.Unmarshal(b, &r) != nil || r.Type == "" || json.Unmarshal(r.Payload, &p) != nil {
+		return r, p, capture.ErrInvalid
+	}
+	return r, p, nil
+}
 func (a Adapter) ReadChanges(ctx context.Context, s capture.Source, st capture.Stream, cp capture.Checkpoint, lim capture.Limits) (capture.Changes, error) {
 	var changes capture.Changes
 	config, err := config(s.Config)

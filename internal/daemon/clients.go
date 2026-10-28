@@ -18,10 +18,37 @@ import (
 	"github.com/humzakhan/capsule-memory/internal/ops"
 	"github.com/humzakhan/capsule-memory/internal/strictjson"
 )
-var safeName=regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
-type ClientConfig struct{Version int `json:"version"`;Name string `json:"name"`;TokenSHA256 string `json:"token_sha256"`;Grant ops.Grant `json:"grant"`}
-func privateDir(path string)error{if e:=os.MkdirAll(path,0700);e!=nil{return e};fi,e:=os.Lstat(path);if e!=nil||!fi.IsDir()||fi.Mode().Perm()!=0700{return memory.ErrInvalid};return nil}
-func privateRead(path string,max int64)([]byte,error){fi,e:=os.Lstat(path);if e!=nil||!fi.Mode().IsRegular()||fi.Mode().Perm()!=0600||fi.Size()>max{return nil,memory.ErrInvalid};b,e:=os.ReadFile(path);if e!=nil{return nil,memory.ErrInvalid};return b,nil}
+
+var safeName = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
+
+type ClientConfig struct {
+	Version     int       `json:"version"`
+	Name        string    `json:"name"`
+	TokenSHA256 string    `json:"token_sha256"`
+	Grant       ops.Grant `json:"grant"`
+}
+
+func privateDir(path string) error {
+	if e := os.MkdirAll(path, 0700); e != nil {
+		return e
+	}
+	fi, e := os.Lstat(path)
+	if e != nil || !fi.IsDir() || fi.Mode().Perm() != 0700 {
+		return memory.ErrInvalid
+	}
+	return nil
+}
+func privateRead(path string, max int64) ([]byte, error) {
+	fi, e := os.Lstat(path)
+	if e != nil || !fi.Mode().IsRegular() || fi.Mode().Perm() != 0600 || fi.Size() > max {
+		return nil, memory.ErrInvalid
+	}
+	b, e := os.ReadFile(path)
+	if e != nil {
+		return nil, memory.ErrInvalid
+	}
+	return b, nil
+}
 func writeNew(path string, body []byte) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {

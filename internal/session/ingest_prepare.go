@@ -83,7 +83,7 @@ func (m *Module) captureGroup(ctx context.Context, q memory.Queryer, src capture
 			Adapter: src.Adapter, HarnessVersion: observation.HarnessVersion,
 			Title: title, Branch: branch, Parent: observation.Parent,
 			Bindings: observation.Bindings, Links: observation.Links, State: observation.State,
-			Policy: records.CapturePolicy{Version: policy.Version, Redaction: "redact/v1", ToolDetail: policy.ToolDetail},
+			Policy:    records.CapturePolicy{Version: policy.Version, Redaction: "redact/v1", ToolDetail: policy.ToolDetail},
 			ChunkHigh: map[string]int64{"main": -1},
 		}
 	} else {
@@ -181,7 +181,7 @@ func (m *Module) prepareCapture(ctx context.Context, src capture.Source, st capt
 			chunk := records.SessionChunk{
 				Session: group.session, Branch: group.branch, Seq: seq, Prev: previous,
 				Generation: ch.Next.Generation, Events: events,
-				Omissions: chunkOmissions(events, group.events, append(append([]records.Omission{}, group.omissions...), gaps...), index == 0),
+				Omissions:  chunkOmissions(events, group.events, append(append([]records.Omission{}, group.omissions...), gaps...), index == 0),
 				Redactions: chunkRedactions(events, group.redactions, group.events),
 			}
 			body, err := json.Marshal(events)

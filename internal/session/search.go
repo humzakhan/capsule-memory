@@ -149,7 +149,7 @@ func (m *Module) Events(ctx context.Context, q memory.Queryer, session, branch s
 		}
 		type candidate struct {
 			body []byte
-			id string
+			id   string
 		}
 		var page []candidate
 		for rows.Next() {

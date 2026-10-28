@@ -7,6 +7,149 @@ import (
 
 	"github.com/humzakhan/capsule-memory/internal/memory"
 )
-func(m *Module) Status(ctx context.Context)(CaptureStatus,error){m.mu.Lock();defer m.mu.Unlock();s:=CaptureStatus{Publication:map[string]memory.ScopeStatus{},CapturedThrough:map[string]string{},PublishedThrough:map[string]string{},CacheEviction:"not_implemented",Queues:map[string]map[string]int{}};for _,b:=range m.buffers{s.BufferedStreams++;s.BufferedEvents+=len(b.changes.Events);s.BufferedBytes+=b.bytes};info,e:=m.svc.Info(ctx);if e!=nil{return s,e};var scopes []string;for _,scope:=range info.Scopes{scopes=append(scopes,scope.ID);state,e:=m.svc.ScopeStatus(ctx,scope.ID);if e!=nil{return s,e};s.Publication[scope.ID]=state};s.IndexCoverage,e=m.coverage(ctx,scopes);if e!=nil{return s,e};e=m.svc.Read(ctx,func(q memory.Queryer)error{if e:=q.QueryRowContext(ctx,"SELECT count(*) FROM checkpoints WHERE caught_up=0").Scan(&s.PendingStreams);e!=nil{return e};if s.PendingStreams>0{s.IndexCoverage.Complete=false;s.Blocked=append(s.Blocked,"capture_incomplete")};rows,e:=q.QueryContext(ctx,"SELECT source_id,harness,adapter,state,COALESCE(reason,''),config FROM sources ORDER BY source_id");if e!=nil{return e};for rows.Next(){var v SourceStatus;var cfg []byte;if rows.Scan(&v.ID,&v.Harness,&v.Adapter,&v.State,&v.Reason,&cfg)!=nil{rows.Close();return memory.ErrStorage};v.Token="n/a";if v.Harness=="t3"{var c struct{TokenFile string `json:"token_file"`};_ = json.Unmarshal(cfg,&c);v.Token="missing";if c.TokenFile!=""{v.Token="configured"};v.Reason+="; broad orchestration:read token; HTTP allowlist only"};s.Sources=append(s.Sources,v)};rows.Close();for i:=range s.Sources{v:=&s.Sources[i];if e=q.QueryRowContext(ctx,"SELECT count(*),COALESCE(sum(state='quarantined'),0),COALESCE(max(updated),0) FROM checkpoints WHERE source_id=?",v.ID).Scan(&v.Streams,&v.Quarantined,new(int64));e!=nil{return e};s.Quarantined+=v.Quarantined;if v.State=="blocked"||v.State=="quarantined"||v.State=="paused"||v.State=="unavailable"{s.Blocked=append(s.Blocked,v.Reason)}}
-		rows,e=q.QueryContext(ctx,"SELECT source_id,stream,position,updated FROM checkpoints");if e!=nil{return e};for rows.Next(){var id,stream,pos string;var updated int64;if rows.Scan(&id,&stream,&pos,&updated)!=nil{rows.Close();return memory.ErrStorage};s.CapturedThrough[id+":"+stream]=pos;if t:=time.Unix(updated,0).UTC().Format(time.RFC3339Nano);t>s.IndexCoverage.LastReconcile{s.IndexCoverage.LastReconcile=t}};rows.Close()
-		for query,dst:=range map[string]*int{"SELECT count(*) FROM chunks":&s.Saved,"SELECT count(*) FROM chunks c JOIN outbox o ON o.revision=c.revision WHERE o.receipt IS NOT NULL":&s.Published,"SELECT count(DISTINCT record) FROM revisions WHERE kind='summary'":&s.Summarized,"SELECT count(*) FROM sessions WHERE view_of IS NOT NULL AND view_of!=''":&s.DuplicateCapture}{if e=q.QueryRowContext(ctx,query).Scan(dst);e!=nil{return e}};if e=q.QueryRowContext(ctx,"SELECT COALESCE(sum(length(envelope)),0) FROM outbox WHERE receipt IS NULL").Scan(&s.PendingBytes);e!=nil{return e};var gaps int;if e=q.QueryRowContext(ctx,"SELECT count(*) FROM source_gaps").Scan(&gaps);e!=nil{return e};s.Exclusions=gaps;if gaps>0{s.IndexCoverage.Complete=false;s.Blocked=append(s.Blocked,"source_gap")};rows,e=q.QueryContext(ctx,"SELECT s.source_id,o.scope,o.receipt FROM outbox o JOIN outbox_source s ON s.revision=o.revision WHERE o.receipt IS NOT NULL ORDER BY length(o.receipt),o.receipt");if e!=nil{return e};for rows.Next(){var source,scope,receipt string;if rows.Scan(&source,&scope,&receipt)!=nil{rows.Close();return memory.ErrStorage};s.PublishedThrough[source+":"+scope]=receipt};rows.Close();rows,e=q.QueryContext(ctx,"SELECT kind,state,count(*) FROM jobs GROUP BY kind,state");if e!=nil{return e};for rows.Next(){var kind,state string;var n int;if rows.Scan(&kind,&state,&n)!=nil{rows.Close();return memory.ErrStorage};if s.Queues[kind]==nil{s.Queues[kind]=map[string]int{}};s.Queues[kind][state]=n};rows.Close();var held int;if e=q.QueryRowContext(ctx,"SELECT count(*) FROM outbox_hold").Scan(&held);e!=nil{return e};if held>0{s.Blocked=append(s.Blocked,"held_withdrawn")};return nil});return s,e}
+
+func (m *Module) Status(ctx context.Context) (CaptureStatus, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	s := CaptureStatus{Publication: map[string]memory.ScopeStatus{}, CapturedThrough: map[string]string{}, PublishedThrough: map[string]string{}, CacheEviction: "not_implemented", Queues: map[string]map[string]int{}}
+	for _, b := range m.buffers {
+		s.BufferedStreams++
+		s.BufferedEvents += len(b.changes.Events)
+		s.BufferedBytes += b.bytes
+	}
+	info, e := m.svc.Info(ctx)
+	if e != nil {
+		return s, e
+	}
+	var scopes []string
+	for _, scope := range info.Scopes {
+		scopes = append(scopes, scope.ID)
+		state, e := m.svc.ScopeStatus(ctx, scope.ID)
+		if e != nil {
+			return s, e
+		}
+		s.Publication[scope.ID] = state
+	}
+	s.IndexCoverage, e = m.coverage(ctx, scopes)
+	if e != nil {
+		return s, e
+	}
+	e = m.svc.Read(ctx, func(q memory.Queryer) error {
+		if e := q.QueryRowContext(ctx, "SELECT count(*) FROM checkpoints WHERE caught_up=0").Scan(&s.PendingStreams); e != nil {
+			return e
+		}
+		if s.PendingStreams > 0 {
+			s.IndexCoverage.Complete = false
+			s.Blocked = append(s.Blocked, "capture_incomplete")
+		}
+		rows, e := q.QueryContext(ctx, "SELECT source_id,harness,adapter,state,COALESCE(reason,''),config FROM sources ORDER BY source_id")
+		if e != nil {
+			return e
+		}
+		for rows.Next() {
+			var v SourceStatus
+			var cfg []byte
+			if rows.Scan(&v.ID, &v.Harness, &v.Adapter, &v.State, &v.Reason, &cfg) != nil {
+				rows.Close()
+				return memory.ErrStorage
+			}
+			v.Token = "n/a"
+			if v.Harness == "t3" {
+				var c struct {
+					TokenFile string `json:"token_file"`
+				}
+				_ = json.Unmarshal(cfg, &c)
+				v.Token = "missing"
+				if c.TokenFile != "" {
+					v.Token = "configured"
+				}
+				v.Reason += "; broad orchestration:read token; HTTP allowlist only"
+			}
+			s.Sources = append(s.Sources, v)
+		}
+		rows.Close()
+		for i := range s.Sources {
+			v := &s.Sources[i]
+			if e = q.QueryRowContext(ctx, "SELECT count(*),COALESCE(sum(state='quarantined'),0),COALESCE(max(updated),0) FROM checkpoints WHERE source_id=?", v.ID).Scan(&v.Streams, &v.Quarantined, new(int64)); e != nil {
+				return e
+			}
+			s.Quarantined += v.Quarantined
+			if v.State == "blocked" || v.State == "quarantined" || v.State == "paused" || v.State == "unavailable" {
+				s.Blocked = append(s.Blocked, v.Reason)
+			}
+		}
+		rows, e = q.QueryContext(ctx, "SELECT source_id,stream,position,updated FROM checkpoints")
+		if e != nil {
+			return e
+		}
+		for rows.Next() {
+			var id, stream, pos string
+			var updated int64
+			if rows.Scan(&id, &stream, &pos, &updated) != nil {
+				rows.Close()
+				return memory.ErrStorage
+			}
+			s.CapturedThrough[id+":"+stream] = pos
+			if t := time.Unix(updated, 0).UTC().Format(time.RFC3339Nano); t > s.IndexCoverage.LastReconcile {
+				s.IndexCoverage.LastReconcile = t
+			}
+		}
+		rows.Close()
+		for query, dst := range map[string]*int{"SELECT count(*) FROM chunks": &s.Saved, "SELECT count(*) FROM chunks c JOIN outbox o ON o.revision=c.revision WHERE o.receipt IS NOT NULL": &s.Published, "SELECT count(DISTINCT record) FROM revisions WHERE kind='summary'": &s.Summarized, "SELECT count(*) FROM sessions WHERE view_of IS NOT NULL AND view_of!=''": &s.DuplicateCapture} {
+			if e = q.QueryRowContext(ctx, query).Scan(dst); e != nil {
+				return e
+			}
+		}
+		if e = q.QueryRowContext(ctx, "SELECT COALESCE(sum(length(envelope)),0) FROM outbox WHERE receipt IS NULL").Scan(&s.PendingBytes); e != nil {
+			return e
+		}
+		var gaps int
+		if e = q.QueryRowContext(ctx, "SELECT count(*) FROM source_gaps").Scan(&gaps); e != nil {
+			return e
+		}
+		s.Exclusions = gaps
+		if gaps > 0 {
+			s.IndexCoverage.Complete = false
+			s.Blocked = append(s.Blocked, "source_gap")
+		}
+		rows, e = q.QueryContext(ctx, "SELECT s.source_id,o.scope,o.receipt FROM outbox o JOIN outbox_source s ON s.revision=o.revision WHERE o.receipt IS NOT NULL ORDER BY length(o.receipt),o.receipt")
+		if e != nil {
+			return e
+		}
+		for rows.Next() {
+			var source, scope, receipt string
+			if rows.Scan(&source, &scope, &receipt) != nil {
+				rows.Close()
+				return memory.ErrStorage
+			}
+			s.PublishedThrough[source+":"+scope] = receipt
+		}
+		rows.Close()
+		rows, e = q.QueryContext(ctx, "SELECT kind,state,count(*) FROM jobs GROUP BY kind,state")
+		if e != nil {
+			return e
+		}
+		for rows.Next() {
+			var kind, state string
+			var n int
+			if rows.Scan(&kind, &state, &n) != nil {
+				rows.Close()
+				return memory.ErrStorage
+			}
+			if s.Queues[kind] == nil {
+				s.Queues[kind] = map[string]int{}
+			}
+			s.Queues[kind][state] = n
+		}
+		rows.Close()
+		var held int
+		if e = q.QueryRowContext(ctx, "SELECT count(*) FROM outbox_hold").Scan(&held); e != nil {
+			return e
+		}
+		if held > 0 {
+			s.Blocked = append(s.Blocked, "held_withdrawn")
+		}
+		return nil
+	})
+	return s, e
+}

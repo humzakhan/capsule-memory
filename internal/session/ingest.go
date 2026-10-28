@@ -16,10 +16,10 @@ import (
 
 type ingestGroup struct {
 	scope, project, session, manifestRecord, branch string
-	manifest records.SessionManifest
-	events []records.Event
-	redactions []records.Redaction
-	omissions []records.Omission
+	manifest                                        records.SessionManifest
+	events                                          []records.Event
+	redactions                                      []records.Redaction
+	omissions                                       []records.Omission
 }
 
 type identity struct {
