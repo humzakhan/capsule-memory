@@ -406,8 +406,8 @@ without dropping targets; raw export retains their part provenance.
 ## Local authority fences — 2026-10-27 repair
 
 These local implementation contracts do not change revision schemas, frame
-bytes, signatures, AAD or relay requests. They are source contracts awaiting
-independent source review and separately authorized execution.
+bytes, signatures, AAD or relay requests. They are source contracts; independent
+source review and separately authorized execution are distinct evidence gates.
 
 Capture reads bind the exact configured source, consent generation and policy
 version. Buffer reuse, status changes, quarantine and the atomic ingest commit
@@ -448,3 +448,19 @@ and request-local guards. Ranked knowledge retrieval refills independently for
 each granted scope and record kind after lifecycle and proof filtering. Scan
 bounds or concurrent changes report incomplete coverage; they never bypass
 visibility or imply a complete archive answer.
+
+Same-vault key issuance also checks retained immutable knowledge bindings in the
+core grant path, including profiles opened without projection hooks. Every
+proposed target reader must remain a source reader before control signing or
+key-package/device-profile writes. Tombstones, withdrawal and index rebuilds do
+not erase archived ciphertext or remove this constraint. The check includes
+unpublished retained assertions conservatively; explicit cross-vault reviewed
+exports retain their separate bridge authority.
+
+Grant and enrollment hold a local SQLite writer reservation while checking the
+current control generation, retained bindings and application grant hooks, then
+writing private output and committing control. Other local writers cannot add
+protected history between that check and key disclosure. No network runs in this
+transaction. Filesystem output and SQLite commit are not atomic: an output
+written before a failed commit is reported as unconfirmed and must be preserved
+for inspection. The guard cannot recall keys or plaintext previously disclosed.

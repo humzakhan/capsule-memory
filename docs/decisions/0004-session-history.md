@@ -80,3 +80,14 @@ See the [local authority contracts](../session-protocol.md#local-authority-fence
 Legacy v1 bytes and schema-v2 framing remain unchanged. No new feature deferral,
 deployment, service installation or execution authority is introduced. Formatting,
 compilation, tests and runtime acceptance of these repairs remain NOT RUN.
+
+Independent source review identified a further grant-boundary gap: a target-only
+reader could receive the existing key for already archived same-vault knowledge.
+Reader subsets therefore constrain key issuance using retained immutable
+knowledge history in the core service, independently of installed projection
+hooks and current lifecycle visibility. Grant/enrollment reserve the local SQLite
+writer and recheck the control generation before signing or writing keys. Deleted
+or withdrawn assertions remain relevant because their ciphertext is retained.
+Cross-vault reviewed exports keep their explicit bridge authority. Private file
+output and database commit remain separate durability boundaries; partial output
+is reported, never described as a confirmed control commit.
