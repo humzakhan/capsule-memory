@@ -6,6 +6,10 @@ This is a broad starting inventory, not a claim that every possible failure or
 combination has been enumerated. Most entries are risks to verify, not confirmed
 bugs. No additional product tests or QA workloads were run to create this list.
 
+Execution after this inventory snapshot is recorded in the
+[2026-10-28 autonomous QA report](qa/2026-10-28-autonomous.md) and its case ledger.
+The historical counts below have not been rewritten as new execution evidence.
+
 ## Data and labels
 
 [JSONL inventory](failure-cases.jsonl) is the canonical record for querying. Each
