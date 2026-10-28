@@ -228,3 +228,5 @@ Logical types and exact framing are review prerequisites, not defined by this pr
 Recommended defaults are a dedicated session vault, project-scoped capture, conversation text with minimal tool metadata, future activity only, local inference, automatic candidates, and reviewed promotion. Build lexical search first. Defer embeddings, binary attachments, universal session resumption, cloud inference, destructive retention, and centrally hosted plaintext processing.
 
 Before each adapter ships, confirm the owner's actual supported harness versions, OS matrix, approved source roots, and inference hardware. These determine compatibility and budgets; they do not change the storage/privacy architecture. The first implementation task should establish foundation evidence and the capture/schema contract before scheduling autonomous work.
+
+T3 history responses that advertise older rows without a continuation cursor are quarantined as `history_cursor_missing`; capture keeps its prior checkpoint and does not report caught-up state.

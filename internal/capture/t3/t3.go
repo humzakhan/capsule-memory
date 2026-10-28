@@ -281,6 +281,10 @@ func (Adapter) ReadChanges(ctx context.Context, s capture.Source, st capture.Str
 	if e = getBudget(ctx, c, "/api/orchestration/threads/"+tid+"/bounded", "", &snap, true, &budget); e != nil {
 		return ch, e
 	}
+	if snap.More && snap.Cursor == "" {
+		ch.Quarantine = "history_cursor_missing"
+		return ch, nil
+	}
 	if snap.Projection.Thread.ID != tid {
 		ch.Quarantine = "unknown_shape"
 		return ch, nil
