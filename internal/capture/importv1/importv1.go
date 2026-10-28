@@ -34,5 +34,14 @@ func (a Adapter) ReadChanges(ctx context.Context,s capture.Source,st capture.Str
 	tc:=filetail.Config{Root:filepath.Dir(st.Key)};local:=st;local.Key=filepath.Base(st.Key);h,e:=filetail.Header(tc.Root,local.Key);if e!=nil{return ch,e};head,e:=decode(h);if e!=nil||head.Kind!="session"||head.Harness==""||head.Store==""{ch.Quarantine="unknown_shape";return ch,nil}
 	origin:=records.Origin{Harness:head.Harness,SourceStore:head.Store,NativeSessionID:head.SessionID,Environment:head.Environment};obs:=capture.Observation{Origin:origin,CWD:head.CWD,Title:head.Title,HarnessVersion:head.HarnessVersion,State:"unknown"};if head.ParentSessionID!=""{parent:=origin;parent.NativeSessionID=head.ParentSessionID;obs.Parent=&records.SessionLink{Origin:parent,Relation:head.Lineage}};ch.Observations=[]capture.Observation{obs}
 	read:=filetail.Read;if a.Reader!=nil{read=a.Reader.Read};b,e:=read(ctx,tc,local,cp,lim);if e!=nil{return ch,e};ch.ScannedBytes=b.ScannedBytes;ch.Reconcile=b.Reconcile;ch.Next=b.Next;ch.Next.Stream=st.Key;ch.Quarantine=b.Quarantine;ch.Omissions=b.Omissions;ch.CaughtUp=b.CaughtUp
-	for _,line:=range b.Lines{l,e:=decode(line.Data);if e!=nil{ch.Quarantine="unknown_shape";return ch,nil};if l.Kind=="session"{continue};if l.Kind!="event"||l.SessionID!=head.SessionID||l.Role==""||l.Type==""||(l.Status!="final"&&l.Status!="partial"){ch.Quarantine="unknown_shape";return ch,nil};if l.Status=="partial"{ch.Next.Position=strconv.FormatInt(line.Offset,10);ch.Next.PrefixDigest="";ch.CaughtUp=false;break};ev:=records.Event{NativeID:l.EventID,Role:l.Role,Type:l.Type,Text:strings.ToValidUTF8(l.Text,"�"),Parent:l.ParentEventID,Time:l.Time};if l.Event!=nil{ev=*l.Event;ev.Text=strings.ToValidUTF8(ev.Text,"�")};body:="";if len(l.Tool)>0||len(l.Native)>0{bb,_:=json.Marshal(map[string]json.RawMessage{"tool":l.Tool,"native":l.Native});body=string(bb)};ch.Events=append(ch.Events,capture.Event{Origin:origin,CWD:l.CWD,Event:ev,ToolBody:body,PositionKey:strconv.FormatInt(line.Offset,10)})};return ch,nil
+	for _,line:=range b.Lines{l,e:=decode(line.Data);if e!=nil{ch.Quarantine="unknown_shape";return ch,nil};if l.Kind=="session"{continue};if l.Kind!="event"||l.SessionID!=head.SessionID||l.Role==""||l.Type==""||(l.Status!="final"&&l.Status!="partial"){ch.Quarantine="unknown_shape";return ch,nil};if l.Status == "partial" {
+			rewound, err := filetail.RewindCheckpoint(ctx, tc, local, b.Next, line.Offset)
+			if err != nil {
+				return capture.Changes{}, err
+			}
+			rewound.Stream = st.Key
+			ch.Next = rewound
+			ch.CaughtUp = false
+			break
+		};ev:=records.Event{NativeID:l.EventID,Role:l.Role,Type:l.Type,Text:strings.ToValidUTF8(l.Text,"�"),Parent:l.ParentEventID,Time:l.Time};if l.Event!=nil{ev=*l.Event;ev.Text=strings.ToValidUTF8(ev.Text,"�")};body:="";if len(l.Tool)>0||len(l.Native)>0{bb,_:=json.Marshal(map[string]json.RawMessage{"tool":l.Tool,"native":l.Native});body=string(bb)};ch.Events=append(ch.Events,capture.Event{Origin:origin,CWD:l.CWD,Event:ev,ToolBody:body,PositionKey:strconv.FormatInt(line.Offset,10)})};return ch,nil
 }
