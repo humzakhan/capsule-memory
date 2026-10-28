@@ -1,5 +1,9 @@
 # V1 delivery status
 
+For current candidate evidence, dependency pins and executed checks, see
+[release readiness](releases.md). Dated source-only results below retain their
+original scope and must not be read as the current candidate status.
+
 This page preserves the original source-only delivery evidence. Later authorized
 [Mac beta QA](mac-qa.md) records runtime checks and local fixes separately from
 the published beta tag.

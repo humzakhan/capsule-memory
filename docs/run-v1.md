@@ -1,5 +1,9 @@
 # Run v1 on the owner's machine
 
+For current candidate evidence, dependency pins and executed checks, see
+[release readiness](releases.md). Dated source-only results below retain their
+original scope and must not be read as the current candidate status.
+
 **Source artifact; all runtime checks NOT RUN.** This sequence is for your own
 trusted Linux/macOS machine with synthetic data. It is not authorization to run
 workloads on the shared OVH host or provision Cloudflare resources. No production

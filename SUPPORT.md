@@ -1,8 +1,8 @@
 # Support
 
-Start with the [runbook](docs/run-v1.md) and [current status](docs/v1-status.md). Capsule Memory is an experimental storage and synchronization utility for existing agent memories and skills; no runtime checks have been completed, and no support SLA is promised.
+Start with the [runbook](docs/run-v1.md) and [current status](docs/v1-status.md). Capsule Memory is an experimental storage and synchronization utility for existing agent memories and skills; bounded synthetic Mac/Cloudflare QA is recorded in [release evidence](docs/releases.md), and no support SLA is promised.
 
-For agent-led setup, use the [task-specific prompts](prompts/README.md). Owner setup, relay preparation, enrolled devices and MCP clients have separate instructions; no daemon or background publisher is included.
+For agent-led setup, use the [task-specific prompts](prompts/README.md). Owner setup, relay preparation, enrolled devices and MCP clients have separate instructions; the optional Linux/macOS daemon supports independently enabled capture, publication and derivation; all start off.
 
 ## Find the relevant guide
 
@@ -14,7 +14,7 @@ For agent-led setup, use the [task-specific prompts](prompts/README.md). Owner s
 | Index rebuild, device recovery, or cleanup | [Recovery and cleanup](docs/run-v1.md#5-recovery-and-cleanup) |
 | Design limits or missing features | [Docs index](docs/README.md) · [Roadmap](docs/roadmap.md) |
 
-Synchronization is manual. A local write can succeed while publication is pending. On transient failures, retry the same sync with bounded backoff; preserve the device home and queued bytes. Do not reset an identity, delete a database, or regenerate ciphertext to make an error disappear.
+Legacy synchronization uses explicit CLI sync; optional daemon publication requires separate opt-in. A local write can succeed while publication is pending. On transient failures, retry the same sync with bounded backoff; preserve the device home and queued bytes. Do not reset an identity, delete a database, or regenerate ciphertext to make an error disappear.
 
 ## Ask for help
 

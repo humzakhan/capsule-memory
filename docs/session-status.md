@@ -1,5 +1,9 @@
 # Session module source status
 
+For current candidate evidence, dependency pins and executed checks, see
+[release readiness](releases.md). Dated source-only results below retain their
+original scope and must not be read as the current candidate status.
+
 The sections below preserve the source-only delivery evidence. Later authorized
 [Mac beta QA](mac-qa.md) records local repairs and bounded runtime results on a
 local branch; it does not establish acceptance of the published beta tag.

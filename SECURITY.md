@@ -1,12 +1,12 @@
 # Security policy
 
-Capsule Memory is an experimental utility for securely storing and synchronizing existing agent memories and skills. There is no runtime-verified or security-audited release.
+Capsule Memory is an experimental utility for securely storing and synchronizing existing agent memories and skills. Bounded synthetic runtime checks exist; no independent security audit or sensitive-use acceptance is claimed.
 
-Focused source inspection has occurred; dependency resolution, builds, typechecks, tests, E2E, and deployment security remain unverified. Use synthetic data while establishing acceptance for your intended environment.
+Focused source inspection, locked builds, tests and bounded E2E have run; [release evidence](docs/releases.md) identifies the exact source and remaining limits. Use synthetic data while establishing acceptance for your intended environment.
 
 ## Report a vulnerability privately
 
-If GitHub private vulnerability reporting is enabled for this repository, use **Security → Report a vulnerability**. Its availability has not been confirmed. Otherwise, contact the repository owner, Humza Khan, through an established private channel. No dedicated reporting email or response SLA is published.
+Use [GitHub private vulnerability reporting](https://github.com/humzakhan/capsule-memory/security/advisories/new), also available under **Security → Report a vulnerability**. Reports stay private during coordination. No response SLA is promised.
 
 Include the affected commit/file, expected and observed behavior, impact, and a minimal synthetic reproduction. Do not include real memories, keys, credentials, device profiles, or exploitable private details in a public issue or pull request. If you have no established private channel and the reporting button is absent, request a private contact route without disclosing vulnerability details.
 

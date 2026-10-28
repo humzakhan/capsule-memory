@@ -5,7 +5,7 @@
   "display_name": "Capsule Memory",
   "repository": "https://github.com/humzakhan/capsule-memory",
   "description": "A utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses.",
-  "status": "experimental-runtime-unverified",
+  "status": "experimental-bounded-qa",
   "execution_authorization": "none; follow the user's task, repository instructions and permitted execution route",
   "entrypoints": {
     "readme": "README.md",
@@ -13,7 +13,7 @@
     "index": "llms.txt",
     "setup_prompts": "prompts/README.md",
     "discovery_guide": "docs/agent-discovery.md",
-    "runtime_evidence": "docs/v1-status.md",
+    "runtime_evidence": "docs/releases.md",
     "runbook": "docs/run-v1.md",
     "session_status": "docs/session-status.md",
     "session_runbook": "docs/run-session.md"
@@ -36,7 +36,7 @@
     "search": "device-local SQLite FTS5",
     "archive": "encrypted content with visible authorization/traffic metadata",
     "keys": "restricted local files; no native keystore integration",
-    "enrollment": "independent device identity; selective scope grants/key packages in v2; runtime unverified",
+    "enrollment": "independent device identity; selective scope grants/key packages in v2; bounded QA, see release evidence",
     "skills": "staged until exact owner approval and local read-as-text activation; no execution",
     "secrets_in_prompts": false
   },
@@ -54,7 +54,7 @@
     {"id": "session-history", "prompt": "prompts/11-session-history.md"}
   ],
   "session_module": {
-    "status": "source-integrated-reviewed-runtime-NOT-RUN",
+    "status": "experimental-bounded-mac-qa-platform-and-harness-limits",
     "default_enabled": false,
     "platforms": ["linux", "macos"],
     "capture": ["version-pinned Claude JSONL", "version-pinned Codex rollout", "pinned T3 HTTP", "owner-declared transcript import"],

@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.0-beta.2 — validated experimental source update
+
+Source archives only; synthetic evaluation recommended. No prebuilt executables
+or hosted service. See [release evidence](docs/releases.md) for exact scope.
+
+- Update Go to 1.26.10, MCP SDK to 1.4.1, segmentio/encoding to 0.5.4, x/sys to
+  0.44.0, Wrangler to 4.154.0 and compatible pinned Worker types. Dependency and
+  standard-library vulnerability scans are clean for the documented targets.
+- Repair policy patches and successful IPC acknowledgements; preserve ancestry
+  and stale-review errors over IPC; keep local-backend schema compatibility
+  explicit and validate memory/decision candidate states.
+- Quarantine T3 responses missing advertised history continuations and bound
+  incremental stale-state refresh with affected-record indexed lookups.
+- Include scoped Mac/Cloudflare QA evidence, failure-case ledger, rollback
+  guidance, current setup/discovery metadata and private vulnerability reporting.
+- Preserve default-off session controls, exact encrypted retries, v1 wire bytes,
+  experimental status and all documented incomplete/unsupported behavior.
+
 ## v0.1.0-beta.1 — Initial source beta
 
 This prerelease makes the authored implementation available for inspection and

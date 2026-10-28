@@ -1,5 +1,9 @@
 # Evaluate the optional session module
 
+For current candidate evidence, dependency pins and executed checks, see
+[release readiness](releases.md). Dated source-only results below retain their
+original scope and must not be read as the current candidate status.
+
 Use disposable synthetic data on an explicitly authorized Linux/macOS development machine or isolated job. **Every command below is prepared for later owner execution; none was run during implementation.** Read [session status](session-status.md) before setup. Allow roughly 30–60 minutes for dependency/build review and a synthetic first pass, excluding model installation and debugging.
 
 The coordinator must first integrate the parallel source deliveries and complete independent review. New source is not a working release until compiled and exercised. These instructions grant no service installation, real-history access, credential discovery, inference call, infrastructure deployment or paid resource use.

@@ -14,14 +14,14 @@ Documentation authoring and read-only file/Git inspection are permitted within t
 
 ## Language and library choices
 
-V1 targets Go 1.24.0 and pins the official Go MCP SDK v1.4.0, modernc SQLite v1.39.1, and Wrangler v4.129.1 via npm with Node 22+. See the implementation runbooks for source evidence and platform limits. The table below separates source choices from pending acceptance; installed compatibility remains unverified.
+V1 targets Go 1.26.10 and pins the official Go MCP SDK v1.4.1, modernc SQLite v1.39.1, and Wrangler v4.154.0 via npm with Node 22+. See the implementation runbooks for source evidence and platform limits. The table below separates source choices from pending acceptance; installed compatibility remains unverified.
 
 | Boundary | Current source choice | Pending evidence or deferred work |
 | --- | --- | --- |
-| Local CLI | Go 1.24.0, standard packages, explicit construction | Platform builds; background service deferred |
+| Local CLI | Go 1.26.10, standard packages, explicit construction | Platform builds; background service deferred |
 | MCP | Official Go SDK v1.4.0; fixed-scope stdio process | SDK runtime behavior and specific harness compatibility |
 | Local data | modernc SQLite v1.39.1 and FTS5, explicit SQL | Runtime FTS5, packaging, backups, migrations |
-| Relay | TypeScript, native Workers/DO APIs, Wrangler v4.129.1, npm | No-emit typecheck and formatter gate; provider acceptance pending |
+| Relay | TypeScript, native Workers/DO APIs, Wrangler v4.154.0, npm | No-emit typecheck and formatter gate; provider acceptance pending |
 | Cryptography | AES-256-GCM, Ed25519, explicit v1 framing | Runtime interoperability, security review; automated key distribution deferred |
 
 No general web framework, ORM, vector database, distributed broker, or frontend is needed for the first slice. Dependencies must earn their maintenance cost. The [Go SDK list](https://modelcontextprotocol.io/docs/sdk) is the source for MCP SDK support, not a promise about every harness feature.
@@ -86,7 +86,7 @@ Targeted diagnostics: `--phase quality` (Go + relay), `--phase go`, `--phase rel
 
 The gate never installs dependencies, rewrites source/manifests, generates Worker declarations, starts services or deploys. Go commands disable automatic module/toolchain downloads, use `-mod=readonly` with disposable manifest copies (and fail if checks require manifest changes), two package workers and `GOMAXPROCS=2`; tests have a two-minute per-package timeout. Build outputs live in a task-owned temporary directory removed on exit. Build caches outside the checkout may be populated; resolve missing modules separately. Caller `GOFLAGS` are cleared to prevent accidental module/output overrides. Source must be trusted before running its tests. Stop a stalled job and report it as incomplete; this script is not an OS resource sandbox.
 
-The relay uses TypeScript 5.9.3 (Apache-2.0) for no-emit checks, Prettier 3.6.2 (MIT) for formatting inspection, and `@cloudflare/workers-types` 5.20260907.1 (MIT OR Apache-2.0), matching Wrangler 4.129.1's peer range and workerd compatibility date. These are development-only dependencies with update/lockfile maintenance costs. Native APIs need no routing framework. `tsconfig.json` explicitly loads Worker definitions without the DOM library or generated declarations, so missing Worker types fail. See [Cloudflare TypeScript guidance](https://developers.cloudflare.com/workers/languages/typescript/), [TypeScript noEmit](https://www.typescriptlang.org/tsconfig/noEmit.html), and [Prettier check mode](https://prettier.io/docs/cli#--check). Versions were verified against official npm metadata during setup; this is not a claim that they are the latest versions.
+The relay uses TypeScript 5.9.3 (Apache-2.0) for no-emit checks, Prettier 3.6.2 (MIT) for formatting inspection, and `@cloudflare/workers-types` 5.20261023.1 (MIT OR Apache-2.0), matching Wrangler 4.154.0's peer range and workerd compatibility date. These are development-only dependencies with update/lockfile maintenance costs. Native APIs need no routing framework. `tsconfig.json` explicitly loads Worker definitions without the DOM library or generated declarations, so missing Worker types fail. See [Cloudflare TypeScript guidance](https://developers.cloudflare.com/workers/languages/typescript/), [TypeScript noEmit](https://www.typescriptlang.org/tsconfig/noEmit.html), and [Prettier check mode](https://prettier.io/docs/cli#--check). Versions were verified against official npm metadata during setup; this is not a claim that they are the latest versions.
 
 Verify the gate itself with `python3 scripts/check_test.py` on an authorized host with Git, Go, Node/npm and the reviewed local relay dependencies. Its disposable Git/module fixtures test observable success/failure and prerequisite handling without changing product source. Python 3 is only needed for this tooling test, not the gate.
 

@@ -3,14 +3,14 @@
 **Securely store and sync existing agent memories and skills across machines and harnesses.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Go 1.24.0](https://img.shields.io/badge/Go-1.24.0-00ADD8.svg)](go.mod)
+[![Go 1.26.10](https://img.shields.io/badge/Go-1.26.10-00ADD8.svg)](go.mod)
 [![Status: source beta](https://img.shields.io/badge/status-source_beta-orange.svg)](docs/releases.md)
 
 Capsule Memory securely stores and synchronizes agent memories and skills across machines and harnesses. A shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Manual workflows leave selection to agents and harnesses. An optional session module adds explicitly enabled conversation capture, local summaries and reviewable memory/decision candidates.
 
 The experimental source includes a Go CLI, scoped MCP, local SQLite search and encrypted synchronization through Cloudflare. The optional session feature is integrated into `main`; [session status](docs/session-status.md) separates reviewed source from runtime evidence. The feature defaults off.
 
-> **Initial source beta: [v0.1.0-beta.1](https://github.com/humzakhan/capsule-memory/releases/tag/v0.1.0-beta.1).** Source archives only; no tested binaries or hosted service. Current-source formatting, builds, typechecks, tests and E2E are **NOT RUN**. Historical setup checks had failures and do not verify this release. Start with synthetic data; source review is not runtime or security acceptance. See the [release gates and known limits](docs/releases.md).
+> **Experimental source beta: [v0.1.0-beta.2](https://github.com/humzakhan/capsule-memory/releases/tag/v0.1.0-beta.2).** Source archives only; no prebuilt binaries or hosted service. Bounded Mac/Cloudflare QA has executed: 91 cases passed, 95 are partial and 7 blocked. The beta.2 dependency set receives its own quality, vulnerability and fresh-source checks. Use synthetic data; this is not a security audit or general platform acceptance. See [release evidence and limits](docs/releases.md).
 
 [Quickstart](#try-the-source-with-synthetic-data) · [Agent setup prompts](prompts/README.md) · [Agent discovery](docs/agent-discovery.md) · [Documentation](docs/README.md) · [Delivery status](docs/v1-status.md)
 
@@ -27,13 +27,13 @@ Existing agent context should remain available across sessions, machines, and ha
 
 | Authored capability | Boundary |
 | --- | --- |
-| CLI capture, recall, history, delete/restore, and index rebuild | SQLite and FTS5 on each trusted device; runtime unverified |
+| CLI capture, recall, history, delete/restore, and index rebuild | SQLite and FTS5 on trusted devices; bounded Mac QA recorded |
 | Official Go SDK MCP tools | Fixed launch scope; store/recall/get/delete, status, and skill list/fetch |
 | Signed encrypted manual sync | Explicit CLI `sync`; durable outbox, replay, and retained conflict/deletion history |
-| Cloudflare Worker, Durable Object, and R2 adapter | R2 is the first implemented storage adapter; provider behavior unverified |
+| Cloudflare Worker, Durable Object, and R2 adapter | R2 is the first adapter; bounded QA passed, broader provider faults unverified |
 | Local skill approval and activation | Exact owner-approved Markdown revision, `read-as-text` only; approvals do not sync |
 
-**Optional session source:** Linux/macOS daemon and authenticated local IPC, version-pinned Claude/Codex/T3/import capture, compressed encrypted histories, loopback local inference, reviewable candidates and lifecycle-checked v2 knowledge. Compilation and runtime are **NOT RUN**. See [session history](docs/session-history.md), [status](docs/session-status.md) and [runbook](docs/run-session.md).
+**Optional session source:** Linux/macOS daemon and authenticated local IPC, version-pinned Claude/Codex/T3/import capture, compressed encrypted histories, loopback local inference, reviewable candidates and lifecycle-checked v2 knowledge. Bounded runtime evidence and untested variants are recorded in [QA results](docs/qa/2026-10-28-autonomous.md). See [session history](docs/session-history.md), [status](docs/session-status.md) and [runbook](docs/run-session.md).
 
 **Deferred:** WebSockets, native keystores, automated key rotation, embeddings, published-body cache eviction, Git automation and executable skill installation. Harness/platform compatibility remains unverified. See the [roadmap](docs/roadmap.md).
 
@@ -80,7 +80,7 @@ The [architecture](docs/architecture.md) also describes future components. Use t
 
 ## Try the source with synthetic data
 
-Use your own trusted Linux/macOS development machine with Go 1.24.0, Node 22+, and npm. Platform compatibility is unverified. Allow roughly 15–30 minutes for initial dependency resolution/build and 2–5 minutes for the authored E2E journey if the source works.
+Use your own trusted Linux/macOS development machine with Go 1.26.10, Node 22+, and npm. Platform compatibility is unverified. Allow roughly 15–30 minutes for initial dependency resolution/build and 2–5 minutes for the authored E2E journey if the source works.
 
 From a checkout of `main`:
 
@@ -94,7 +94,7 @@ npm ci --prefix cloudflare --ignore-scripts
   node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
 ```
 
-**These commands are NOT RUN for this beta.** `go.sum` and `cloudflare/package-lock.json` are committed. Use the pinned toolchain and locked dependencies; do not regenerate locks as an installation step. The check gate includes formatting, static/type checks, tests and builds; a failure is a blocker for a tested binary release. Historical setup evidence is recorded in [verification](docs/verification.md#setup-gate-baseline-2026-10-27).
+**Beta.2 fresh-source checks are recorded in [release evidence](docs/releases.md).** `go.sum` and `cloudflare/package-lock.json` are committed. Use the pinned toolchain and locked dependencies; do not regenerate locks as an installation step. The check gate includes formatting, static/type checks, tests and builds; a failure is a blocker for a tested binary release. Historical setup evidence is recorded in [verification](docs/verification.md#setup-gate-baseline-2026-10-27).
 
 The E2E journey uses disposable synthetic device homes and local-only Worker/DO/R2 emulation. No Cloudflare token or deployment is required. Read the [complete runbook](docs/run-v1.md) for setup, retained failure artifacts, and cleanup, and the [E2E guide](e2e/README.md) for assertions and limits. Local emulator success would not establish production durability or security.
 
@@ -125,7 +125,7 @@ Configure a compatible client to launch this command and argument list. Replace 
 }
 ```
 
-The server exposes `memory_store`, `memory_recall`, `memory_get`, `memory_delete`, `sync_status`, `skill_list`, and `skill_fetch`. Its scope is fixed at launch and grants write/delete authority within that scope. No MCP sync, enrollment, approval, or activation tool is exposed. See [Go client and MCP usage](docs/go-client.md#mcp-and-staged-skills) for exact inputs and skill trust behavior. No particular harness integration has been runtime-verified.
+The server exposes `memory_store`, `memory_recall`, `memory_get`, `memory_delete`, `sync_status`, `skill_list`, and `skill_fetch`. Its scope is fixed at launch and grants write/delete authority within that scope. No MCP sync, enrollment, approval, or activation tool is exposed. See [Go client and MCP usage](docs/go-client.md#mcp-and-staged-skills) for exact inputs and skill trust behavior. Scoped stdio MCP was tested on the Mac; native harness-version compatibility remains partial.
 
 ## Privacy and trust limits
 

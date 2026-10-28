@@ -20,11 +20,11 @@ Share only manually reviewed, redacted diagnostics. Public IDs, paths, and metad
 
 ## Dependencies and verification
 
-The source pins Go 1.24.0, the official MCP SDK v1.4.0, `modernc.org/sqlite` v1.39.1 (with libc v1.66.10), and Wrangler v4.129.1; the relay requires Node 22+. See [go.mod](go.mod) and [cloudflare/package.json](cloudflare/package.json).
+The source pins Go 1.26.10, the official MCP SDK v1.4.1, `modernc.org/sqlite` v1.39.1 (with libc v1.66.10), and Wrangler v4.154.0; the relay requires Node 22+. See [go.mod](go.mod) and [cloudflare/package.json](cloudflare/package.json).
 
 `go.sum` and `cloudflare/package-lock.json` are reviewed dependency-resolution outputs. Use `go mod download` and `npm ci --prefix cloudflare --ignore-scripts` for setup separately from the no-rewrite check gate. Review any subsequent manifest/lock changes and registry URLs. New dependencies need a concrete requirement, maintenance and license rationale, and platform implications.
 
-Use [verification scenarios](docs/verification.md) to select meaningful checks. The [E2E journey](e2e/README.md) is authored, not passed. Source reading and `git diff --check` establish only inspection and whitespace evidence; neither proves runtime behavior or security.
+Use [verification scenarios](docs/verification.md) to select meaningful checks. The [E2E journey](e2e/README.md) has bounded local execution evidence; consult [release evidence](docs/releases.md) for exact revisions and limits. Source reading and `git diff --check` establish only inspection and whitespace evidence; neither proves runtime behavior or security.
 
 ## Execution environments
 

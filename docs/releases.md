@@ -1,6 +1,60 @@
 # Releases and readiness
 
-## Initial beta
+
+## v0.1.0-beta.2 — experimental source beta
+
+This candidate includes the Mac/Cloudflare QA repairs, dependency-security
+updates, and corrected setup/support documentation. Distribution remains source
+archives only: no executable assets, package-manager installer or hosted relay.
+Use synthetic data. No security audit or broad platform/harness acceptance is
+claimed. The immutable release tag identifies the final source revision; beta.1
+is retained unchanged and must not inherit later test results.
+
+Current pins: Go **1.26.10**, Go MCP SDK **1.4.1**, SQLite **1.39.1**, Wrangler
+**4.154.0**, Worker types **5.20261023.1** and Node **22+**. The Go patch line
+addresses standard-library advisories found in the previous 1.24.0 build; SDK,
+segmentio/encoding and x/sys updates address dependency advisories. The Wrangler
+upgrade resolves the previous dev-toolchain audit entries without overrides or
+forced peer-dependency resolution. Worker compatibility_date stays 2026-09-07.
+No cryptographic wire format or schema version changes were introduced.
+
+### Evidence and release gates
+
+- Quality gate passed with the updated dependency set: Go formatting/vet/tests/
+  build and relay TypeScript/format checks. npm audit reports zero findings,
+  including development dependencies; govulncheck v1.9.0 reports no findings for
+  macOS arm64, Linux amd64 and Windows amd64 source targets. Scanner results are
+  dated evidence, not a security guarantee or a runtime-platform test.
+- Publication is gated on locked dependency installation, the full check gate,
+  a CLI build and the existing local Worker E2E journey in a fresh disposable
+  checkout of the final candidate. Exact commit and outcomes accompany the
+  GitHub prerelease. This is a fresh checkout on the same Mac with cached
+  dependencies, not a separate clean machine or foreign-platform execution.
+- Earlier [autonomous QA](qa/2026-10-28-autonomous.md) covered 193 documented
+  cases: **91 passed, 95 partial, 7 blocked**. That report records its older
+  product SHA and exact limits; those counts are not a new exhaustive beta.2 run.
+  It includes actual Cloudflare memory/skill synchronization, concurrent writes,
+  durability/recovery, scoped MCP, capture/withdrawal and focused fault probes.
+- GitHub [private vulnerability reporting](https://github.com/humzakhan/capsule-memory/security/advisories/new)
+  is enabled. Follow [SECURITY.md](../SECURITY.md); never disclose real content,
+  keys or profiles in public reports.
+
+Remaining limits include Linux/Windows runtime, native harness-version coverage,
+full real-format capture compatibility, current resident-model inference,
+long-duration load, exhaustive crash/provider-failure schedules and independent
+cryptographic/security acceptance. Published-body cache eviction is unimplemented;
+knowledge scans can report incomplete coverage after 4096 candidates per stream.
+Private keys/plaintext remain local files; deletion is not physical erasure.
+
+### Binary releases remain deferred
+
+A future binary release needs explicit version/build identification, published
+checksums/provenance and dependency notices, plus clean-machine install/update/
+uninstall/rollback evidence for every advertised platform. This source beta
+ships no downloadable executable and does not claim those gates are complete.
+
+
+## Historical initial beta — v0.1.0-beta.1
 
 [v0.1.0-beta.1](https://github.com/humzakhan/capsule-memory/releases/tag/v0.1.0-beta.1)
 is the first GitHub **prerelease**, distributed as source archives. The repository
@@ -37,8 +91,8 @@ The tag and GitHub release identify the exact final source revision.
 
 The [dated setup baseline](verification.md#setup-gate-baseline-2026-10-27)
 recorded Go/relay formatting failures and a relay `TextDecoderOptions` typecheck
-failure at `cloudflare/src/wire.ts:6`. That constructor remains unchanged in this
-source. Historical Go vet/test/build success reported no test files and predates
+failure at `cloudflare/src/wire.ts:6`. That constructor was unchanged in that
+release; beta.2 includes the later correction. Historical Go vet/test/build success reported no test files and predates
 the repairs. None of those results verifies this beta. No current execution was
 performed during release preparation, and no CI workflow was enabled.
 
