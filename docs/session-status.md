@@ -11,7 +11,7 @@
 | Owner-signed aggregation grants, v2 knowledge promotion, lifecycle and live freshness checks | `internal/projection` | Authored; NOT RUN |
 | Hand-authored protocol/adapter examples | `contracts/` | Authored data; not validated or executed evidence |
 
-All installation, dependency resolution, formatting (`gofmt`), compilation, vet, tests, validators, runtime, daemon, inference, real-format capture, synchronization and production provider checks are **NOT RUN**. No new automated tests were authored for this task. Source review and `git diff --check` are the only permitted checks; the implementation handoff records their actual result.
+All installation, dependency resolution, formatting (`gofmt`), compilation, vet, tests, validators, runtime, daemon, inference, real-format capture, synchronization and production provider checks for this source delivery are **NOT RUN**. The original task authored no automated tests. Later repairs may add only focused regression source for concrete uncovered defects; that source remains unexecuted. Source review and `git diff --check` are the only permitted checks in the repair task; its handoff records their actual result. Historical setup checks in [verification](verification.md#setup-gate-baseline-2026-10-27) retain their original source identity and do not verify these repairs.
 
 ## Defaults and practical limits
 
