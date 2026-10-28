@@ -1,6 +1,20 @@
 # Releases and readiness
 
 
+## v0.1.0-beta.4 — refreshed README artwork
+
+A documentation-only source prerelease replacing the three README diagrams with
+the owner-supplied FROST Light PNGs. The images are preserved byte-for-byte, with
+descriptive alternative text retained. The superseded SVG files are removed from
+current main; historical releases are unchanged.
+
+Validation checks PNG format/dimensions, exact attachment hashes, local image
+links, retained alternative text, whitespace and the Conventional Commit subject.
+No product source or dependencies changed. Functional tests and vulnerability
+scans are not rerun for this artwork-only change; beta.2 evidence below retains
+its original source identity. Distribution remains source archives only.
+
+
 ## v0.1.0-beta.3 — clearer guides and diagrams
 
 A documentation-only source prerelease: a plain-language README, accessible SVG

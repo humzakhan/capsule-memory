@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.0-beta.4 — refreshed README artwork
+
+Documentation-only update; product code and dependencies are unchanged.
+
+- Replace the three original README SVG diagrams with the supplied FROST Light
+  PNG illustrations for encrypted archives, memories/skills and session history.
+- Preserve descriptive alternative text and the existing opt-in/privacy guidance.
+- Remove the superseded SVG assets; previous release tags retain their originals.
+
 ## v0.1.0-beta.3 — everyday workflows and visual guides
 
 Documentation-only source update; product code and dependencies are unchanged.

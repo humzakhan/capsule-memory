@@ -11,7 +11,7 @@ Capsule Memory helps you keep useful memories, reusable skill guides and optiona
 
 [Get started](#get-started) · [How sync works](#how-sync-works) · [Conversation history](#optional-conversation-history) · [Our agents](#use-it-with-our-agents) · [Documentation](docs/README.md)
 
-![A trusted computer encrypts saved context, a Cloudflare archive stores encrypted copies, and another authorized device downloads them for local recall. Background sync must be enabled.](docs/assets/how-it-works.svg)
+![A trusted computer encrypts saved context, a Cloudflare archive stores encrypted copies, and another authorized device downloads them for local recall. Background sync must be enabled.](docs/assets/how-it-works.png)
 
 ## How it helps your everyday work
 
@@ -29,7 +29,7 @@ A **memory** is a saved note: a preference, project fact or decision. A **skill*
 
 Once you enable background sync, Capsule Memory's local background process—the **daemon**—periodically uploads and downloads saved records for the projects you select. This includes both memories and skill text. You choose which devices have access; nothing starts syncing just because you install the software.
 
-![Saved memories pass through encrypted sync and become available for recall. Saved skill text follows the same sync path but arrives for local review; approval does not synchronize.](docs/assets/memories-and-skills.svg)
+![Saved memories pass through encrypted sync and become available for recall. Saved skill text follows the same sync path but arrives for local review; approval does not synchronize.](docs/assets/memories-and-skills.png)
 
 What to expect after setup:
 
@@ -44,7 +44,7 @@ What to expect after setup:
 
 If you want more than individually saved notes, you can separately enable conversation capture and local summaries.
 
-![Optional stages: capture approved conversations, summarize with a configured local model, review suggestions, and reuse approved knowledge or deliberately grant sharing access.](docs/assets/conversation-to-context.svg)
+![Optional stages: capture approved conversations, summarize with a configured local model, review suggestions, and reuse approved knowledge or deliberately grant sharing access.](docs/assets/conversation-to-context.png)
 
 1. **Choose what to capture.** Version-specific adapters exist for Claude, Codex and T3, plus explicit transcript imports. Capture starts with future conversations; importing older history requires separate limits. App/version compatibility is partial.
 2. **Summarize on your device.** An explicitly configured local model can produce session summaries and project overviews. The model server requires separate setup; Capsule Memory does not send transcripts to a cloud model.
