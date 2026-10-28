@@ -14,13 +14,17 @@
     "setup_prompts": "prompts/README.md",
     "discovery_guide": "docs/agent-discovery.md",
     "runtime_evidence": "docs/releases.md",
+    "cli_installation": "docs/install.md",
+    "macbook_controller": "prompts/12-macbook-controller.md",
     "runbook": "docs/run-v1.md",
     "session_status": "docs/session-status.md",
-    "session_runbook": "docs/run-session.md"
+    "session_runbook": "docs/run-session.md",
+    "device_enrollment": "docs/device-enrollment.md"
   },
   "cli": {
     "binary": "capsule-memory",
     "source": "cmd/capsule-memory",
+    "install_path": "/usr/local/bin/capsule-memory on macOS/Linux; source build, normal-user operation",
     "sync": "legacy manual CLI sync; optional Linux/macOS daemon with independent capture/publication/derivation controls, all off initially"
   },
   "mcp": {
@@ -35,8 +39,8 @@
   "trust": {
     "search": "device-local SQLite FTS5",
     "archive": "encrypted content with visible authorization/traffic metadata",
-    "keys": "restricted local files; no native keystore integration",
-    "enrollment": "independent device identity; selective scope grants/key packages in v2; bounded QA, see release evidence",
+    "keys": "restricted local files; optional explicit macOS native Keychain custody for owner signing key only; native operations not runtime-verified",
+    "enrollment": "beta.5 owner CLI; independent joining-device keys, invitation/fingerprint approval and encrypted selected-scope delivery; matching Worker required",
     "skills": "staged until exact owner approval and local read-as-text activation; no execution",
     "secrets_in_prompts": false
   },
@@ -51,7 +55,8 @@
     {"id": "recover-device", "prompt": "prompts/08-recover-device.md"},
     {"id": "review-skill", "prompt": "prompts/09-review-skill.md"},
     {"id": "security-operations", "prompt": "prompts/10-security-operations.md"},
-    {"id": "session-history", "prompt": "prompts/11-session-history.md"}
+    {"id": "session-history", "prompt": "prompts/11-session-history.md"},
+    {"id": "macbook-controller", "prompt": "prompts/12-macbook-controller.md"}
   ],
   "session_module": {
     "status": "experimental-bounded-mac-qa-platform-and-harness-limits",

@@ -46,7 +46,7 @@ export interface Archive {
 export const utf8 = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
 // A timeout does NOT cancel an in-flight provider write. Its outcome remains
 // ambiguous and is resolved by immutable create-once/head CAS on an exact retry.
-async function provider<T>(operation: Promise<T>): Promise<T> {
+export async function provider<T>(operation: Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([

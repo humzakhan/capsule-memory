@@ -1,39 +1,43 @@
-# Join another machine or publishing node
+# Join another machine
 
-Use this for a new device in an existing vault. This is separate from initializing an owner.
+Use this for a new ordinary device in an existing vault. Owner recovery or
+transferring primary owner authority is a separate operation.
 
 ~~~text
-Enroll a new trusted Capsule Memory device without creating another vault.
+Enroll this trusted machine into my existing Capsule Memory vault.
 
-Inputs: trusted CHECKOUT/SOURCE_REVISION, BINARY, existing OWNER_HOME,
-new private CHILD_HOME, intended vault/relay and scope, target machine,
-approved authenticated profile-transfer method, EXECUTION_ROUTE and ALLOWED_ACTIONS.
-Provide file locations and public identities, not secret contents.
+Read AGENTS.md, prompts/README.md, docs/install.md, docs/device-enrollment.md
+and the matching enrollment protocol. Build/install v0.1.0-beta.5 or the selected
+later compatible release on this machine before joining. The normal macOS/Linux
+target is /usr/local/bin/capsule-memory, verified on PATH and recorded by exact
+revision; use normal-user execution and approved privileges only for installing
+the executable. Respect host restrictions, including OVH's workload policy.
+Verify the client and relay match; beta.4 lacks these pairing endpoints.
 
-Read AGENTS.md, prompts/README.md, docs/go-client.md section "Create two device
-profiles", docs/relay-setup.md, and docs/renaming.md.
+1. Preserve the existing vault/owner identity. Never run init on the new device,
+   clone another active device identity, or give this machine owner.json.
+2. On the existing owner machine, use the devices console or device invite with
+   explicit collection IDs. Transfer only the short-lived private invitation
+   through an authenticated encrypted channel; never put it or keys in chat,
+   Git, diagnostics or command arguments. If owner interaction is unavailable,
+   prepare safely and report enrollment pending without granting access.
+3. On this machine, run device join --invite-file PRIVATE_FILE in an unused
+   private home. Keep its generated state and compare its complete fingerprint
+   with the owner's approval screen. Select only authorized collections, knowing
+   they grant read and write, including existing records under their keys.
+   Use the installed absolute executable path and --home PRIVATE_DEVICE_HOME;
+   do not leave the CLI usable only from a source checkout.
+4. Resume the exact saved request after interruption; do not reset or regenerate
+   an identity to escape an uncertain outcome. Distinguish pending, published
+   membership and confirmed activation. Never bypass a denial or revoked grant.
+5. Once active, sync granted collections and use synthetic round-trip checks.
+   Configure scoped MCP/background sync only as authorized. Keep capture and
+   inference off. Skill text stays staged for local review, not execution.
 
-1. Confirm the existing vault/owner identity and target machine trust. Inspect
-   membership intent without printing private profiles. Never run init on the child
-   as an enrollment substitute.
-2. Explain v1 limits: device create grants all scopes for which the owner profile
-   holds current keys. There is no narrow-scope enrollment CLI or read-only device
-   grant. If this exceeds the requested trust, stop enrollment and report the gap.
-3. On the owner, use device create --out CHILD_HOME only when authorized. It creates
-   an independent device identity and queues ordered signed membership control.
-   The new destination must be unused. It must not receive owner.json.
-4. Sync the owner to publish pending controls in generation order before child sync.
-   Preserve pending controls and unused memberships on failure; do not reset the owner.
-5. Transfer only the newly generated child device.json through the approved private
-   authenticated channel. Keep target home 0700 and file 0600. Never use Git, an issue,
-   an unencrypted archive, or this conversation as a transfer channel.
-   Confirm custody and owner-directed treatment of the temporary source copy.
-6. Sync the child for each intended granted scope. If authorized, use one synthetic
-   round-trip to check visibility and provenance. Verify no owner authority is present
-   without exposing private contents.
+For older releases, stop and identify the capability gap. The legacy
+owner-generated child-profile transfer in docs/go-client.md remains available
+only as an explicitly chosen alternative, not a silent downgrade.
 
-Return device/public identity, scope breadth, transfer confirmation without secrets,
-owner-control publication and child coverage evidence, or exact NOT RUN/blockers.
-Do not operate source and destination concurrently as two devices with one copied
-identity. A new machine requires its own enrollment, not a clone of another active home.
+Return installed revision, public device identity, granted scopes, activation
+and replay results, and exact blockers/NOT RUN checks. Expose no secrets.
 ~~~

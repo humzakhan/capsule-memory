@@ -1,16 +1,17 @@
 # Capsule Memory Go client v1
 
-Source is implemented; runtime behavior is **unverified**. No install, Go command,
-formatter, build, test, checker, MCP session, or relay request was run for this
-implementation. Use an authorized isolated environment or the owner's machine
-for every command below. This document does not authorize execution on OVH.
+This reference includes the original legacy workflow. For current bounded
+runtime evidence and limits, see [releases](releases.md). Install the tagged CLI
+with [the installation guide](install.md); new machines normally use
+[owner-reviewed pairing](device-enrollment.md), not owner-generated child profiles.
+Follow the actual host policy; this document does not authorize execution on OVH.
 
 ## Dependencies and source decision
 
-The module targets Go 1.24.0. It pins the official MCP SDK v1.4.0 and
+The module targets Go 1.26.10. It pins the official MCP SDK v1.4.1 and
 `modernc.org/sqlite` v1.39.1, with that driver's exact `modernc.org/libc`
-v1.66.10 requirement. No `go.sum` is fabricated: the authorized dependency
-resolution step must create and review it before acceptance.
+v1.66.10 requirement. Preserve the committed `go.mod` and `go.sum` during setup.
+The SDK references below explain the original API choice, not current version pins.
 
 The [official MCP v1.4.0 module](https://github.com/modelcontextprotocol/go-sdk/blob/v1.4.0/go.mod)
 requires Go 1.24. Its [stdio example](https://github.com/modelcontextprotocol/go-sdk/blob/v1.4.0/README.md)
@@ -26,22 +27,22 @@ includes `SQLITE_ENABLE_FTS5` and SQLite 3.50.4. The driver is BSD-3-Clause,
 uses a CGo-free SQLite translation, and carries transitive maintenance and binary
 size costs. The [exact dependency manifest](https://proxy.golang.org/modernc.org/sqlite/@v/v1.39.1.mod)
 pins libc v1.66.10. The simpler alternative, a CGO SQLite driver, adds a native
-build dependency. Linux/macOS are intended targets; no platform build or static
-binary claim has been verified. Dependency vulnerability review remains pending.
+build dependency. The optional macOS owner Keychain adapter separately requires
+cgo. See [release evidence](releases.md) for the bounded Mac execution, Linux
+cross-build and dated dependency scans; these do not establish every platform.
 
-Resolve modules and build only in the approved environment:
+Resolve modules and build only in the approved environment. Routine installation
+uses locked dependencies; it does not run `go mod tidy` or rewrite formatting:
 
 ```sh
-go mod tidy
-gofmt -w cmd/capsule-memory internal/memory
-go build -o ./bin/capsule-memory ./cmd/capsule-memory
-go vet ./...
+GOTOOLCHAIN=local go mod download
+GOTOOLCHAIN=local go build -mod=readonly -o /private/staging/capsule-memory ./cmd/capsule-memory
 ```
 
-These commands are **NOT RUN**. Review dependency changes and generated sums;
-minimal source `go.mod` may gain transitive requirements during `go mod tidy`.
-The focused black-box journey under `e2e/` owns integration verification; no
-parallel unit suite was added.
+Replace the staging path with a task-owned private directory and follow
+[installation](install.md) for PATH, native macOS prerequisites and rollback.
+The focused black-box journey under `e2e/` owns integration verification; current
+release evidence records executed tests separately from platform/security gaps.
 
 ## Profile paths and rename compatibility
 
@@ -321,6 +322,11 @@ checks are all NOT RUN.** The coordinator owns acceptance, integration,
 inspection, and Git publication.
 
 ## Optional session commands and daemon clients
+
+The unreleased [device approval CLI](device-enrollment.md) adds `devices` and
+invitation/join/request/approve/deny/resume/revoke commands over owner-reviewed
+enrollment. It also offers explicit macOS `owner protect`. These require matching
+client/relay source; the legacy manual child-profile transfer remains available.
 
 The optional module adds authored source for `profile migrate`, `scope add`, scoped
 `device create|grant|revoke-scope|import-keys`, `daemon init|run|client add`,

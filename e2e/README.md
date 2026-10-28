@@ -1,7 +1,8 @@
 # Owner-machine black-box journey
 
-**NOT RUN.** No runtime, dependency install, typecheck, build, or E2E was executed
-while authoring this suite. Follow [the runbook](../docs/run-v1.md) on a trusted
+The original suite was authored source-only. Later bounded execution is recorded
+in [release evidence](../docs/releases.md); the unreleased enrollment extension
+adds the checks described below. Follow [the runbook](../docs/run-v1.md) on a trusted
 owner-operated Linux/macOS machine. This suite never selects a production relay.
 
 ```sh
@@ -38,6 +39,14 @@ synthetic scope uses freshly generated cryptographic bytes to check filtering;
 it is deliberately never granted to a CLI replica. It is a relay-envelope
 boundary scenario, not evidence of logical-record application in that scope.
 
+The [enrollment journey](enrollment.mjs) uses the same real CLI/local Worker and
+failure proxy. It checks local identity persistence, invitation-bound discovery,
+owner-only listing, full-fingerprint and collection ceilings, exact-byte recovery
+after a committed approval reply is dropped, restart write fencing, encrypted activation challenge proof, recipient
+activation and bidirectional selected-scope sync, terminal denial, revocation and pre/post-publication cancellation.
+It deliberately does not access real Keychain items or claim a physical second
+device. See [the operator guide](../docs/device-enrollment.md) for limits.
+
 All state lives in one private temporary directory. Success removes it;
 `--keep` or failure retains it and prints only its path. Logs are bounded and
 kept in the private directory; CLI output, keys, config, and complete envelopes
@@ -63,6 +72,7 @@ CLI/MCP fetch/list state, and invalidation on revision change, conflict, or
 deletion. Normal deleted fetches withhold payload text; explicit history retains
 the stale edit. Text activation declares only `text/markdown` / `read-as-text`.
 Executable activation/installation, harness file writes, global registration,
-and approval-release syncing are unavailable in v1. Automatic epoch rotation, remote
-key distribution, multi-head restore UX, background daemon/hooks, notifications,
+and approval-release syncing are unavailable in v1. Owner-reviewed initial key
+delivery is covered by the new enrollment extension. Automatic epoch rotation,
+ongoing rotated-key distribution, multi-head restore UX, background daemon/hooks, notifications,
 and a Git bridge are outside this journey. No mock converts them into passes.

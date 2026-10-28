@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/humzakhan/capsule-memory/internal/enrollment"
 	"github.com/humzakhan/capsule-memory/internal/frame"
 	"github.com/humzakhan/capsule-memory/internal/records"
 	"github.com/humzakhan/capsule-memory/internal/strictjson"
@@ -27,10 +28,7 @@ var decimalPattern = regexp.MustCompile(`^(0|[1-9][0-9]*)$`)
 var ErrInvalid = errors.New("invalid or unauthorized data")
 var ErrStorage = errors.New("local storage operation failed")
 
-type Signed struct {
-	Payload   string `json:"payload"`
-	Signature string `json:"signature"`
-}
+type Signed = enrollment.Signed
 type Scope struct {
 	ID    string `json:"scope_id"`
 	Epoch string `json:"key_epoch"`
@@ -242,7 +240,7 @@ func sign(prefix string, value any, key ed25519.PrivateKey) (Signed, error) {
 		return Signed{}, err
 	}
 	p := base64.StdEncoding.EncodeToString(b)
-	return Signed{p, base64.StdEncoding.EncodeToString(ed25519.Sign(key, []byte(prefix+"\n"+p+"\n")))}, nil
+	return Signed{Payload: p, Signature: base64.StdEncoding.EncodeToString(ed25519.Sign(key, []byte(prefix+"\n"+p+"\n")))}, nil
 }
 func verify(prefix string, s Signed, public ed25519.PublicKey, dst any) error {
 	b, err := unbase(s.Payload, -1)

@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/humzakhan/capsule-memory/contracts/schemas/device-enrollment.schema.json",
+  "title": "Unsigned enrollment v1 payloads; signature, authority, expiry, epoch and context checks require protocol validation",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/invitation"
+    },
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/decision"
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "seconds": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,18})$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signed": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "payload": {
+          "type": "string",
+          "maxLength": 2097152
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 88,
+          "maxLength": 88
+        }
+      },
+      "required": [
+        "payload",
+        "signature"
+      ]
+    },
+    "invitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "vault_id": {
+          "$ref": "#/$defs/id"
+        },
+        "invite_id": {
+          "$ref": "#/$defs/id"
+        },
+        "relay": {
+          "type": "string",
+          "format": "uri"
+        },
+        "owner_public_key_b64": {
+          "type": "string",
+          "minLength": 44,
+          "maxLength": 44
+        },
+        "scope_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "issued_at": {
+          "$ref": "#/$defs/seconds"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/seconds"
+        },
+        "allow_loopback_http": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "version",
+        "vault_id",
+        "invite_id",
+        "relay",
+        "owner_public_key_b64",
+        "scope_ids",
+        "issued_at",
+        "expires_at",
+        "allow_loopback_http"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "vault_id": {
+          "$ref": "#/$defs/id"
+        },
+        "invite_id": {
+          "$ref": "#/$defs/id"
+        },
+        "invitation_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "device_id": {
+          "$ref": "#/$defs/id"
+        },
+        "public_key_b64": {
+          "type": "string",
+          "minLength": 44,
+          "maxLength": 44
+        },
+        "encryption_key_b64": {
+          "type": "string",
+          "minLength": 44,
+          "maxLength": 44
+        }
+      },
+      "required": [
+        "version",
+        "vault_id",
+        "invite_id",
+        "invitation_sha256",
+        "device_id",
+        "public_key_b64",
+        "encryption_key_b64"
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "vault_id": {
+          "$ref": "#/$defs/id"
+        },
+        "invite_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "action": {
+          "enum": [
+            "approve",
+            "deny"
+          ]
+        },
+        "scope_ids": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "parent_sha256": {
+          "type": "string"
+        },
+        "archive_cursor": {
+          "type": "string"
+        },
+        "control": {
+          "$ref": "#/$defs/signed"
+        },
+        "key_package_b64": {
+          "type": "string",
+          "maxLength": 1398272
+        },
+        "activation_sha256": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "vault_id",
+        "invite_id",
+        "request_sha256",
+        "action",
+        "scope_ids",
+        "parent_sha256",
+        "archive_cursor",
+        "key_package_b64",
+        "activation_sha256"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "approve"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "control"
+            ],
+            "properties": {
+              "scope_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/id"
+                }
+              },
+              "parent_sha256": {
+                "$ref": "#/$defs/digest"
+              },
+              "archive_cursor": {
+                "$ref": "#/$defs/decimal"
+              },
+              "key_package_b64": {
+                "minLength": 64
+              },
+              "activation_sha256": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "required": [
+                "control"
+              ]
+            },
+            "properties": {
+              "scope_ids": {
+                "maxItems": 0
+              },
+              "parent_sha256": {
+                "const": ""
+              },
+              "archive_cursor": {
+                "const": ""
+              },
+              "key_package_b64": {
+                "const": ""
+              },
+              "activation_sha256": {
+                "const": ""
+              }
+            }
+          }
+        }
+      ]
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,127})$"
+    }
+  }
+}

@@ -16,7 +16,7 @@ The first device creates an owner recovery authority and separate device signing
 
 Enrollment uses a short-lived invitation plus an authenticated comparison or transfer of the new device's public-key fingerprint. The owner signs a membership grant naming device identity, permitted opaque scopes, control version, and epoch. A bearer invitation alone must not authorize a substituted key.
 
-Use separate per-scope content-key epochs and authenticated device-specific wrapping. The relay stores only public verification material and opaque wrapped key packages. Exact algorithms, wrapping format, fingerprint UX, and recovery format remain pre-implementation review items.
+Use separate per-scope content-key epochs and authenticated device-specific wrapping. The relay stores public verification material, private invitation capabilities and opaque wrapped key packages, never content or signing private keys. The beta.5 [enrollment extension](device-enrollment-protocol.md) specifies standard HPKE wrapping, complete owner-signed request/decision binding and fingerprint confirmation for initial delivery. Automatic epoch rotation/distribution and owner recovery remain separate boundaries; this is not a blanket security acceptance.
 
 The Worker checks device proof and current grants, not merely a copied device ID. Use short-lived relay credentials scoped to a device; keep object-storage credentials server-side. Local IPC restricts the OS user and validates each harness grant. A project/harness identity cannot invent another scope in a tool argument.
 

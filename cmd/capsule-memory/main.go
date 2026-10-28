@@ -42,11 +42,14 @@ func run(ctx context.Context, args []string) error {
 	}
 	args = global.Args()
 	if len(args) == 0 {
-		return errors.New("command required: init, device create, store, recall, get, delete, restore, sync, status, rebuild, skill, mcp")
+		return errors.New("command required: devices, device, owner protect, init, store, recall, get, delete, restore, sync, status, rebuild, skill, mcp")
 	}
 	command := args[0]
 	args = args[1:]
 	sub := ""
+	if handled, err := runEnrollment(ctx, home, command, args); handled {
+		return err
+	}
 	if handled, err := runOptional(ctx, home, daemonHome, command, args); handled {
 		return err
 	}

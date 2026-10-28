@@ -129,11 +129,28 @@ func (s *Service) Update(ctx context.Context, fn func(*sql.Tx) error) error {
 	return s.updateLocked(ctx, fn)
 }
 func (s *Service) updateLocked(ctx context.Context, fn func(*sql.Tx) error) error {
+	return s.enrollmentTransaction(ctx, false, fn)
+}
+func (s *Service) enrollmentTransaction(ctx context.Context, allowPending bool, fn func(*sql.Tx) error) error {
 	tx, e := s.db.BeginTx(ctx, nil)
 	if e != nil {
 		return ErrStorage
 	}
 	defer tx.Rollback()
+	if !allowPending {
+		// Reserve the writer before the guard read, avoiding a deferred
+		// read-snapshot upgrade racing another legacy direct-mode writer.
+		if _, e = tx.ExecContext(ctx, "UPDATE meta SET value=value WHERE key='current_control'"); e != nil {
+			return ErrStorage
+		}
+		var n int
+		if e = tx.QueryRowContext(ctx, "SELECT count(*) FROM meta WHERE key='enrollment_intent'").Scan(&n); e != nil {
+			return ErrStorage
+		}
+		if n != 0 {
+			return ErrEnrollmentPending
+		}
+	}
 	if e = fn(tx); e != nil {
 		return e
 	}

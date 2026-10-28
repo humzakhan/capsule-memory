@@ -14,6 +14,7 @@ import path from "node:path";
 import readline from "node:readline";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
+import {enrollmentCases} from "./enrollment.mjs";
 
 const exec = promisify(execFile);
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -33,6 +34,9 @@ const sha = data => createHash("sha256").update(data).digest("hex");
 const opaqueID = () => randomBytes(24).toString("base64url");
 const children = new Set();
 let worker, workerLog = "", proxy, offline = false, dropNextRecord = false, rejectNextRecord = false, bootstrap;
+let dropDecisionReply=false;
+let beforeDecision;
+const capturedDecisions=[];
 const capturedRecords = [];
 let capturedControl;
 const completed = [];
@@ -71,6 +75,7 @@ async function command(home, commandArgs, {fail = false} = {}) {
     return JSON.parse(stdout);
   } catch (error) {
     if (fail && typeof error.code === "number" && error.code !== 0) return {failed: true};
+    await writeFile(path.join(root,"cli-last-error.log"),String(error.stderr ?? "").slice(-16000),{mode:0o600});
     // Child diagnostics may someday contain content. Do not dump stdout,
     // stderr, command arguments, configs, envelopes, or keys on failure.
     throw new Error(`CLI ${commandArgs[0]} failed (${typeof error.code === "number" ? error.code : "invalid output"})`);
@@ -183,14 +188,26 @@ try {
       const body=Buffer.concat(chunks);
       if (offline) { res.writeHead(503); res.end(); return; }
       const isRecord=req.method==="POST"&&req.url.endsWith("/records");
+      const isDecision=req.method==="POST"&&req.url.endsWith("/decision");
+      if (isDecision) capturedDecisions.push(Buffer.from(body));
+      if (isDecision && beforeDecision) {
+        const inject=beforeDecision;beforeDecision=undefined;
+        await inject();
+      }
       if (isRecord) capturedRecords.push({body,headers:{...req.headers}});
       // Capture a real, valid, unpublished CLI envelope for parser negatives.
       if (isRecord && rejectNextRecord) { rejectNextRecord=false; res.writeHead(503); res.end(); return; }
       if (req.method==="PUT"&&req.url.endsWith("/manifest")) capturedControl=Buffer.from(body);
-      const upstream = await fetch(`http://127.0.0.1:${workerPort}${req.url}`,{method:req.method,headers:{...req.headers,host:`127.0.0.1:${workerPort}`},body:["GET","HEAD"].includes(req.method)?undefined:body,signal:AbortSignal.timeout(30000)});
+      const upstream = await fetch(`http://127.0.0.1:${workerPort}${req.url}`,{method:req.method,headers:{...req.headers},body:["GET","HEAD"].includes(req.method)?undefined:body,signal:AbortSignal.timeout(30000)});
       const response=Buffer.from(await upstream.arrayBuffer());
+      if (!upstream.ok) {
+        let code="unavailable";
+        try { const value=JSON.parse(response); if (/^[a-z0-9_]{1,100}$/.test(value.error)) code=value.error; } catch {}
+        await writeFile(path.join(root,"relay-last-error.json"),JSON.stringify({path:req.url,status:upstream.status,code}),{mode:0o600});
+      }
       // Real Worker has committed before we destroy the client response.
       if (isRecord && dropNextRecord && upstream.ok) { dropNextRecord=false; res.destroy(); return; }
+      if (isDecision && dropDecisionReply && upstream.ok) { dropDecisionReply=false; res.destroy(); return; }
       res.writeHead(upstream.status,{"Content-Type":"application/json"}); res.end(response);
     } catch { if (!res.destroyed) { res.writeHead(502); res.end(); } }
   });
@@ -410,6 +427,10 @@ try {
   await sync(owner,scope); await sync(child,scope);
   assert.equal((await command(child,["get","--scope",scope,"--id",parserRecord.record_id])).heads[0].revision_id,parserRecord.revision_id);
   passed("signed duplicate/escaped keys and excessive depth rejected without publication; original envelope replays");
+
+  await enrollmentCases({command,sync,owner,existingChild:child,root,scope,record:mcpRecord,passed,
+    loseDecisionReply:()=>{dropDecisionReply=true;},decisionWasDropped:()=>!dropDecisionReply,
+    beforeNextDecision:inject=>{beforeDecision=inject;},decisions:capturedDecisions,relay:proxyURL,vault:bootstrap.vault_id});
 
   // A separate HTTP-only synthetic scope checks omission+watermark semantics.
   // This is a real signed/encrypted request to the same local Worker, not a mock.

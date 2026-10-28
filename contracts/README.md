@@ -1,5 +1,11 @@
 # Draft contracts
 
+The beta.5 [device enrollment contract](../docs/device-enrollment-protocol.md)
+adds its own schema and generated synthetic signing/HPKE vector. Those describe
+the pairing extension, not a change to legacy record/envelope bytes. The Go
+vector test and local Worker E2E provide the specific executed evidence recorded
+by that implementation; they do not validate every older planning fixture below.
+
 Session repair recipes are hand-authored source-review scenarios, not executable
 tests or computed crypto vectors. The derived fixture input fingerprint is an
 explicit shape placeholder; owner-proof recipes contain no fabricated signatures.

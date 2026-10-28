@@ -169,6 +169,9 @@ func (s *Service) ApproveSkill(ctx context.Context, scope, record, revision stri
 func (s *Service) ActivateSkill(ctx context.Context, scope, record, revision string) (map[string]any, error) {
 	s.wmu.Lock()
 	defer s.wmu.Unlock()
+	if s.enrollmentPending.Load() {
+		return nil, ErrEnrollmentPending
+	}
 	if err := s.scope(scope); err != nil {
 		return nil, err
 	}

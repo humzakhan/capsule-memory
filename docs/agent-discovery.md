@@ -21,6 +21,7 @@ The normal reading path is README → prompt index → selected task/runbook. An
 | Situation | Existing path | Important boundary |
 | --- | --- | --- |
 | First-time source evaluation | [First run](../prompts/01-first-run.md) | Synthetic local E2E; runtime still unverified |
+| Machine-wide CLI / MacBook controller installation | [Install](install.md) · [MacBook controller](../prompts/12-macbook-controller.md) | Binary on PATH; private user profiles; existing owner handoff is separate |
 | New vault / owner bootstrap | [Owner setup](../prompts/02-owner-setup.md) | Only public owner pin/vault ID go to relay |
 | Central relay preparation | [Relay setup](../prompts/03-relay-setup.md) | Worker + DO + R2, not a plaintext memory server |
 | New workstation, server or publishing node | [Enroll device](../prompts/04-enroll-device.md) | Distinct device identity; no owner key transfer |
@@ -29,15 +30,15 @@ The normal reading path is README → prompt index → selected task/runbook. An
 | Concurrent edits, delete, restore | [Record lifecycle](../prompts/07-conflicts-and-deletion.md) | Preserve branches/tombstones; explicit restore |
 | Index repair, long absence, clean replica | [Recovery](../prompts/08-recover-device.md) | Preserve pending writes, profile custody, original state |
 | Incoming skill review and local activation | [Skill review](../prompts/09-review-skill.md) | Exact owner approval; read-as-text only, no installer |
-| Lost device, revocation, key/backup planning | [Security operations](../prompts/10-security-operations.md) | Some relay checks exist; turnkey management commands do not |
+| Lost device, revocation, key/backup planning | [Device console](device-enrollment.md) · [Security operations](../prompts/10-security-operations.md) | Deny/cancel/revoke exist; old copies remain and key rotation is separate |
 
-Legacy `device create` grants all available owner scopes. Optional v2 administration supports selected scope grants and capability-scoped daemon clients; see [session setup](../prompts/11-session-history.md). The legacy fixed-scope MCP exposes write/delete tools. Review the exact interface and capabilities before connecting a client.
+For new machines, beta.5 invitation-based pairing generates keys on the joining device and lets the owner select collections through `devices`. Legacy `device create` grants all available owner scopes and remains an explicitly chosen alternative. Optional v2 administration supports selected scope grants and capability-scoped daemon clients; see [session setup](../prompts/11-session-history.md). The legacy fixed-scope MCP exposes write/delete tools. Review the exact interface and capabilities before connecting a client.
 
 ## What discovery does not create
 
 The source includes an optional Linux/macOS daemon, background capture/publication/derivation and systemd/launchd templates. None is installed or enabled by cloning or downloading a release. Legacy mode uses explicit sync. No hosted/remote MCP endpoint, public agent-to-agent service or automatic capture hook is provided.
 
-There are no independent push and pull CLI commands; sync performs both publication and replay. Cold data becomes searchable by authorized local replay/indexing, not a central plaintext search endpoint. Optional local summarization is authored and separately opt-in; embeddings, automated key distribution, executable skill installation, other storage adapters and Git automation remain deferred.
+There are no independent push and pull CLI commands; sync performs both publication and replay. Cold data becomes searchable by authorized local replay/indexing, not a central plaintext search endpoint. Optional local summarization is separately opt-in. Initial enrollment delivers selected keys through authenticated encrypted packages; automatic epoch rotation/distribution remains deferred, along with embeddings, executable skill installation, other storage adapters and Git automation.
 
 ## Public discoverability checklist
 

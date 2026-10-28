@@ -1,9 +1,22 @@
 # Relay setup and publication boundary
 
-Source artifact only. Installs, type generation, builds, Wrangler, HTTP scenarios,
-and production validation: **NOT RUN**. Use [run-v1.md](run-v1.md) on your own
-machine with synthetic data before considering a separately authorized deployment.
-No resources have been provisioned. There is no deployment workflow.
+For current executed checks and provider limits, see [release evidence](releases.md).
+Use [run-v1.md](run-v1.md) with synthetic data before a separately authorized
+deployment. This guide does not itself authorize cloud changes.
+
+## Upgrade an existing relay for beta.5 pairing
+
+An authorized operator builds/deploys the existing Worker from the same beta.5
+tag as the CLI, using the pinned lockfile and reviewed configuration. Preserve
+the existing Worker identity, vault ID, owner public pin, private R2 binding and
+Durable Object namespace/migration history. Do not rerun `init`, replace the
+archive or bootstrap another owner. Beta.4 lacks the enrollment endpoints.
+Install on the new computer through [the CLI guide](install.md); a joining
+device uses signed requests and needs no Cloudflare account token.
+
+The bootstrap instructions below apply to a new vault. For an existing vault,
+use [device pairing](device-enrollment.md) to add ordinary devices. The legacy
+owner-created profile route remains an explicit alternative.
 
 ## Bindings and bootstrap
 
@@ -39,10 +52,11 @@ publication shares the record journal and atomic head barrier.
 
 Manual revocation/rotation requires an owner-signed next control, followed by
 authenticated distribution of new scope keys only to remaining devices. Do not
-edit the pinned owner key to enroll a device. Automated rotation, remote key
-distribution, owner-key rotation, and recovery invitations are unsupported in
-this slice. The relay understands signed control updates; use only a reviewed
-owner-side authoring path available in the CLI, or keep that operation manual.
+edit the pinned owner key to enroll a device. Initial scoped key delivery is
+provided by beta.5 pairing. Automatic epoch rotation/distribution, owner-key
+rotation and recovery invitations remain unsupported. The relay understands
+signed control updates; use only a reviewed owner-side authoring path available
+in the CLI, or keep that operation manual.
 
 ## Authentication and resource limits
 

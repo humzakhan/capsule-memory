@@ -1,5 +1,62 @@
 # Releases and readiness
 
+## v0.1.0-beta.5 — approve devices from your terminal
+
+The existing Go CLI gains an owner console and secure invitation-based pairing.
+Run `capsule-memory --home OWNER_HOME devices` to invite a computer, review its
+full fingerprint, choose collections, and approve or deny. New devices generate
+their own identities. Owner-signed encrypted delivery grants selected collection
+keys; activation proves package decryption. Resume/cancel preserve exact prepared
+operations, and revoke publishes an ordered membership change. Read/write access
+includes existing records under the selected keys. Prior copies remain after
+revocation, and automatic epoch rotation is not provided.
+
+Use [the installation guide](install.md) to build the tagged release and install
+`/usr/local/bin/capsule-memory` on macOS/Linux. The executable is machine-wide;
+normal operation and private profiles stay under the user account. Use the
+[MacBook controller prompt](../prompts/12-macbook-controller.md) to preserve your
+existing owner identity before enrolling OVH and the Mac Mini. Upgrade both the
+CLI and existing Worker to this tag while retaining vault/owner pins and DO/R2
+bindings. Publishing a release does not upgrade an existing deployment.
+
+Native macOS cgo builds offer `owner protect` for the owner signing key only.
+Collection/device keys and plaintext databases remain private local files.
+No per-action Touch ID, hardware-backed Ed25519 or automatic owner transfer is
+claimed. Pairing does not enable capture, inference, background services, MCP
+connections or skill execution.
+
+### Evidence and limits
+
+At feature revision `814bf93186f5399d321575ff4c82b42165679e79`, the full quality
+gate passed (format/vet/Go tests/build/TypeScript/relay format/commit subjects),
+as did 17 compiled-CLI/local-Worker E2E groups, focused enrollment/memory/CLI race
+checks, a Linux amd64 cross-build and an actual interactive terminal pairing and
+encrypted memory round trip. The E2E includes invalid activation proofs, lost
+committed responses, exact retries, stale heads, scoped grants, cancellation,
+denial, revocation and existing memory/skill recovery paths. One independent
+source reviewer found no material HIGH/MEDIUM issue at that exact revision;
+the review did not repeat runtime checks.
+
+Before publication, run locked dependency setup, the full gate, a CLI build and
+the local Worker E2E from a fresh disposable checkout of the final release
+candidate. Record the exact final source revision and results on the GitHub
+prerelease. Check setup links/commands and the install workflow using a disposable
+prefix without replacing an active installation. This is same-Mac validation,
+not a clean physical second machine or machine-wide privilege test.
+
+**NOT RUN for this enrollment release:** live Cloudflare pairing/durability/
+quotas, physical second-machine enrollment, actual Keychain item operations or
+access prompts, Linux runtime, and formal cryptographic/security acceptance.
+Windows retains legacy direct mode; new pairing needs supported exclusive Unix
+profile locks. Earlier QA/security-scan evidence retains its original revision
+and date. No broader coverage or new infrastructure is implied.
+
+Distribution remains source archives only; binary assets and package-manager
+distribution are deferred. Existing limits include unimplemented published-body
+cache eviction and bounded/incomplete knowledge searches. See
+[enrollment](device-enrollment.md), [protocol](device-enrollment-protocol.md) and
+[threat model](threat-model.md) for custody, recovery and disclosure boundaries.
+
 
 ## v0.1.0-beta.4 — refreshed README artwork
 

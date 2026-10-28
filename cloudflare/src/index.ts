@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { Enrollment, type CommitResult } from "./enrollment";
 import {
   R2Archive,
   journal,
@@ -73,7 +74,12 @@ function route(req: Request, env: Env): string {
   requireThat(
     (path === "/manifest" && ["GET", "PUT"].includes(req.method)) ||
       (path === "/records" && req.method === "POST") ||
-      (path === "/changes" && req.method === "GET"),
+      (path === "/changes" && req.method === "GET") ||
+      (path === "/enrollment/invites" && req.method === "POST") ||
+      (path === "/enrollment/requests" && ["GET", "POST"].includes(req.method)) ||
+      (/^\/enrollment\/requests\/[A-Za-z0-9_-]{8,128}$/.test(path) && req.method === "GET") ||
+      (/^\/enrollment\/requests\/[A-Za-z0-9_-]{8,128}\/(decision|ack)$/.test(path) &&
+        req.method === "POST"),
     "not_found",
     404,
   );
@@ -372,6 +378,20 @@ export class Vault extends DurableObject<Env> {
       req.method === "GET" ? 0 : path === "/manifest" ? MAX_CONTROL * 2 : MAX_BODY,
     );
     const observed = await this.archive.head();
+    if (path.startsWith("/enrollment/")) {
+      await this.current(observed.head);
+      const inbox = new Enrollment(
+        this.env.ARCHIVE,
+        this.archive,
+        this.env.VAULT_ID,
+        this.env.OWNER_PUBLIC_KEY_B64,
+      );
+      return json(
+        await inbox.handle(req, path, body, observed.head.manifest!, observed.head.cursor, (s) =>
+          this.publishEnrollmentControl(observed, s),
+        ),
+      );
+    }
     if (path === "/manifest" && req.method === "GET") {
       await this.current(observed.head);
       return json(observed.head.manifest);
@@ -435,6 +455,32 @@ export class Vault extends DurableObject<Env> {
       return json({ cursor, duplicate: false });
     }
     return this.changes(req, observed.head, auth.scope);
+  }
+  private async publishEnrollmentControl(
+    observed: VersionedHead,
+    signed: Signed,
+  ): Promise<CommitResult> {
+    const desired = await this.decodeControl(signed);
+    const current = await this.current(observed.head);
+    await this.catchUp(observed.head);
+    if (BigInt(current.generation) >= BigInt(desired.generation)) {
+      const row = this.ctx.storage.sql
+        .exec<{
+          cursor: string;
+          signed_digest: string;
+        }>("SELECT cursor,signed_digest FROM entries WHERE generation=?", desired.generation)
+        .toArray()[0];
+      if (!row || row.signed_digest !== (await signDigest(signed)))
+        return { state: "conflicted", cursor: "", manifest: observed.head.manifest! };
+      return { state: "approved", cursor: row.cursor, manifest: observed.head.manifest! };
+    }
+    requireThat(
+      desired.generation === (BigInt(current.generation) + 1n).toString(),
+      "enrollment_control_conflict",
+      409,
+    );
+    const cursor = await this.publish(observed, utf8(signed), "control", signed);
+    return { state: "approved", cursor, manifest: signed };
   }
   private async changes(req: Request, head: Head, scope: string): Promise<Response> {
     const params = new URL(req.url).searchParams;

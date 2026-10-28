@@ -23,6 +23,9 @@ the agents decide what to remember. Do not describe it as an autonomous memory m
 3. Follow runbook steps 1–2 exactly in the allowed environment. Resolve real Go/npm
    dependencies and review generated sums/locks. Do not invent frozen installs.
    No curl-to-shell installer, prebuilt release, or registry package is assumed.
+   If the user also authorized installation, follow docs/install.md to install
+   the selected release machine-wide and verify PATH/revision/rollback. An
+   evaluation alone leaves the binary in disposable storage, not a global path.
 4. Run only the single focused E2E if authorized. It uses local Wrangler/DO/R2,
    disposable synthetic profiles and a built CLI. Preserve actual output and failures.
    Stop after a concrete failure; do not add test suites or claim skipped cases passed.
