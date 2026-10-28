@@ -120,6 +120,9 @@ func OpenWith(ctx context.Context, home string, mode LockMode) (*Service, error)
 		}
 		version = 2
 	}
+	if err == nil && version == 2 {
+		_, err = tx.ExecContext(ctx, schemaV2Indexes)
+	}
 	if err != nil {
 		tx.Rollback()
 		db.Close()

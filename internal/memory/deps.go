@@ -181,6 +181,14 @@ func (s *Service) RecomputeStale(ctx context.Context, tx *sql.Tx) error {
 	return e
 }
 
+// Drive invalidation from the affected records, rather than scanning the archive
+// and probing the temporary seed table for every historical revision.
+const refreshInvalidSQL = `WITH RECURSIVE live AS (` + liveDeps + `), roots(record) AS (
+ SELECT r.record FROM refresh_affected a CROSS JOIN revisions r ON r.record=a.record WHERE ` + deletedSQL + `
+ UNION SELECT r.record FROM refresh_affected a CROSS JOIN revisions r ON r.record=a.record WHERE r.kind='session_chunk' AND NOT EXISTS(SELECT 1 FROM sessions s WHERE s.session=json_extract(r.body,'$.body.session') AND s.scope=r.scope AND s.deleted=0)
+ UNION SELECT d.child FROM live d JOIN refresh_affected a ON a.record=d.child WHERE NOT EXISTS(SELECT 1 FROM revisions r WHERE r.revision=d.parent_revision AND r.record=d.parent) OR EXISTS(SELECT 1 FROM parents p WHERE p.parent=d.parent_revision) OR (SELECT count(*) FROM revisions h WHERE h.record=d.parent AND NOT EXISTS(SELECT 1 FROM parents p WHERE p.parent=h.revision))!=1 OR ` + secondaryViewSQL + ` OR ` + invalidRangeSQL + ` OR ` + retractedDepSQL + ` OR EXISTS(SELECT 1 FROM stale s WHERE s.record=d.parent AND NOT EXISTS(SELECT 1 FROM refresh_affected x WHERE x.record=s.record))
+ ), invalid(record) AS (SELECT record FROM roots UNION SELECT d.child FROM live d JOIN invalid i ON d.parent=i.record JOIN refresh_affected a ON a.record=d.child) INSERT INTO refresh_invalid SELECT record FROM invalid`
+
 // RefreshStale recomputes only a changed record and its live descendants. The
 // bound is on this operation's affected closure, never total archive history.
 // Unchanged stale rows remain in place, so hooks observe transitions only.
@@ -209,11 +217,7 @@ func (s *Service) RefreshStale(ctx context.Context, tx *sql.Tx, seeds []string) 
 	if count > 100000 {
 		return ErrStaleOverflow
 	}
-	_, e := tx.ExecContext(ctx, `WITH RECURSIVE live AS (`+liveDeps+`), roots(record) AS (
- SELECT r.record FROM revisions r JOIN refresh_affected a ON a.record=r.record WHERE `+deletedSQL+`
- UNION SELECT r.record FROM revisions r JOIN refresh_affected a ON a.record=r.record WHERE r.kind='session_chunk' AND NOT EXISTS(SELECT 1 FROM sessions s WHERE s.session=json_extract(r.body,'$.body.session') AND s.scope=r.scope AND s.deleted=0)
- UNION SELECT d.child FROM live d JOIN refresh_affected a ON a.record=d.child WHERE NOT EXISTS(SELECT 1 FROM revisions r WHERE r.revision=d.parent_revision AND r.record=d.parent) OR EXISTS(SELECT 1 FROM parents p WHERE p.parent=d.parent_revision) OR (SELECT count(*) FROM revisions h WHERE h.record=d.parent AND NOT EXISTS(SELECT 1 FROM parents p WHERE p.parent=h.revision))!=1 OR `+secondaryViewSQL+` OR `+invalidRangeSQL+` OR `+retractedDepSQL+` OR EXISTS(SELECT 1 FROM stale s WHERE s.record=d.parent AND NOT EXISTS(SELECT 1 FROM refresh_affected x WHERE x.record=s.record))
- ), invalid(record) AS (SELECT record FROM roots UNION SELECT d.child FROM live d JOIN invalid i ON d.parent=i.record JOIN refresh_affected a ON a.record=d.child) INSERT INTO refresh_invalid SELECT record FROM invalid`)
+	_, e := tx.ExecContext(ctx, refreshInvalidSQL)
 	if e != nil {
 		return ErrStorage
 	}

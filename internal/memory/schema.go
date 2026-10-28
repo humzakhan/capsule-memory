@@ -1,6 +1,9 @@
 package memory
 
 const SchemaV2 = 2
+
+// Additive indexes apply to existing schema-v2 profiles as well as new ones.
+const schemaV2Indexes = `CREATE INDEX IF NOT EXISTS revision_record ON revisions(record);`
 const schemaV2 = `
 CREATE TABLE IF NOT EXISTS scope_labels(scope TEXT PRIMARY KEY,label TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN('default','project','personal','ledger')));
 CREATE TABLE IF NOT EXISTS deps(child TEXT NOT NULL,child_revision TEXT NOT NULL,parent TEXT NOT NULL,parent_revision TEXT NOT NULL,event_from TEXT NOT NULL DEFAULT '',event_to TEXT NOT NULL DEFAULT '',evidence INTEGER NOT NULL DEFAULT 1,PRIMARY KEY(child_revision,parent,parent_revision,event_from,event_to,evidence));
@@ -57,5 +60,6 @@ CREATE TABLE IF NOT EXISTS publication_block(revision TEXT PRIMARY KEY REFERENCE
 CREATE INDEX IF NOT EXISTS revision_session_key ON revisions(kind,json_extract(body,'$.body.session_key'));
 CREATE INDEX IF NOT EXISTS chunks_session ON chunks(session,record);
 CREATE INDEX IF NOT EXISTS deps_parent_revision ON deps(parent_revision);
+` + schemaV2Indexes + `
 PRAGMA user_version=2;
 `

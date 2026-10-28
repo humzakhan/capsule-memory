@@ -95,3 +95,9 @@ Verify the gate itself with `python3 scripts/check_test.py` on an authorized hos
 Use Conventional Commits for every new commit and the final PR title: `type: description`, `type(scope): description`, `type!: description` or `type(scope)!: description`. Accepted types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Use a nonempty description and scope when present. Explain breaking changes in the body when applicable. Do not rewrite historical commits merely to rename them.
 
 Before committing, review `git diff --cached` for the exact staged contents, unrelated edits, generated artifacts and secrets; review dependency pins, integrity hashes and registry URLs too. Before delivery, check the actual commit range and final PR title against this syntax. The gate validates commit subjects; the reviewer checks the PR title and maintainability contract. Neither these commands nor this standard grants commit/push/merge authority.
+
+Incremental stale-state refresh starts with its affected-record set and uses the
+schema-v2 `revision_record` index for archive lookups. Opening an existing v2
+profile installs this additive index without changing its schema version or
+protocol bytes. The query-plan regression guards against a full archive scan on
+every append; it imposes no machine-specific timing threshold.
