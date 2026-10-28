@@ -80,13 +80,24 @@ async function sync(home, scope) {
   // Real CLI reports HTTP status on stderr. Retry only temporary relay states;
   // syntax, auth, crypto, and domain errors fail this journey immediately.
   for (let attempt = 0; attempt < 40; attempt++) {
+    const pendingBefore = (await command(home,["status"])).pending;
     try {
       const {stdout} = await exec(cli, ["--home",home,"sync","--scope",scope], {timeout:150000,maxBuffer:8*1024*1024});
       const result = JSON.parse(stdout);
       if (result.caught_up && result.pending === 0) return result;
     } catch (error) {
       const diagnostic = String(error.stderr ?? "");
-      if (!/HTTP (503|429)/.test(diagnostic)) throw new Error("sync failed outside retryable relay states");
+      // Cleanup can wait while this same sync publishes its ordinary parent.
+      // Retry only when the durable queue shrank, never to release held ancestry
+      // or hide an indefinitely blocked descendant behind the retry budget.
+      const ancestryProgress = diagnostic.includes("parent publication unconfirmed; revision retained without releasing private ancestry")
+        && (await command(home,["status"])).pending < pendingBefore;
+      if (!/HTTP (503|429)/.test(diagnostic) && !ancestryProgress) {
+        // Keep content-bearing child diagnostics in the private synthetic
+        // artifact directory, never in public terminal output.
+        await writeFile(path.join(root,"sync-last-failure.log"), diagnostic.slice(-16000), {mode:0o600});
+        throw new Error("sync failed outside retryable relay states; inspect private sync-last-failure.log");
+      }
     }
     await pause(150 + Math.min(attempt * 100, 2000));
   }
