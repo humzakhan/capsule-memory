@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/humzakhan/capsule-memory/internal/memory"
 	"github.com/humzakhan/capsule-memory/internal/ops"
@@ -89,8 +90,8 @@ func (c *Client) Call(ctx context.Context, method string, params, result any) er
 		c.conn.Close()
 		return ErrUnavailable
 	}
-	var response Response
-	if strictjson.Decode(line, 8<<20, &response) != nil || response.Version != 1 || response.ID != "req" {
+	response, err := decodeResponse(line)
+	if err != nil || response.Version != 1 || response.ID != "req" {
 		c.conn.Close()
 		return memory.ErrInvalid
 	}
@@ -105,6 +106,32 @@ func (c *Client) Call(ctx context.Context, method string, params, result any) er
 		return memory.ErrInvalid
 	}
 	return nil
+}
+
+// Result is an opaque operation payload, including JSON null for a successful
+// command without a return value. Keep strict validation on the envelope and
+// duplicate keys throughout the original frame without rejecting that payload.
+func decodeResponse(line []byte) (Response, error) {
+	var response Response
+	var fields map[string]json.RawMessage
+	if !utf8.Valid(line) || strictjson.Unique(line) != nil || json.Unmarshal(line, &fields) != nil || fields == nil {
+		return response, memory.ErrInvalid
+	}
+	result, hasResult := fields["result"]
+	delete(fields, "result")
+	envelope, err := json.Marshal(fields)
+	if err != nil || strictjson.Decode(envelope, 8<<20, &response) != nil {
+		return response, memory.ErrInvalid
+	}
+	if response.OK {
+		if !hasResult || response.Error != nil {
+			return response, memory.ErrInvalid
+		}
+	} else if hasResult || response.Error == nil {
+		return response, memory.ErrInvalid
+	}
+	response.Result = result
+	return response, nil
 }
 
 func (c *Client) encodeRequest(method string, params any) ([]byte, error) {

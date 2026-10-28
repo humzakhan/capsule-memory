@@ -109,6 +109,11 @@ requires a new source identity. Native compatibility pins are empty by default.
 
 ## IPC and clients
 
+Successful commands without a return value acknowledge with `result:null`.
+Clients accept that operation payload while strictly validating the response
+envelope and rejecting duplicate keys. An invalid or interrupted reply remains
+an ambiguous outcome; it must not trigger an automatic mutation retry.
+
 The Unix socket is `<daemon-home>/run/daemon.sock`, mode 0600 inside a 0700 directory.
 Paths must fit the platform Unix socket limit. Requests are versioned JSONL,
 limited to 1 MiB; replies are limited to 8 MiB. The listener has at most 32 clients,
