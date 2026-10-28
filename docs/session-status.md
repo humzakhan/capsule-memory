@@ -1,5 +1,9 @@
 # Session module source status
 
+The sections below preserve the source-only delivery evidence. Later authorized
+[Mac beta QA](mac-qa.md) records local repairs and bounded runtime results on a
+local branch; it does not establish acceptance of the published beta tag.
+
 **Source repairs reviewed; runtime acceptance pending.** The original
 `feat/session-history` delivery used base
 `a08ffd8fb7a2fcd3d0f4b848fb919295d6dbf758`, 2026-10-26. The follow-up

@@ -1,5 +1,9 @@
 # V1 delivery status
 
+This page preserves the original source-only delivery evidence. Later authorized
+[Mac beta QA](mac-qa.md) records runtime checks and local fixes separately from
+the published beta tag.
+
 This page records the v1 source delivery, now integrated into `main`. **No runtime check has been executed.** Source is authored and inspected; usable runtime behavior is still unproven. An authored test is not a passed test.
 
 ## Required implementation and evidence
