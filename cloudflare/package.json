@@ -13,9 +13,9 @@
     "format:check": "prettier --check \"src/**/*.ts\" package.json tsconfig.json .prettierrc.json"
   },
   "devDependencies": {
-    "wrangler": "4.129.1",
-    "@cloudflare/workers-types": "5.20260907.1",
+    "@cloudflare/workers-types": "5.20261023.1",
+    "prettier": "3.6.2",
     "typescript": "5.9.3",
-    "prettier": "3.6.2"
+    "wrangler": "4.154.0"
   }
 }
