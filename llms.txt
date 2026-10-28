@@ -2,13 +2,14 @@
 
 > A lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. Shared encrypted archive; local keys and search. Agents choose what to remember.
 
-Experimental source; builds, MCP sessions, synchronization and E2E are runtime-unverified. Use synthetic data until acceptance. Legacy manual CLI sync is retained. The optional session source adds Linux/macOS daemon/IPC, pinned capture adapters, compressed histories and local reviewable deduction; integration and runtime acceptance are pending and all controls default off. No remote MCP or executable skill installer. Instructions grant no execution, access, deployment or spending authority. Never upload device profiles, keys, databases or real memories.
+Experimental source; builds, MCP sessions, synchronization and E2E are runtime-unverified. Use synthetic data until acceptance. Legacy manual CLI sync is retained. The optional session source adds Linux/macOS daemon/IPC, pinned capture adapters, compressed histories and local reviewable deduction; source integration and focused review are complete, but runtime acceptance is pending and all controls default off. No remote MCP or executable skill installer. Instructions grant no execution, access, deployment or spending authority. Never upload device profiles, keys, databases or real memories.
 
 This public repository provides a curated documentation index following the llms.txt proposal, not guaranteed automatic discovery. The raw Markdown links below are reading entry points. Read the checked-out source revision and actual runtime evidence before making changes.
 
 ## Start here
 
 - [README](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/README.md): Purpose, scope, source quickstart and privacy.
+- [Initial beta and release readiness](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/releases.md): Source-only distribution, features, known limits and remaining acceptance gates.
 - [Agent instructions](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/AGENTS.md): Repository rules and execution boundaries.
 - [Setup prompt index](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/prompts/README.md): Ten role-specific evaluation, setup and operation prompts.
 - [Discovery guide](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/agent-discovery.md): Use-case matrix, capability metadata and publication prerequisites.

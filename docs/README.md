@@ -2,7 +2,7 @@
 
 Capsule Memory is a lightweight utility for securely storing and synchronizing existing agent memories and skills across machines and harnesses. The shared encrypted archive centralizes durable storage; plaintext, keys, and search remain device-local. Agents and harnesses decide what to remember and use.
 
-Start with [Run v1](run-v1.md) for a synthetic local evaluation. The source is experimental: installs, builds, formatting, typechecks, tests, and E2E are **NOT RUN**. [Delivery status](v1-status.md) is the evidence record; architectural targets are not promises of implemented behavior.
+Read the [initial beta and release gates](releases.md), then start with [Run v1](run-v1.md) for a synthetic local evaluation. The source is experimental: installs, builds, formatting, typechecks, tests, and E2E are **NOT RUN**. [Delivery status](v1-status.md) is the evidence record; architectural targets are not promises of implemented behavior.
 
 ## Set up with an agent
 
@@ -12,6 +12,7 @@ Use [the prompt index](../prompts/README.md) for evaluation, setup and operation
 
 | Guide | Purpose |
 | --- | --- |
+| [Releases](releases.md) · [Changelog](../CHANGELOG.md) | Initial source beta, known blockers and tested-release gates |
 | [Run v1](run-v1.md) | Dependency resolution, build, local E2E, private demo, recovery, cleanup |
 | [Run sessions](run-session.md) · [Session status](session-status.md) | Optional session source, owner setup and pending acceptance |
 | [Rename compatibility](renaming.md) | Retained protocol bytes and explicit reuse of pre-rename profiles |

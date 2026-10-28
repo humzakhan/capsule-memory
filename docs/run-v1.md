@@ -11,25 +11,26 @@ download/build and 2–5 minutes for the focused E2E if the authored source work
 Use the Go version required by `go.mod`, Node 22+ supported by the pinned Wrangler,
 and npm. Clone/check out `main` through your normal Git
 workflow, then run these commands from the repository root. Dependency resolution
-requires internet access. There is no authored fake lockfile.
+requires internet access. The repository includes reviewed `go.sum` and
+`cloudflare/package-lock.json` files; preserve them during installation.
 
 ```sh
 umask 077
 mkdir -p "$HOME/.local/bin"
-go mod tidy
-go build -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory
-cd cloudflare
-npm install --save-exact
-./node_modules/.bin/wrangler types
-cd ..
+go mod download
+npm ci --prefix cloudflare --ignore-scripts
+./scripts/check.sh --range e27cd2ee12bae4fce683a0af74f959cf5710d0f5..HEAD && \
+  go build -mod=readonly -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory
 ```
 
-Wrangler is pinned in `cloudflare/package.json`; owner installation creates a
-real `package-lock.json` for review. Its first installation does not have frozen
-transitive versions. Ask the maintainer to review and track the generated
-lockfile before relying on `npm ci`.
-`wrangler types` generates runtime declarations; it does not itself typecheck
-the source. Runtime API compatibility and TypeScript checking remain unverified.
+Wrangler is pinned in `cloudflare/package.json`; `npm ci` uses the committed
+lockfile without lifecycle scripts. Do not use `npm install` or `go mod tidy` as
+routine installation steps. The check gate performs no installs or source
+rewrites. These commands have not run against the beta source; historical setup
+failures are recorded in [verification](verification.md#setup-gate-baseline-2026-10-27).
+Stop on a failed check. See [release readiness](releases.md) before publishing
+binaries or claiming tested compatibility. `wrangler types` is declaration
+generation, not a substitute for the relay typecheck.
 
 The client stores plaintext SQLite, FTS, and restricted-file private keys locally.
 Use disk encryption and private backups. Do not put any home directory below a

@@ -4,13 +4,13 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go 1.24.0](https://img.shields.io/badge/Go-1.24.0-00ADD8.svg)](go.mod)
-[![Status: experimental](https://img.shields.io/badge/status-experimental-orange.svg)](docs/v1-status.md)
+[![Status: source beta](https://img.shields.io/badge/status-source_beta-orange.svg)](docs/releases.md)
 
 Capsule Memory securely stores and synchronizes agent memories and skills across machines and harnesses. A shared encrypted archive centralizes durable storage; plaintext, keys, and search stay device-local. Manual workflows leave selection to agents and harnesses. An optional session module adds explicitly enabled conversation capture, local summaries and reviewable memory/decision candidates.
 
-The experimental source includes a Go CLI, scoped MCP, local SQLite search and encrypted synchronization through Cloudflare. The session feature is being integrated on `feat/session-history`; [session status](docs/session-status.md) separates authored source from runtime evidence. The feature defaults off.
+The experimental source includes a Go CLI, scoped MCP, local SQLite search and encrypted synchronization through Cloudflare. The optional session feature is integrated into `main`; [session status](docs/session-status.md) separates reviewed source from runtime evidence. The feature defaults off.
 
-> **Source implementation; runtime unverified.** Installs, dependency resolution, formatters, builds, typechecks, tests, and E2E are **NOT RUN**. No infrastructure is deployed. Start with synthetic data; source inspection is not a security audit or runtime acceptance.
+> **Initial source beta: [v0.1.0-beta.1](https://github.com/humzakhan/capsule-memory/releases/tag/v0.1.0-beta.1).** Source archives only; no tested binaries or hosted service. Current-source formatting, builds, typechecks, tests and E2E are **NOT RUN**. Historical setup checks had failures and do not verify this release. Start with synthetic data; source review is not runtime or security acceptance. See the [release gates and known limits](docs/releases.md).
 
 [Quickstart](#try-the-source-with-synthetic-data) · [Agent setup prompts](prompts/README.md) · [Agent discovery](docs/agent-discovery.md) · [Documentation](docs/README.md) · [Delivery status](docs/v1-status.md)
 
@@ -87,16 +87,14 @@ From a checkout of `main`:
 ```sh
 umask 077
 mkdir -p "$HOME/.local/bin"
-go mod tidy
-go build -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory
-cd cloudflare
-npm install --save-exact
-./node_modules/.bin/wrangler types
-cd ..
-node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
+go mod download
+npm ci --prefix cloudflare --ignore-scripts
+./scripts/check.sh --range e27cd2ee12bae4fce683a0af74f959cf5710d0f5..HEAD && \
+  go build -mod=readonly -o "$HOME/.local/bin/capsule-memory" ./cmd/capsule-memory && \
+  node e2e/run.mjs --cli "$HOME/.local/bin/capsule-memory"
 ```
 
-**These commands are NOT RUN.** Dependencies and Wrangler are pinned, but `go.sum` and an npm lockfile are not yet present. The owner must resolve and review them; the first install is not frozen. `wrangler types` generates declarations and does not typecheck the implementation.
+**These commands are NOT RUN for this beta.** `go.sum` and `cloudflare/package-lock.json` are committed. Use the pinned toolchain and locked dependencies; do not regenerate locks as an installation step. The check gate includes formatting, static/type checks, tests and builds; a failure is a blocker for a tested binary release. Historical setup evidence is recorded in [verification](docs/verification.md#setup-gate-baseline-2026-10-27).
 
 The E2E journey uses disposable synthetic device homes and local-only Worker/DO/R2 emulation. No Cloudflare token or deployment is required. Read the [complete runbook](docs/run-v1.md) for setup, retained failure artifacts, and cleanup, and the [E2E guide](e2e/README.md) for assertions and limits. Local emulator success would not establish production durability or security.
 
