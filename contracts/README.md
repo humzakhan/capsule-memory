@@ -1,6 +1,6 @@
 # Draft contracts
 
-The unreleased [device enrollment contract](../docs/device-enrollment-protocol.md)
+The beta.5 [device enrollment contract](../docs/device-enrollment-protocol.md)
 adds its own schema and generated synthetic signing/HPKE vector. Those describe
 the pairing extension, not a change to legacy record/envelope bytes. The Go
 vector test and local Worker E2E provide the specific executed evidence recorded

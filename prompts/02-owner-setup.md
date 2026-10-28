@@ -10,11 +10,14 @@ Inputs: CHECKOUT, SOURCE_REVISION, BINARY, private OWNER_HOME, intended RELAY_UR
 EXECUTION_ROUTE, ALLOWED_ACTIONS, and whether this is a synthetic demo or real setup.
 Do not put secrets into these inputs.
 
-Read AGENTS.md, prompts/README.md, docs/go-client.md, docs/run-v1.md,
+Read AGENTS.md, prompts/README.md, docs/install.md, docs/go-client.md, docs/run-v1.md,
 docs/relay-setup.md, and docs/renaming.md as relevant.
 
 1. Confirm this is a new vault. If an existing profile/vault is intended, stop
    initialization and choose enrollment or recovery. Never overwrite existing files.
+   For a MacBook taking over existing owner authority, use prompt 12 instead.
+   If installation is authorized, install the selected release machine-wide as
+   docs/install.md describes; verify its absolute path and revision before init.
 2. Use an explicit private home outside the checkout, shared folders and cloud sync.
    Explain local plaintext SQLite/FTS and restricted-file keys; recommend the user's
    existing disk encryption/private backup practice without provisioning services.

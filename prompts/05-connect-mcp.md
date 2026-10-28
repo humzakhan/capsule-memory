@@ -15,6 +15,9 @@ client configuration fields, or shell expansion of paths.
 
 1. Confirm the device/profile already exists and the chosen scope is intended.
    Do not call init, enroll devices, change owner pins, or widen grants.
+   Verify the installed CLI path/revision first. For an authorized new-machine
+   installation, use docs/install.md; prefer /usr/local/bin/capsule-memory on
+   macOS/Linux and record an explicit fallback if system-wide writes are blocked.
 2. Prepare a minimal stdio launch entry using an absolute executable path:
    command: BINARY
    args: ["--home", "DEVICE_HOME", "mcp", "--scope", "SCOPE_ID"]

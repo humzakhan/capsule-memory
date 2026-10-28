@@ -6,9 +6,13 @@ transferring primary owner authority is a separate operation.
 ~~~text
 Enroll this trusted machine into my existing Capsule Memory vault.
 
-Read AGENTS.md, prompts/README.md, docs/device-enrollment.md and the matching
-enrollment protocol. Verify the exact installed client/relay capabilities: the
-owner-reviewed pairing CLI is unreleased and requires matching source on both.
+Read AGENTS.md, prompts/README.md, docs/install.md, docs/device-enrollment.md
+and the matching enrollment protocol. Build/install v0.1.0-beta.5 or the selected
+later compatible release on this machine before joining. The normal macOS/Linux
+target is /usr/local/bin/capsule-memory, verified on PATH and recorded by exact
+revision; use normal-user execution and approved privileges only for installing
+the executable. Respect host restrictions, including OVH's workload policy.
+Verify the client and relay match; beta.4 lacks these pairing endpoints.
 
 1. Preserve the existing vault/owner identity. Never run init on the new device,
    clone another active device identity, or give this machine owner.json.
@@ -21,6 +25,8 @@ owner-reviewed pairing CLI is unreleased and requires matching source on both.
    private home. Keep its generated state and compare its complete fingerprint
    with the owner's approval screen. Select only authorized collections, knowing
    they grant read and write, including existing records under their keys.
+   Use the installed absolute executable path and --home PRIVATE_DEVICE_HOME;
+   do not leave the CLI usable only from a source checkout.
 4. Resume the exact saved request after interruption; do not reset or regenerate
    an identity to escape an uncertain outcome. Distinguish pending, published
    membership and confirmed activation. Never bypass a denial or revoked grant.

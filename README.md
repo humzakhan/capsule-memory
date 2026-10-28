@@ -74,7 +74,9 @@ Choose the guide for your next step:
 | --- | --- |
 | Try it with sample data | [First-run guide](prompts/01-first-run.md) |
 | Set up my encrypted archive | [Owner setup](prompts/02-owner-setup.md) and [Cloudflare setup](prompts/03-relay-setup.md) |
-| Add or approve another computer | [Device approval CLI (unreleased)](docs/device-enrollment.md) · [Agent enrollment guide](prompts/04-enroll-device.md) |
+| Install the CLI on a Mac or Linux computer | [Machine-wide CLI installation](docs/install.md) |
+| Use a MacBook to approve my other computers | [MacBook controller prompt](prompts/12-macbook-controller.md) |
+| Add or approve another computer | [Device approval CLI](docs/device-enrollment.md) · [Agent enrollment guide](prompts/04-enroll-device.md) |
 | Connect an AI assistant | [MCP connection guide](prompts/05-connect-mcp.md) |
 | Enable background sync or conversation capture | [Daemon setup](docs/daemon.md) and [session guide](prompts/11-session-history.md) |
 
@@ -83,7 +85,7 @@ A compatible assistant connects through **MCP**, a standard way for AI tools to 
 <details>
 <summary>Building it yourself</summary>
 
-Use Go **1.26.10**, Node **22+** and npm with the committed dependency locks. Follow the [build and sample-data runbook](docs/run-v1.md) for installation, validation and cleanup, or the [session runbook](docs/run-session.md) for optional background features. Those guides preserve dated historical evidence; [release readiness](docs/releases.md) identifies the current checks and remaining limits.
+Use Go **1.26.10** and the committed module locks. The [installation guide](docs/install.md) builds the tagged release and installs `/usr/local/bin/capsule-memory`; private profiles stay under your user account. Node **22+** and npm are needed for relay tooling and the [sample-data E2E](docs/run-v1.md), not ordinary CLI operation. Use the [session runbook](docs/run-session.md) for optional background features. [Release readiness](docs/releases.md) identifies current checks and remaining limits.
 
 </details>
 

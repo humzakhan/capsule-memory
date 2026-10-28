@@ -1,6 +1,7 @@
 # 0005: Owner-reviewed device enrollment in the existing Go CLI
 
-Status: implemented on the device-enrollment feature branch; unreleased.
+Status: implemented for v0.1.0-beta.5; bounded local validation and independent
+source review passed. See [release evidence](../releases.md) for limits.
 
 ## Decision
 

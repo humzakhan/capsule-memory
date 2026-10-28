@@ -19,6 +19,9 @@ cloudflare/wrangler.jsonc, and docs/v1-contract.md.
 2. Explain bootstrap: obtain ONLY public owner pin and vault ID from owner init.
    The relay must never receive owner.json, device.json, private keys, scope keys,
    plaintext records, a local search index, or private GitHub credentials.
+   For an existing vault, reuse its current public identity rather than run init.
+   Beta.5 pairing requires the matching client and Worker: an authorized upgrade
+   preserves the existing Worker identity, vault/owner pins and DO/R2 bindings.
 3. For authorized local evaluation, follow the runbook's local Wrangler configuration.
    Keep bindings local, emulator state private, existing .dev.vars intact, and
    loopback HTTP explicitly scoped. Use synthetic profiles and bounded processes.

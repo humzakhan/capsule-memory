@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.1.0-beta.5 — owner-reviewed device pairing
+
+Source prerelease with a Go CLI for adding and managing trusted computers.
+Build/install from the tag; no prebuilt executables are distributed.
+
+- Add the `devices` owner console and invite/join/requests/approve/deny/resume/
+  cancel/revoke commands, with exact fingerprint and collection selection.
+- Generate private identities on each joining device and deliver only selected
+  collection keys through owner-signed, recipient-encrypted packages. Preserve
+  existing vault identity, legacy protocol bytes and private-reader protections.
+- Persist approval/recovery bytes, fence uncertain owner writes, and require
+  proof of package decryption before activation. Revocation blocks future access;
+  it does not erase previously downloaded records or rotate old keys.
+- Add explicit optional macOS Keychain custody for the owner signing key, plus
+  machine-wide CLI installation and MacBook-first controller/enrollment prompts.
+- Record the full quality gate, 17 local Worker E2E groups, race checks and actual
+  console workflow at the feature revision, with independent source review.
+  [Release evidence](docs/releases.md) distinguishes live-cloud, second-machine
+  and native Keychain checks that remain unperformed.
+
 ## v0.1.0-beta.4 — refreshed README artwork
 
 Documentation-only update; product code and dependencies are unchanged.

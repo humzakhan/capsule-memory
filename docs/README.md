@@ -13,11 +13,12 @@ Use [the prompt index](../prompts/README.md) for evaluation, setup and operation
 | Guide | Purpose |
 | --- | --- |
 | [Releases](releases.md) · [Changelog](../CHANGELOG.md) | Initial source beta, known blockers and tested-release gates |
+| [Install the CLI](install.md) · [MacBook controller](../prompts/12-macbook-controller.md) | Tagged source build, machine-wide command and existing-owner handoff |
 | [Run v1](run-v1.md) | Dependency resolution, build, local E2E, private demo, recovery, cleanup |
 | [Run sessions](run-session.md) · [Session status](session-status.md) | Optional session source, owner setup and pending acceptance |
 | [Rename compatibility](renaming.md) | Retained protocol bytes and explicit reuse of pre-rename profiles |
 | [Go client](go-client.md) | CLI flags/results, fixed-scope MCP, local skill approval and text activation |
-| [Device approval](device-enrollment.md) | Unreleased Go console, secure pairing, scoped owner approval and recovery |
+| [Device approval](device-enrollment.md) | Beta.5 Go console, secure pairing, scoped owner approval and recovery |
 | [Relay setup](relay-setup.md) | Authentication, archive publication, limits, provider assumptions |
 | [E2E journey](../e2e/README.md) | Authored synthetic local assertions and failure artifacts |
 | [Support](../SUPPORT.md) | Troubleshooting navigation and safe bug reports |

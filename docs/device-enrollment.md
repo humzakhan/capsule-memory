@@ -1,12 +1,17 @@
 # Approve a new device from your terminal
 
-This unreleased feature extends the existing Go CLI on Linux/macOS and the Unix
+Available in **v0.1.0-beta.5**, this extends the existing Go CLI on Linux/macOS and the Unix
 platforms with supported exclusive profile locks. Windows retains its existing
 direct legacy mode. Build the client and upgrade
 your existing Worker from the **same revision** before using it. An older relay,
 including the beta.4 deployment, does not provide these enrollment endpoints.
 Keep the existing vault ID, owner public key, Durable Object and private R2
 binding. Do not create a replacement vault or change its signing identity.
+
+Start with [machine-wide CLI installation](install.md). If your MacBook will be
+the primary approver for OVH and the Mac Mini, use the
+[MacBook controller prompt](../prompts/12-macbook-controller.md). Installing the
+CLI does not transfer owner authority or enroll the computer.
 
 The owner runs `capsule-memory devices`. A new computer submits a pairing request;
 the owner compares its fingerprint, chooses collections, and approves or denies

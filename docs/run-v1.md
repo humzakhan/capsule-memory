@@ -12,6 +12,12 @@ download/build and 2–5 minutes for the focused E2E if the authored source work
 
 ## 1. Install and build locally
 
+For a real installation, use [Install the CLI](install.md): it pins the release
+and installs a machine-wide command. The per-user binary below is for this
+synthetic evaluation, not the required machine-wide setup. Use the
+[MacBook controller prompt](../prompts/12-macbook-controller.md) to reuse existing
+owner authority; do not initialize the demo below against your real archive.
+
 Use the Go version required by `go.mod`, Node 22+ supported by the pinned Wrangler,
 and npm. Clone/check out `main` through your normal Git
 workflow, then run these commands from the repository root. Dependency resolution

@@ -11,12 +11,14 @@ This public repository provides a curated documentation index following the llms
 - [README](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/README.md): Purpose, scope, source quickstart and privacy.
 - [Initial beta and release readiness](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/releases.md): Source-only distribution, features, known limits and remaining acceptance gates.
 - [Agent instructions](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/AGENTS.md): Repository rules and execution boundaries.
-- [Setup prompt index](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/prompts/README.md): Ten role-specific evaluation, setup and operation prompts.
+- [Setup prompt index](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/prompts/README.md): Role-specific evaluation, installation, setup and operation prompts.
 - [Discovery guide](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/agent-discovery.md): Use-case matrix, capability metadata and publication prerequisites.
 
 ## Use and configure
 
-- [Device approval](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/device-enrollment.md): Unreleased owner CLI, invitation-based pairing, scoped key delivery and recovery.
+- [Install the CLI](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/install.md): Tagged source build, machine-wide PATH installation and rollback on macOS/Linux.
+- [MacBook controller](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/prompts/12-macbook-controller.md): Install on a MacBook, preserve existing owner authority and approve OVH/Mac Mini as ordinary devices.
+- [Device approval](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/device-enrollment.md): Beta.5 owner CLI, invitation-based pairing, scoped key delivery and recovery.
 
 - [Runbook](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/run-v1.md): Owner-machine build, synthetic E2E, demo and cleanup.
 - [Go CLI and MCP](https://raw.githubusercontent.com/humzakhan/capsule-memory/main/docs/go-client.md): Real commands, fixed-scope stdio tools, local skill approval.
