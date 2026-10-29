@@ -122,6 +122,21 @@ func (h *Host) dispatchAdmin(ctx context.Context, profile *Profile, name string,
 		return svc.ActivateSkill(ctx, in.Scope, in.ID, in.Revision)
 	case "admin.legacy.status":
 		return svc.Status(ctx)
+	case "admin.legacy.stats":
+		stats, err := svc.Stats(ctx)
+		if err != nil {
+			return nil, err
+		}
+		capture, err := sess.Status(ctx)
+		if err != nil {
+			return nil, err
+		}
+		states := map[string]int{}
+		for _, source := range capture.Sources {
+			states[source.State]++
+		}
+		stats["capture_status"] = map[string]any{"source_states": states, "saved_chunks": capture.Saved, "pending_streams": capture.PendingStreams}
+		return stats, nil
 	case "admin.profile.info":
 		return svc.Info(ctx)
 	default:

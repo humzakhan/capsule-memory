@@ -42,7 +42,7 @@ func run(ctx context.Context, args []string) error {
 	}
 	args = global.Args()
 	if len(args) == 0 {
-		return errors.New("command required: devices, device, owner protect, init, store, recall, get, delete, restore, sync, status, rebuild, skill, mcp")
+		return errors.New("command required: devices, device, owner protect, init, store, recall, get, delete, restore, sync, status, stats, rebuild, skill, mcp")
 	}
 	command := args[0]
 	args = args[1:]
@@ -64,7 +64,7 @@ func run(ctx context.Context, args []string) error {
 	fs.SetOutput(io.Discard)
 	fs.StringVar(&home, "home", home, "private device state directory")
 	var scope, kind, text, id, parents, query, relay, out, revision string
-	var history, loopback bool
+	var history, loopback, jsonOutput bool
 	switch command {
 	case "init":
 		fs.StringVar(&relay, "relay", "", "relay base URL")
@@ -104,6 +104,8 @@ func run(ctx context.Context, args []string) error {
 		if sub == "fetch" {
 			fs.BoolVar(&history, "history", false, "include immutable history")
 		}
+	case "stats":
+		fs.BoolVar(&jsonOutput, "json", false, "machine-readable output")
 	case "status", "rebuild":
 	default:
 		return errors.New("unknown command")
@@ -203,6 +205,15 @@ func run(ctx context.Context, args []string) error {
 			return err
 		}
 		return print(v)
+	case "stats":
+		v, err := service.Stats(ctx)
+		if err != nil {
+			return err
+		}
+		if jsonOutput {
+			return print(v)
+		}
+		return printStats(os.Stdout, v)
 	case "rebuild":
 		if err := service.Rebuild(ctx); err != nil {
 			return err
@@ -297,6 +308,9 @@ func routeLegacy(ctx context.Context, home, daemonHome, command, sub string, fs 
 		return err
 	}
 	encoder := json.NewEncoder(os.Stdout)
+	if command == "stats" && fs.Lookup("json").Value.String() != "true" {
+		return printStats(os.Stdout, result)
+	}
 	if command != "store" && command != "delete" && command != "restore" {
 		return encoder.Encode(result)
 	}
@@ -323,6 +337,8 @@ func legacyMethod(command, sub string) string {
 		return "admin.sync.now"
 	case "status":
 		return "admin.legacy.status"
+	case "stats":
+		return "admin.legacy.stats"
 	case "rebuild":
 		return "admin.rebuild"
 	case "device":
