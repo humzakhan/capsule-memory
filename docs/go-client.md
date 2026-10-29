@@ -385,3 +385,14 @@ export paging adds `snapshot` to request/response; callers must return the token
 unchanged after page one. `session.read` reports `Branch` and `Branches`; concurrent
 capture branches remain separate. `knowledge.search` proof results name the exact
 target revision, and the returned row must match that revision after the resolver.
+
+### Local memory statistics
+
+Run `capsule-memory --home /private/device stats` to see per-scope counts of
+locally visible legacy memory records, pending uploads, and replay coverage.
+Counts exclude skills, session capture, deleted records, and duplicate conflict
+heads. They are a local snapshot, not a cloud-wide total; sync the scope first
+for the latest available relay data. For daemon-owned profiles, the command also
+reports capture source-state counts, saved chunks, and pending streams. Direct
+profiles report capture status as unavailable.
+It does not display memory contents.

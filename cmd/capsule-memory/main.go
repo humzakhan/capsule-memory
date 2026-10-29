@@ -42,7 +42,7 @@ func run(ctx context.Context, args []string) error {
 	}
 	args = global.Args()
 	if len(args) == 0 {
-		return errors.New("command required: devices, device, owner protect, init, store, recall, get, delete, restore, sync, status, rebuild, skill, mcp")
+		return errors.New("command required: devices, device, owner protect, init, store, recall, get, delete, restore, sync, status, stats, rebuild, skill, mcp")
 	}
 	command := args[0]
 	args = args[1:]
@@ -104,7 +104,7 @@ func run(ctx context.Context, args []string) error {
 		if sub == "fetch" {
 			fs.BoolVar(&history, "history", false, "include immutable history")
 		}
-	case "status", "rebuild":
+	case "status", "stats", "rebuild":
 	default:
 		return errors.New("unknown command")
 	}
@@ -199,6 +199,12 @@ func run(ctx context.Context, args []string) error {
 		return print(v)
 	case "status":
 		v, err := service.Status(ctx)
+		if err != nil {
+			return err
+		}
+		return print(v)
+	case "stats":
+		v, err := service.Stats(ctx)
 		if err != nil {
 			return err
 		}
@@ -323,6 +329,8 @@ func legacyMethod(command, sub string) string {
 		return "admin.sync.now"
 	case "status":
 		return "admin.legacy.status"
+	case "stats":
+		return "admin.legacy.stats"
 	case "rebuild":
 		return "admin.rebuild"
 	case "device":

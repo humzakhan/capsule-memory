@@ -83,7 +83,7 @@ func (h *Host) register() {
 			"admin.aggregation.grant", "admin.sync.now", "admin.scope.add",
 			"admin.device.create", "admin.device.grant", "admin.device.revoke",
 			"admin.rebuild", "admin.skill.approve", "admin.skill.activate",
-			"admin.legacy.status", "admin.profile.info",
+			"admin.legacy.status", "admin.legacy.stats", "admin.profile.info",
 		}},
 	}
 	for _, group := range groups {
