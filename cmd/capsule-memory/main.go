@@ -64,7 +64,7 @@ func run(ctx context.Context, args []string) error {
 	fs.SetOutput(io.Discard)
 	fs.StringVar(&home, "home", home, "private device state directory")
 	var scope, kind, text, id, parents, query, relay, out, revision string
-	var history, loopback bool
+	var history, loopback, jsonOutput bool
 	switch command {
 	case "init":
 		fs.StringVar(&relay, "relay", "", "relay base URL")
@@ -104,7 +104,9 @@ func run(ctx context.Context, args []string) error {
 		if sub == "fetch" {
 			fs.BoolVar(&history, "history", false, "include immutable history")
 		}
-	case "status", "stats", "rebuild":
+	case "stats":
+		fs.BoolVar(&jsonOutput, "json", false, "machine-readable output")
+	case "status", "rebuild":
 	default:
 		return errors.New("unknown command")
 	}
@@ -208,7 +210,10 @@ func run(ctx context.Context, args []string) error {
 		if err != nil {
 			return err
 		}
-		return print(v)
+		if jsonOutput {
+			return print(v)
+		}
+		return printStats(os.Stdout, v)
 	case "rebuild":
 		if err := service.Rebuild(ctx); err != nil {
 			return err
@@ -303,6 +308,9 @@ func routeLegacy(ctx context.Context, home, daemonHome, command, sub string, fs 
 		return err
 	}
 	encoder := json.NewEncoder(os.Stdout)
+	if command == "stats" && fs.Lookup("json").Value.String() != "true" {
+		return printStats(os.Stdout, result)
+	}
 	if command != "store" && command != "delete" && command != "restore" {
 		return encoder.Encode(result)
 	}

@@ -388,7 +388,8 @@ target revision, and the returned row must match that revision after the resolve
 
 ### Local memory statistics
 
-Run `capsule-memory --home /private/device stats` to see per-scope counts of
+Run `capsule-memory --home /private/device stats` for an ASCII dashboard, or add
+`--json` for machine-readable output. It shows per-scope counts of
 locally visible legacy memory records, pending uploads, and replay coverage.
 Counts exclude skills, session capture, deleted records, and duplicate conflict
 heads. They are a local snapshot, not a cloud-wide total; sync the scope first
