@@ -34,8 +34,18 @@ func TestStatsCountsVisibleMemoryRecords(t *testing.T) {
 		t.Fatal(err)
 	}
 	stats := got["scopes"].(map[string]any)[scope].(map[string]any)
-	if stats["memories"] != 1 || stats["pending_uploads"] != 4 {
+	if stats["memories"] != 1 || stats["skills"] != 1 || stats["pending_uploads"] != 4 {
 		t.Fatalf("unexpected stats: %v", stats)
+	}
+	if got["memories"] != 1 || got["skills"] != 1 || got["pending_uploads"] != 4 {
+		t.Fatalf("unexpected totals: %v", got)
+	}
+	devices := got["devices"].([]map[string]any)
+	if len(devices) != 1 || devices[0]["this_device"] != true {
+		t.Fatalf("unexpected devices: %v", devices)
+	}
+	if _, exists := devices[0]["public_key_b64"]; exists {
+		t.Fatal("stats should not expose keys")
 	}
 	write(WriteInput{Scope: scope, Record: "deleted_memory", Operation: "restore", Text: "synthetic", TextSet: true})
 	got, err = svc.Stats(ctx)

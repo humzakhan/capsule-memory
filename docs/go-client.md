@@ -390,9 +390,12 @@ target revision, and the returned row must match that revision after the resolve
 
 Run `capsule-memory --home /private/device stats` for an ASCII dashboard, or add
 `--json` for machine-readable output. It shows per-scope counts of
-locally visible legacy memory records, pending uploads, and replay coverage.
-Counts exclude skills, session capture, deleted records, and duplicate conflict
-heads. They are a local snapshot, not a cloud-wide total; sync the scope first
+locally visible legacy memory and skill records, pending uploads, replay coverage,
+and last-known device membership. Device sync and pending approvals are unknown
+without a network check. Device IDs are shown because friendly names are not
+authoritative in the vault.
+Memory counts exclude skills, session capture, deleted records, and duplicate
+conflict heads. They are a local snapshot, not a cloud-wide total; sync the scope first
 for the latest available relay data. For daemon-owned profiles, the command also
 reports capture source-state counts, saved chunks, and pending streams. Direct
 profiles report capture status as unavailable.
